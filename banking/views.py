@@ -1,8 +1,10 @@
+from django.http import response
+from django.views.generic import detail
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
-from rest_framework.decorators import action
+from rest_framework.decorators import action, permission_classes
 from django.db import models
 from django.db.models import Sum
 from django.contrib.auth.models import User
@@ -11,6 +13,7 @@ from .serializers import AccountSerializer, TransactionSerializer, BusinessSeria
 from decimal import Decimal
 import os
 import subprocess
+from functools import reduce
 
 class UserRegistrationView(APIView):
     permission_classes = [AllowAny]
@@ -106,11 +109,11 @@ class AccountViewSet(viewsets.ModelViewSet):
         return Account.objects.none()
     
     def get_permissions(self):
-        # For list and retrieve actions, require authentication
+        #For list and retrieve actions, require authentication
         if self.action in ['list', 'retrieve', 'my_accounts', 'roundups', 'spending_trends', 'current_balance']:
             return [IsAuthenticated()]
         # For create, update, delete actions, require admin privileges
-        elif self.action in ['create', 'update', 'partial_update', 'destroy', 'manager_list']:
+        elif self.action in ['create','retrieve', 'update', 'partial_update', 'destroy', 'manager_list']:
             return [IsAdminUser()]
         return [AllowAny()]
         
@@ -131,6 +134,39 @@ class AccountViewSet(viewsets.ModelViewSet):
         print(f"Found {accounts.count()} accounts")
         
         return Response(serializer.data)
+
+    # @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated])
+    # def roundups(self, request, pk=None):
+    #     """Get roundup savings for this account."""
+    #     account = Account.objects.filter(user=request.user, id=pk)[0]
+    #
+    #     print(account.round_up_pot, account.round_up_enabled)
+    #     transactions = Transaction.objects.filter(from_account=account.id)
+    #     print(transactions)
+    #
+    #     for t in transactions:
+    #         print("XD",t)
+
+
+    @action(detail=True, permission_classes=[IsAuthenticated])
+    def spending_trends(self, request, pk):
+        """ Trends of spending for an account, needs significant additions, rn just passess test_spending_trends """
+        account = Account.objects.filter(user=request.user, id=pk)[0]
+        transactions = Transaction.objects.filter(from_account=account)
+        total = reduce(lambda acc, ts: acc + ts.amount, transactions, Decimal('0'))
+        
+        return Response({
+            'account_id': str(pk),
+            'total': total
+        })
+    
+    @action(detail=True, permission_classes=[IsAuthenticated])
+    def user_account(self, request, pk):
+        account = Account.objects.filter(id=pk, user=request.user)[0]
+        return Response({
+            'account_id': str(pk),
+            'name': account.name
+        })
 
 class TransactionViewSet(viewsets.ModelViewSet):
     serializer_class = TransactionSerializer
