@@ -4,4 +4,12 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "argon2-cffi>=25.1.0",
+    "django-cors-headers>=4.9.0",
+    "django-rest-authtoken>=2.1.4",
+    "django-rest-swagger>=2.2.0",
+    "djangorestframework>=3.16.1",
+    "djangorestframework-simplejwt>=5.5.1",
+    "drf-yasg>=1.21.15",
+]

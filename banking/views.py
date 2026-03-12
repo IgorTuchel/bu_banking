@@ -14,6 +14,8 @@ from decimal import Decimal
 import os
 import subprocess
 from functools import reduce
+from argon2 import PasswordHasher
+
 
 class UserRegistrationView(APIView):
     permission_classes = [AllowAny]
@@ -32,7 +34,10 @@ class UserRegistrationView(APIView):
                 {"error": "Username and password are required"}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+        ph = PasswordHasher()
+
+        hashPass = ph.hash(password)
+
         # Check if username already exists
         if User.objects.filter(username=username).exists():
             return Response(
@@ -44,12 +49,12 @@ class UserRegistrationView(APIView):
             # Create the user
             user = User.objects.create_user(
                 username=username,
-                password=password,
+                password=hashPass,
                 email=email,
                 first_name=first_name,
                 last_name=last_name
             )
-            
+            print(Account.objects.filter(user=user))
             # Create default Current Account with 1000 starting balance
             current_account = Account.objects.create(
                 name=f"{first_name or username}'s Current Account",
@@ -58,7 +63,6 @@ class UserRegistrationView(APIView):
                 user=user,
                 account_type='current'
             )
-            
             # Create default Savings Account with 0 starting balance
             savings_account = Account.objects.create(
                 name=f"{first_name or username}'s Savings Account",
@@ -67,7 +71,6 @@ class UserRegistrationView(APIView):
                 user=user,
                 account_type='savings'
             )
-            
             # Return success response with account details
             return Response({
                 "message": "User registered successfully",
@@ -112,6 +115,7 @@ class AccountViewSet(viewsets.ModelViewSet):
         #For list and retrieve actions, require authentication
         if self.action in ['list', 'retrieve', 'my_accounts', 'roundups', 'spending_trends', 'current_balance']:
             return [IsAuthenticated()]
+        
         # For create, update, delete actions, require admin privileges
         elif self.action in ['create','retrieve', 'update', 'partial_update', 'destroy', 'manager_list']:
             return [IsAdminUser()]
@@ -126,7 +130,10 @@ class AccountViewSet(viewsets.ModelViewSet):
         if not request.user.is_authenticated:
             return Response({"detail": "Authentication required"}, status=status.HTTP_401_UNAUTHORIZED)
         
-        accounts = Account.objects.filter(user=request.user)
+        if request.user.is_staff:
+            accounts = Account.objects.all()
+        else:
+            accounts = Account.objects.filter(user=request.user)
         serializer = self.get_serializer(accounts, many=True)
         
         # Print debugging info
@@ -167,6 +174,23 @@ class AccountViewSet(viewsets.ModelViewSet):
             'account_id': str(pk),
             'name': account.name
         })
+    
+    @action(detail=True, permission_classes=[IsAuthenticated])
+    def current_balance(self, request, pk):
+        account = Account.objects.filter(id=pk, user=request.user)[0]
+        return Response({
+            'account_id': str(pk),
+            'current_balance': account.starting_balance
+        })
+
+    
+    @action(detail=True, permission_classes=[IsAuthenticated], methods=['post'])
+    def enable_roundup(self, request, pk):
+        Account.objects.filter(id=pk, user=request.user).update(round_up_enabled=True)
+        print(f"Round-up enabled for account {pk}")
+        return Response({
+            'account_id': str(pk),
+        }, status=status.HTTP_200_OK)
 
 class TransactionViewSet(viewsets.ModelViewSet):
     serializer_class = TransactionSerializer
