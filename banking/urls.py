@@ -3,12 +3,11 @@ URLs for the banking app with additional diagnostic endpoints.
 """
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from .views import AccountViewSet, TransactionViewSet, BusinessViewSet, UserRegistrationView
 from .tests.test_view import TestView
-import logging
-import traceback
+from .views.user_registration_view import UserRegistrationView 
+from .views.account_view import AccountViewSet
+from .views.transaction_view import TransactionViewSet
+from .views.business_view import BusinessViewSet
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi 
 from rest_framework.permissions import AllowAny 
@@ -24,7 +23,6 @@ urlpatterns = [
     path('test-view/', TestView.as_view(), name='banking-test-view'),
     path('user-registration/', UserRegistrationView.as_view(), name='user-registration'),
 ]
-
 
 schema_view = get_schema_view(
    openapi.Info(

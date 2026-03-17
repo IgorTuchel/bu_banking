@@ -8,14 +8,13 @@ from django.contrib.auth.models import User
 from decimal import Decimal
 import uuid
 
-
 class BankingAPITestCase(APITestCase):
     def setUp(self):
         # Create a test user and get a JWT token for authentication
         self.user = User.objects.create_user(username="testuser", password="password")
         self.token = str(RefreshToken.for_user(self.user).access_token)
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token)
-
+        
         # Set up test data
         self.account = Account.objects.create(
             id="3ac94f73-ee6a-473a-ad35-c36164229144",
@@ -75,7 +74,6 @@ class BankingAPITestCase(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreaterEqual(len(response.data), 1)
-
 
     # NO CLUE ABOUT THIS ONE
     # def test_roundup_feature(self):
@@ -155,8 +153,7 @@ class BankingAPIManagerTestCase(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('current_balance', response.data)        
-#
-#
+
 # #TASK5 "Round Up," "Round Up Reclamation," "Top 10 Spenders,"
 
 class BankingAPITestCase3(APITestCase):
@@ -188,6 +185,3 @@ class BankingAPITestCase3(APITestCase):
         self.user.save()
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)     
-#
-# #
-# #ENDTASK5        
