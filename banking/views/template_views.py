@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from django.views import View
 from django.contrib.auth.models import User
 from django.contrib import messages
-from .models import Account
+from ..models import Account
 from decimal import Decimal
 
 class TemplateRegistrationView(View):

@@ -4,8 +4,8 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import Account
-from .serializers import AccountSerializer
+from ..models import Account
+from ..serializers import AccountSerializer
 
 class LoginView(APIView):
     permission_classes = [AllowAny]

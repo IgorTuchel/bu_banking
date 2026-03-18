@@ -5,8 +5,8 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from banking.auth_views import LoginView, UserAccountsView
-from banking.template_views import register_api
+from banking.views.auth_views import LoginView, UserAccountsView
+from banking.views.template_views import register_api
 
 urlpatterns = [
     path('admin/', admin.site.urls),
