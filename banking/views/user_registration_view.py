@@ -5,7 +5,6 @@ from rest_framework.permissions import AllowAny
 from django.contrib.auth.models import User
 from ..models import Account
 from decimal import Decimal
-from argon2 import PasswordHasher
 
 class UserRegistrationView(APIView):
     permission_classes = [AllowAny]
@@ -24,9 +23,6 @@ class UserRegistrationView(APIView):
                 {"error": "Username and password are required"}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
-        ph = PasswordHasher()
-        hashPass = ph.hash(password)
 
         # Check if username already exists
         if User.objects.filter(username=username).exists():
@@ -39,7 +35,7 @@ class UserRegistrationView(APIView):
             # Create the user
             user = User.objects.create_user(
                 username=username,
-                password=hashPass,
+                password=password,
                 email=email,
                 first_name=first_name,
                 last_name=last_name
