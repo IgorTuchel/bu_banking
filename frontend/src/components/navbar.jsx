@@ -4,6 +4,9 @@ export default function Navbar() {
   return (
     <nav className="navbar">
       <div className="navLeft">
+        <button className="menuButton" aria-label="Open menu">
+          ☰
+        </button>
         <div className="navLinks">
           <a href="#">Home</a>
           <a href="#">Transactions</a>
