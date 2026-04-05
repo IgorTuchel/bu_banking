@@ -1,0 +1,30 @@
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 24px;
+  border-bottom: 1px solid #ddd;
+}
+
+.navLeft {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.navLinks {
+  display: flex;
+  gap: 16px;
+}
+
+.navLinks a {
+  text-decoration: none;
+  color: #333;
+  font-size: 14px;
+}
+
+.navIcons {
+  display: flex;
+  gap: 12px;
+  cursor: pointer;
+}
