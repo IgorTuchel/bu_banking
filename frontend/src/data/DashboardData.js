@@ -56,10 +56,10 @@ export const accounts = [
 ];
 
 export const quickActions = [
-  { id: 1, label: "Transfer Money" },
-  { id: 2, label: "Pay Bills" },
-  { id: 3, label: "View Cards" },
-  { id: 4, label: "Transaction History" },
+  { id: 1, label: "Transfer Money", icon: "💸" },
+  { id: 2, label: "Pay Bills", icon: "🧾" },
+  { id: 3, label: "View Cards", icon: "💳" },
+  { id: 4, label: "Transaction History", icon: "📊" },
 ];
 
 export const notifications = [

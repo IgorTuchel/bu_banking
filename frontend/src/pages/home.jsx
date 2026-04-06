@@ -7,6 +7,7 @@ import QuickActions from "../components/QuickActions";
 import TransactionsList from "../components/TransactionsList";
 import NotificationsPanel from "../components/NotificationsPanel";
 import AccountSelector from "../components/AccountSelector";
+import SelectedAccountCard from "../components/SelectedAccountCard";
 
 import { getDashboardData } from "../services/dashboardService";
 
@@ -74,6 +75,8 @@ function Home() {
         selectedAccountKey={selectedAccountKey}
         onChange={setSelectedAccountKey}
       />
+
+      <SelectedAccountCard account={selectedAccount} />
 
       <section className="summary-grid">
         {selectedAccount.summary.map((item) => (
