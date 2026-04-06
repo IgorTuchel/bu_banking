@@ -52,15 +52,36 @@ function Home() {
   }, [dashboardData, selectedAccountKey]);
 
   if (isLoading) {
-    return <main className="home-page">Loading dashboard...</main>;
+    return (
+      <main className="home-page">
+        <section className="status-card loading-card">
+          <h2>Loading dashboard</h2>
+          <p>Please wait while we load your latest account information.</p>
+        </section>
+      </main>
+    );
   }
 
   if (errorMessage) {
-    return <main className="home-page">{errorMessage}</main>;
+    return (
+      <main className="home-page">
+        <section className="status-card error-card">
+          <h2>Something went wrong</h2>
+          <p>{errorMessage}</p>
+        </section>
+      </main>
+    );
   }
 
   if (!dashboardData || !selectedAccount) {
-    return <main className="home-page">No dashboard data available.</main>;
+    return (
+      <main className="home-page">
+        <section className="status-card empty-card">
+          <h2>No dashboard data available</h2>
+          <p>There is currently no account information to display.</p>
+        </section>
+      </main>
+    );
   }
 
   return (

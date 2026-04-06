@@ -1,7 +1,12 @@
 function TransactionsList({ transactions }) {
   return (
     <section className="transactions-section">
-      <h2>Recent Transactions</h2>
+      <div className="section-header">
+        <h2>Recent Transactions</h2>
+        <button className="section-link-button" type="button">
+          View all
+        </button>
+      </div>
 
       <div className="transactions-list">
         {transactions.map((transaction) => {

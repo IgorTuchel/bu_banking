@@ -249,6 +249,28 @@
   color: #dc2626;
 }
 
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.section-link-button {
+  border: none;
+  background: transparent;
+  color: #2563eb;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.section-link-button:hover {
+  text-decoration: underline;
+}
+
 .notification-card {
   padding: 1rem;
   border-radius: 10px;
