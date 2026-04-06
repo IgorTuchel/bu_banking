@@ -7,8 +7,7 @@ function DashboardHeader({ firstName, lastLogin }) {
       <p>Here is an overview of your account activity.</p>
 
       <LastLoginInfo
-        date={lastLogin.date}
-        time={lastLogin.time}
+        timestamp={lastLogin.timestamp}
         location={lastLogin.location}
       />
     </section>

@@ -1,8 +1,7 @@
 export const userData = {
   firstName: "Daniel",
   lastLogin: {
-    date: "6 April 2026",
-    time: "14:42",
+    timestamp: "2026-04-06T14:42:00",
     location: "Bournemouth, UK",
   },
 };

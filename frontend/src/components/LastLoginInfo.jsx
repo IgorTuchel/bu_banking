@@ -1,9 +1,47 @@
-function LastLoginInfo({ date, time, location }) {
+function formatLastLogin(timestamp) {
+  if (!timestamp) {
+    return {
+      formattedDate: "Unknown date",
+      formattedTime: "Unknown time",
+    };
+  }
+
+  const loginDate = new Date(timestamp);
+
+  if (Number.isNaN(loginDate.getTime())) {
+    return {
+      formattedDate: "Invalid date",
+      formattedTime: "Invalid time",
+    };
+  }
+
+  const formattedDate = loginDate.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  const formattedTime = loginDate.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+
+  return {
+    formattedDate,
+    formattedTime,
+  };
+}
+
+function LastLoginInfo({ timestamp, location }) {
+  const { formattedDate, formattedTime } = formatLastLogin(timestamp);
+
   return (
     <div className="last-login-info">
       <span className="last-login-label">Last login:</span>
       <span className="last-login-value">
-        {date} at {time} · {location}
+        {formattedDate} at {formattedTime}
+        {location ? ` from ${location}` : ""}
       </span>
     </div>
   );
