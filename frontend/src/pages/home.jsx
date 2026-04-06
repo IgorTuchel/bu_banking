@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./home.css";
 
 import DashboardHeader from "../components/DashboardHeader";
@@ -8,29 +8,69 @@ import TransactionsList from "../components/TransactionsList";
 import NotificationsPanel from "../components/NotificationsPanel";
 import AccountSelector from "../components/AccountSelector";
 
-import {
-  userData,
-  accounts,
-  quickActions,
-  notifications,
-} from "../data/dashboardData";
+import { getDashboardData } from "../services/dashboardService";
 
 function Home() {
-  const [selectedAccountKey, setSelectedAccountKey] = useState(accounts[0].key);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [selectedAccountKey, setSelectedAccountKey] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    async function loadDashboardData() {
+      try {
+        setIsLoading(true);
+        setErrorMessage("");
+
+        const data = await getDashboardData();
+        setDashboardData(data);
+
+        if (data.accounts.length > 0) {
+          setSelectedAccountKey(data.accounts[0].key);
+        }
+      } catch (error) {
+        setErrorMessage("Unable to load dashboard data.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadDashboardData();
+  }, []);
 
   const selectedAccount = useMemo(() => {
-    return accounts.find((account) => account.key === selectedAccountKey);
-  }, [selectedAccountKey]);
+    if (!dashboardData) {
+      return null;
+    }
+
+    return (
+      dashboardData.accounts.find(
+        (account) => account.key === selectedAccountKey
+      ) || dashboardData.accounts[0]
+    );
+  }, [dashboardData, selectedAccountKey]);
+
+  if (isLoading) {
+    return <main className="home-page">Loading dashboard...</main>;
+  }
+
+  if (errorMessage) {
+    return <main className="home-page">{errorMessage}</main>;
+  }
+
+  if (!dashboardData || !selectedAccount) {
+    return <main className="home-page">No dashboard data available.</main>;
+  }
 
   return (
     <main className="home-page">
       <DashboardHeader
-        firstName={userData.firstName}
-        lastLogin={userData.lastLogin}
+        firstName={dashboardData.user.firstName}
+        lastLogin={dashboardData.user.lastLogin}
       />
 
       <AccountSelector
-        accounts={accounts}
+        accounts={dashboardData.accounts}
         selectedAccountKey={selectedAccountKey}
         onChange={setSelectedAccountKey}
       />
@@ -41,11 +81,11 @@ function Home() {
         ))}
       </section>
 
-      <QuickActions actions={quickActions} />
+      <QuickActions actions={dashboardData.quickActions} />
 
       <section className="home-content-grid">
         <TransactionsList transactions={selectedAccount.transactions} />
-        <NotificationsPanel notifications={notifications} />
+        <NotificationsPanel notifications={dashboardData.notifications} />
       </section>
     </main>
   );
