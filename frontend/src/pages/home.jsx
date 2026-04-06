@@ -24,7 +24,10 @@ function Home() {
 
   return (
     <main className="home-page">
-      <DashboardHeader firstName={userData.firstName} />
+      <DashboardHeader
+        firstName={userData.firstName}
+        lastLogin={userData.lastLogin}
+      />
 
       <AccountSelector
         accounts={accounts}

@@ -1,5 +1,10 @@
 export const userData = {
   firstName: "Daniel",
+  lastLogin: {
+    date: "6 April 2026",
+    time: "14:42",
+    location: "Bournemouth, UK",
+  },
 };
 
 export const accounts = [

@@ -23,6 +23,24 @@
   color: #6b7280;
 }
 
+.last-login-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+  font-size: 0.95rem;
+  color: #6b7280;
+}
+
+.last-login-label {
+  font-weight: 600;
+  color: #374151;
+}
+
+.last-login-value {
+  color: #6b7280;
+}
+
 .account-selector-section {
   display: flex;
   flex-direction: column;
