@@ -1,0 +1,134 @@
+.transactions-page {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.transactions-page-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.transactions-subtext {
+  margin: 0.35rem 0 0 0.5rem;
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+}
+
+.transactions-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.transactions-search {
+  flex: 1;
+  min-width: 240px;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 1rem;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.transactions-search:focus {
+  border-color: var(--color-primary);
+}
+
+.transactions-filters {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.transactions-filter-button {
+  border: 1px solid var(--color-accent);
+  background: transparent;
+  color: var(--color-accent);
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.transactions-filter-button:hover {
+  background: var(--color-accent);
+  color: var(--color-text-heading);
+}
+
+.transactions-filter-button-active {
+  background: var(--color-accent);
+  color: var(--color-text-heading);
+}
+
+.transaction-row-detailed {
+  align-items: center;
+}
+
+.transaction-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.transaction-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.transaction-category {
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.transaction-status {
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.transaction-status-completed {
+  background: rgba(34, 197, 94, 0.12);
+  color: var(--color-success);
+}
+
+.transaction-status-pending {
+  background: rgba(245, 158, 11, 0.14);
+  color: #b7791f;
+}
+
+@media (max-width: 600px) {
+  .transactions-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .transaction-row-detailed {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .transaction-meta {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .transaction-amount {
+    align-self: flex-start;
+  }
+}
