@@ -1,6 +1,6 @@
 import "./navbar.css";
 import logo from "../assets/logo.png";
-import { NavLink }  from "react-router-dom";  
+import { NavLink } from "react-router-dom";
 
 export default function Navbar() {
   return (
@@ -22,10 +22,10 @@ export default function Navbar() {
         </button>
 
         <div className="navLinks">
-          <a href="#">Home</a>
-          <a href="#">Transactions</a>
-          <a href="#">Spending Insights</a>
-          <a href="#">Credit Score</a>
+          <NavLink to="/">Home</NavLink>
+          <NavLink to="/transactions">Transactions</NavLink>
+          <NavLink to="/spending-insights">Spending Insights</NavLink>
+          <NavLink to="/credit-score">Credit Score</NavLink>
         </div>
       </div>
 

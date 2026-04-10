@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import Navbar from "../components/Navbar";
 import "./home.css";
 import "./transactions.css";
 
@@ -64,8 +63,6 @@ export default function TransactionsPage() {
 
   return (
     <>
-      <Navbar />
-
       <main className="home-page transactions-page">
         <header className="dashboard-header">
           <h1>Transactions</h1>
