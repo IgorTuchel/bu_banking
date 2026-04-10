@@ -3,10 +3,7 @@ import Navbar from "./components/navbar";
 import Home from "./pages/home";
 import Transactions from "./pages/transactions";
 import SpendingInsights from "./pages/spendingInsights";
-
-function CreditScore() {
-  return <div style={{ padding: "2rem" }}>Credit Score Page</div>;
-}
+import CreditScore from "./pages/creditScore";
 
 function App() {
   return (
