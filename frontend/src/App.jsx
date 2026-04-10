@@ -2,11 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/navbar";
 import Home from "./pages/home";
 import Transactions from "./pages/transactions";
-
-// Temporary placeholder pages
-function SpendingInsights() {
-  return <div style={{ padding: "2rem" }}>Spending Insights Page</div>;
-}
+import SpendingInsights from "./pages/spendingInsights";
 
 function CreditScore() {
   return <div style={{ padding: "2rem" }}>Credit Score Page</div>;
@@ -20,8 +16,8 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/transactions" element={<Transactions />} />
-        <Route path="/spending-insights" element={<SpendingInsights />} />
-        <Route path="/credit-score" element={<CreditScore />} />
+        <Route path="/spendingInsights" element={<SpendingInsights />} />
+        <Route path="/creditScore" element={<CreditScore />} />
       </Routes>
     </>
   );

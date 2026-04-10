@@ -24,8 +24,8 @@ export default function Navbar() {
         <div className="navLinks">
           <NavLink to="/">Home</NavLink>
           <NavLink to="/transactions">Transactions</NavLink>
-          <NavLink to="/spending-insights">Spending Insights</NavLink>
-          <NavLink to="/credit-score">Credit Score</NavLink>
+          <NavLink to="/spendingInsights">Spending Insights</NavLink>
+          <NavLink to="/creditScore">Credit Score</NavLink>
         </div>
       </div>
 
