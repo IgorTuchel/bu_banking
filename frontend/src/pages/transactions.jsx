@@ -9,8 +9,11 @@ import {
   groupTransactions,
 } from "../utils/transactionUtils";
 
-const INITIAL_VISIBLE_COUNT = 30;
-const LOAD_MORE_COUNT = 20;
+import { TRANSACTIONS_CONFIG } from "../constants/transactions";
+
+const { INITIAL_VISIBLE_COUNT, 
+        LOAD_MORE_COUNT 
+      } = TRANSACTIONS_CONFIG;
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState([]);
