@@ -10,6 +10,7 @@ import AccountSelector from "../components/AccountSelector";
 import SelectedAccountCard from "../components/SelectedAccountCard";
 
 import { getDashboardData } from "../services/dashboardService";
+import { DEFAULT_ACCOUNT_INDEX } from "../constants/dashboard";
 
 function Home() {
   const [dashboardData, setDashboardData] = useState(null);
@@ -27,7 +28,7 @@ function Home() {
         setDashboardData(data);
 
         if (data.accounts.length > 0) {
-          setSelectedAccountKey(data.accounts[0].key);
+          setSelectedAccountKey(data.accounts[DEFAULT_ACCOUNT_INDEX].key);
         }
       } catch (error) {
         setErrorMessage("Unable to load dashboard data.");
@@ -47,7 +48,7 @@ function Home() {
     return (
       dashboardData.accounts.find(
         (account) => account.key === selectedAccountKey
-      ) || dashboardData.accounts[0]
+      ) || dashboardData.accounts[DEFAULT_ACCOUNT_INDEX]
     );
   }, [dashboardData, selectedAccountKey]);
 
