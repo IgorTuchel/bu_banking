@@ -4,6 +4,9 @@ import "./transactions.css";
 
 import { getTransactionsData } from "../services/transactionsService";
 
+const INITIAL_VISIBLE_COUNT = 30;
+const LOAD_MORE_COUNT = 20;
+
 function getAmountValue(amount) {
   return Number(amount.replace(/[^\d.-]/g, ""));
 }
@@ -28,7 +31,9 @@ function getStartOfDay(date) {
 
 function getDaysDifference(fromDate, toDate) {
   const msPerDay = 1000 * 60 * 60 * 24;
-  return Math.floor((getStartOfDay(fromDate) - getStartOfDay(toDate)) / msPerDay);
+  return Math.floor(
+    (getStartOfDay(fromDate) - getStartOfDay(toDate)) / msPerDay
+  );
 }
 
 function getStartOfWeek(date) {
@@ -119,6 +124,7 @@ export default function TransactionsPage() {
   const [transactions, setTransactions] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -140,6 +146,10 @@ export default function TransactionsPage() {
     loadTransactions();
   }, []);
 
+  useEffect(() => {
+    setVisibleCount(INITIAL_VISIBLE_COUNT);
+  }, [searchTerm, activeFilter]);
+
   const filteredTransactions = useMemo(() => {
     return transactions.filter((transaction) => {
       const matchesSearch =
@@ -150,7 +160,7 @@ export default function TransactionsPage() {
         return matchesSearch && transaction.amount.startsWith("+");
       }
 
-      if (activeFilter === "Expenses") {
+      if (activeFilter === "Outgoing") {
         return matchesSearch && transaction.amount.startsWith("-");
       }
 
@@ -162,9 +172,15 @@ export default function TransactionsPage() {
     });
   }, [transactions, searchTerm, activeFilter]);
 
+  const visibleTransactions = useMemo(() => {
+    return filteredTransactions.slice(0, visibleCount);
+  }, [filteredTransactions, visibleCount]);
+
   const groupedTransactions = useMemo(() => {
-    return groupTransactions(filteredTransactions);
-  }, [filteredTransactions]);
+    return groupTransactions(visibleTransactions);
+  }, [visibleTransactions]);
+
+  const hasMoreTransactions = visibleCount < filteredTransactions.length;
 
   const totals = useMemo(() => {
     const income = transactions
@@ -237,7 +253,8 @@ export default function TransactionsPage() {
           <div>
             <h2>All Transactions</h2>
             <p className="transactions-subtext">
-              Showing {filteredTransactions.length} transaction
+              Showing {Math.min(visibleCount, filteredTransactions.length)} of{" "}
+              {filteredTransactions.length} transaction
               {filteredTransactions.length !== 1 ? "s" : ""}
             </p>
           </div>
@@ -272,53 +289,71 @@ export default function TransactionsPage() {
 
         <div className="transactions-list">
           {groupedTransactions.length > 0 ? (
-            groupedTransactions.map((group) => (
-              <section key={group.label} className="transaction-group">
-                <h3 className="transaction-group-heading">{group.label}</h3>
+            <>
+              {groupedTransactions.map((group) => (
+                <section key={group.label} className="transaction-group">
+                  <h3 className="transaction-group-heading">{group.label}</h3>
 
-                {group.items.map((transaction) => {
-                  const isPositive = transaction.amount.startsWith("+");
+                  {group.items.map((transaction) => {
+                    const isPositive = transaction.amount.startsWith("+");
 
-                  return (
-                    <div
-                      key={transaction.id}
-                      className="transaction-row transaction-row-detailed"
-                    >
-                      <div className="transaction-main">
-                        <p className="transaction-name">{transaction.name}</p>
-                        <p className="transaction-date">
-                          {formatTransactionDate(transaction.timestamp)}
-                        </p>
+                    return (
+                      <div
+                        key={transaction.id}
+                        className="transaction-row transaction-row-detailed"
+                      >
+                        <div className="transaction-main">
+                          <p className="transaction-name">{transaction.name}</p>
+                          <p className="transaction-date">
+                            {formatTransactionDate(transaction.timestamp)}
+                          </p>
+                        </div>
+
+                        <div className="transaction-meta">
+                          <span
+                            className={`transaction-status ${
+                              transaction.status === "Pending"
+                                ? "transaction-status-pending"
+                                : transaction.status === "Declined"
+                                ? "transaction-status-declined"
+                                : "transaction-status-completed"
+                            }`}
+                          >
+                            {transaction.status}
+                          </span>
+
+                          <p
+                            className={`transaction-amount ${
+                              isPositive
+                                ? "transaction-positive"
+                                : "transaction-negative"
+                            }`}
+                          >
+                            {transaction.amount}
+                          </p>
+                        </div>
                       </div>
+                    );
+                  })}
+                </section>
+              ))}
 
-                      <div className="transaction-meta">
-                        <span
-                          className={`transaction-status ${
-                            transaction.status === "Pending"
-                              ? "transaction-status-pending"
-                              : transaction.status === "Declined"
-                              ? "transaction-status-declined"
-                              : "transaction-status-completed"
-                          }`}
-                        >
-                          {transaction.status}
-                        </span>
-
-                        <p
-                          className={`transaction-amount ${
-                            isPositive
-                              ? "transaction-positive"
-                              : "transaction-negative"
-                          }`}
-                        >
-                          {transaction.amount}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </section>
-            ))
+              {hasMoreTransactions && (
+                <div className="transactions-load-more">
+                  <button
+                    type="button"
+                    className="transactions-load-more-button"
+                    onClick={() =>
+                      setVisibleCount(
+                        (currentCount) => currentCount + LOAD_MORE_COUNT
+                      )
+                    }
+                  >
+                    Show more transactions
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             <div className="status-card empty-card">
               <h2>No transactions found</h2>

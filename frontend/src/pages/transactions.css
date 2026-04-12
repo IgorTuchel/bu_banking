@@ -86,6 +86,13 @@
   min-width: 230px;
 }
 
+.transactions-list {
+  margin-top: 1rem;
+  max-height: 720px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
 .transaction-status {
   width: 110px;
   text-align: center;
@@ -162,6 +169,45 @@
   border-bottom: 1px solid rgba(0, 0, 0, 0.04);
 }
 
+.transactions-list::-webkit-scrollbar {
+  width: 10px;
+}
+
+.transactions-list::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 999px;
+}
+
+.transactions-list::-webkit-scrollbar-thumb {
+  background: rgba(46, 139, 87, 0.35);
+  border-radius: 999px;
+}
+
+.transactions-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(46, 139, 87, 0.5);
+}
+
+.transactions-load-more {
+  display: flex;
+  justify-content: center;
+  padding-top: 0.75rem;
+}
+
+.transactions-load-more-button {
+  border: 1px solid var(--color-accent);
+  background: var(--color-surface);
+  color: var(--color-text-heading);
+  padding: 0.75rem 1.1rem;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.transactions-load-more-button:hover {
+  background: var(--color-accent);
+  color: var(--color-text-heading);
+}
 
 @media (max-width: 600px) {
   .transactions-toolbar {
