@@ -246,8 +246,7 @@
   position: relative;
   padding: 1.25rem;
   border-radius: var(--radius-md);
-
-  border-top: 4px solid transparent;
+  border-top: 5px solid transparent;
 
   background:
     linear-gradient(var(--color-surface), var(--color-surface)) padding-box,
