@@ -9,6 +9,7 @@ import {
   getAmountValue,
   getDateRangeLabel,
   groupTransactions,
+  addRunningBalance,
 } from "../utils/transactionUtils";
 import { TRANSACTIONS_CONFIG } from "../constants/transactions";
 
@@ -16,6 +17,7 @@ const { INITIAL_VISIBLE_COUNT, LOAD_MORE_COUNT } = TRANSACTIONS_CONFIG;
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState([]);
+  const [currentBalance, setCurrentBalance] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
   const [selectedDateRange, setSelectedDateRange] = useState("thisMonth");
@@ -33,6 +35,7 @@ export default function TransactionsPage() {
 
         const data = await getTransactionsData();
         setTransactions(Array.isArray(data.transactions) ? data.transactions : []);
+        setCurrentBalance(Number(data.accountSummary?.currentBalance ?? 0));
       } catch (error) {
         setErrorMessage("Unable to load transactions.");
       } finally {
@@ -46,6 +49,10 @@ export default function TransactionsPage() {
   useEffect(() => {
     setVisibleCount(INITIAL_VISIBLE_COUNT);
   }, [searchTerm, activeFilter, selectedDateRange]);
+
+  const allTransactionsWithBalance = useMemo(() => {
+    return addRunningBalance(transactions, currentBalance);
+  }, [transactions, currentBalance]);
 
   const dateFilteredTransactions = useMemo(() => {
     return filterTransactionsByDateRange(transactions, selectedDateRange);
@@ -82,28 +89,26 @@ export default function TransactionsPage() {
     return filteredTransactions.slice(0, visibleCount);
   }, [filteredTransactions, visibleCount]);
 
+  const transactionsWithBalance = useMemo(() => {
+    return addRunningBalance(visibleTransactions, currentBalance);
+  }, [visibleTransactions, currentBalance]);
+
   const groupedTransactions = useMemo(() => {
     try {
-      return groupTransactions(visibleTransactions);
+      return groupTransactions(transactionsWithBalance);
     } catch (error) {
       console.error("Grouping error:", error);
       return [];
     }
-  }, [visibleTransactions]);
+  }, [transactionsWithBalance]);
 
   const hasMoreTransactions = visibleCount < filteredTransactions.length;
   const canCollapse = visibleCount > INITIAL_VISIBLE_COUNT;
   const dateRangeLabel = getDateRangeLabel(selectedDateRange);
 
   const totals = useMemo(() => {
-    let currentBalance = 0;
     let incoming = 0;
     let outgoing = 0;
-
-    transactions.forEach((transaction) => {
-      const amount = getAmountValue(transaction.amount ?? "0");
-      currentBalance += amount;
-    });
 
     dateFilteredTransactions.forEach((transaction) => {
       const amount = getAmountValue(transaction.amount ?? "0");
@@ -120,7 +125,7 @@ export default function TransactionsPage() {
       incoming: incoming.toFixed(2),
       outgoing: outgoing.toFixed(2),
     };
-  }, [transactions, dateFilteredTransactions]);
+  }, [dateFilteredTransactions, currentBalance]);
 
   function scrollTransactionsToTop() {
     if (transactionsListRef.current) {
@@ -197,7 +202,7 @@ export default function TransactionsPage() {
           <input
             type="text"
             className="transactions-search"
-            placeholder="Search by merchant or category"
+            placeholder="Search by name, merchant or category"
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
           />
@@ -255,7 +260,8 @@ export default function TransactionsPage() {
                             {transaction.name ?? "Unknown"}
                           </p>
                           <p className="transaction-date">
-                            {formatTransactionDate(timestamp)}
+                            {formatTransactionDate(timestamp)} •{" "}
+                            {transaction.category ?? "Uncategorised"}
                           </p>
                         </div>
 
@@ -272,15 +278,21 @@ export default function TransactionsPage() {
                             {status}
                           </span>
 
-                          <p
-                            className={`transaction-amount ${
-                              isPositive
-                                ? "transaction-positive"
-                                : "transaction-negative"
-                            }`}
-                          >
-                            {amount}
-                          </p>
+                          <div className="transaction-amount-wrapper">
+                            <p
+                              className={`transaction-amount ${
+                                isPositive
+                                  ? "transaction-positive"
+                                  : "transaction-negative"
+                              }`}
+                            >
+                              {amount}
+                            </p>
+
+                            <p className="transaction-balance">
+                              £{transaction.runningBalance.toFixed(2)}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     );

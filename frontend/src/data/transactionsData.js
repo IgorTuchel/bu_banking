@@ -1,3 +1,7 @@
+export const transactionsAccountSummary = {
+  currentBalance: 3166.68,
+};
+
 export const sampleTransactions = [
   {
     id: 1,

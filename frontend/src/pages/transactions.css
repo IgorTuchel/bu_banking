@@ -9,10 +9,11 @@
   gap: var(--space-md);
 }
 
-.transactions-subtext {
-  margin: 0.35rem 0 0 0.5rem;
+.transaction-subtext {
+  margin-top: 0.1rem;
+  font-size: 0.85rem;
   color: var(--color-text-muted);
-  font-size: 0.95rem;
+  letter-spacing: 0.2px;
 }
 
 .transactions-toolbar {
@@ -192,6 +193,18 @@
   white-space: nowrap;
   width: 100px;
   text-align: right;
+}
+
+.transaction-amount-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.transaction-balance {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
 }
 
 .summary-card-note {

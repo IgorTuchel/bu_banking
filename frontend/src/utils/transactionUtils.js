@@ -181,3 +181,24 @@ export function getDateRangeLabel(selectedDateRange) {
 
   return "Selected period";
 }
+
+export function addRunningBalance(transactions, currentBalance = 0) {
+  if (!Array.isArray(transactions) || transactions.length === 0) {
+    return [];
+  }
+
+  const sorted = sortTransactions(transactions);
+  let runningBalance = Number(currentBalance) || 0;
+
+  return sorted.map((transaction) => {
+    const result = {
+      ...transaction,
+      runningBalance,
+    };
+
+    const amount = getAmountValue(transaction.amount ?? "0");
+    runningBalance -= amount;
+
+    return result;
+  });
+}
