@@ -11,6 +11,7 @@ import SelectedAccountCard from "../components/SelectedAccountCard";
 
 import { getDashboardData } from "../services/dashboardService";
 import { DEFAULT_ACCOUNT_INDEX } from "../constants/dashboard";
+import { getSelectedAccount } from "../utils/dashboardUtils";
 
 function Home() {
   const [dashboardData, setDashboardData] = useState(null);
@@ -45,10 +46,10 @@ function Home() {
       return null;
     }
 
-    return (
-      dashboardData.accounts.find(
-        (account) => account.key === selectedAccountKey
-      ) || dashboardData.accounts[DEFAULT_ACCOUNT_INDEX]
+    return getSelectedAccount(
+      dashboardData.accounts,
+      selectedAccountKey,
+      DEFAULT_ACCOUNT_INDEX
     );
   }, [dashboardData, selectedAccountKey]);
 
