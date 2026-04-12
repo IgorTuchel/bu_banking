@@ -1,17 +1,20 @@
 export function getAmountValue(amount) {
-  return Number(amount.replace(/[^\d.-]/g, ""));
+  return Number((amount ?? "0").replace(/[^\d.-]/g, ""));
 }
 
 export function formatTransactionDate(timestamp) {
-  return new Date(timestamp).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  return new Date(timestamp ?? new Date().toISOString()).toLocaleDateString(
+    "en-GB",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }
+  );
 }
 
 export function isPendingStatus(status) {
-  return status.toLowerCase() === "pending";
+  return (status ?? "").toLowerCase() === "pending";
 }
 
 export function getStartOfDay(date) {
@@ -32,6 +35,13 @@ export function getStartOfWeek(date) {
   const day = copy.getDay();
   const diff = day === 0 ? 6 : day - 1;
   copy.setDate(copy.getDate() - diff);
+  copy.setHours(0, 0, 0, 0);
+  return copy;
+}
+
+export function getStartOfMonth(date) {
+  const copy = new Date(date);
+  copy.setDate(1);
   copy.setHours(0, 0, 0, 0);
   return copy;
 }
@@ -109,4 +119,65 @@ export function groupTransactions(transactions) {
   });
 
   return groups;
+}
+
+export function filterTransactionsByDateRange(transactions, selectedDateRange) {
+  if (!Array.isArray(transactions)) {
+    return [];
+  }
+
+  const now = new Date();
+  const today = getStartOfDay(now);
+
+  return transactions.filter((transaction) => {
+    const timestamp = transaction.timestamp;
+    if (!timestamp) {
+      return false;
+    }
+
+    const transactionDate = new Date(timestamp);
+    const transactionDay = getStartOfDay(transactionDate);
+
+    if (selectedDateRange === "allTime") {
+      return true;
+    }
+
+    if (selectedDateRange === "thisMonth") {
+      return transactionDay >= getStartOfMonth(now);
+    }
+
+    if (selectedDateRange === "last30Days") {
+      const startDate = new Date(today);
+      startDate.setDate(startDate.getDate() - 30);
+      return transactionDay >= startDate;
+    }
+
+    if (selectedDateRange === "last90Days") {
+      const startDate = new Date(today);
+      startDate.setDate(startDate.getDate() - 90);
+      return transactionDay >= startDate;
+    }
+
+    return true;
+  });
+}
+
+export function getDateRangeLabel(selectedDateRange) {
+  if (selectedDateRange === "thisMonth") {
+    return "This month";
+  }
+
+  if (selectedDateRange === "last30Days") {
+    return "Last 30 days";
+  }
+
+  if (selectedDateRange === "last90Days") {
+    return "Last 90 days";
+  }
+
+  if (selectedDateRange === "allTime") {
+    return "All time";
+  }
+
+  return "Selected period";
 }

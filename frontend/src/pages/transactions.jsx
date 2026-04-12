@@ -4,8 +4,10 @@ import "./transactions.css";
 
 import { getTransactionsData } from "../services/transactionsService";
 import {
-  getAmountValue,
+  filterTransactionsByDateRange,
   formatTransactionDate,
+  getAmountValue,
+  getDateRangeLabel,
   groupTransactions,
 } from "../utils/transactionUtils";
 import { TRANSACTIONS_CONFIG } from "../constants/transactions";
@@ -16,6 +18,7 @@ export default function TransactionsPage() {
   const [transactions, setTransactions] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
+  const [selectedDateRange, setSelectedDateRange] = useState("thisMonth");
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -42,10 +45,14 @@ export default function TransactionsPage() {
 
   useEffect(() => {
     setVisibleCount(INITIAL_VISIBLE_COUNT);
-  }, [searchTerm, activeFilter]);
+  }, [searchTerm, activeFilter, selectedDateRange]);
+
+  const dateFilteredTransactions = useMemo(() => {
+    return filterTransactionsByDateRange(transactions, selectedDateRange);
+  }, [transactions, selectedDateRange]);
 
   const filteredTransactions = useMemo(() => {
-    return transactions.filter((transaction) => {
+    return dateFilteredTransactions.filter((transaction) => {
       const name = transaction.name ?? "";
       const category = transaction.category ?? "";
       const amount = transaction.amount ?? "";
@@ -55,11 +62,11 @@ export default function TransactionsPage() {
         name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         category.toLowerCase().includes(searchTerm.toLowerCase());
 
-      if (activeFilter === "Income") {
+      if (activeFilter === "In") {
         return matchesSearch && amount.startsWith("+");
       }
 
-      if (activeFilter === "Outgoing") {
+      if (activeFilter === "Out") {
         return matchesSearch && amount.startsWith("-");
       }
 
@@ -69,7 +76,7 @@ export default function TransactionsPage() {
 
       return matchesSearch;
     });
-  }, [transactions, searchTerm, activeFilter]);
+  }, [dateFilteredTransactions, searchTerm, activeFilter]);
 
   const visibleTransactions = useMemo(() => {
     return filteredTransactions.slice(0, visibleCount);
@@ -86,29 +93,34 @@ export default function TransactionsPage() {
 
   const hasMoreTransactions = visibleCount < filteredTransactions.length;
   const canCollapse = visibleCount > INITIAL_VISIBLE_COUNT;
+  const dateRangeLabel = getDateRangeLabel(selectedDateRange);
 
   const totals = useMemo(() => {
-    const income = transactions
-      .filter((transaction) => (transaction.amount ?? "").startsWith("+"))
-      .reduce(
-        (sum, transaction) => sum + getAmountValue(transaction.amount ?? "0"),
-        0
-      );
+    let currentBalance = 0;
+    let incoming = 0;
+    let outgoing = 0;
 
-    const expenses = transactions
-      .filter((transaction) => (transaction.amount ?? "").startsWith("-"))
-      .reduce(
-        (sum, transaction) =>
-          sum + Math.abs(getAmountValue(transaction.amount ?? "0")),
-        0
-      );
+    transactions.forEach((transaction) => {
+      const amount = getAmountValue(transaction.amount ?? "0");
+      currentBalance += amount;
+    });
+
+    dateFilteredTransactions.forEach((transaction) => {
+      const amount = getAmountValue(transaction.amount ?? "0");
+
+      if (amount > 0) {
+        incoming += amount;
+      } else {
+        outgoing += Math.abs(amount);
+      }
+    });
 
     return {
-      totalTransactions: transactions.length,
-      income: income.toFixed(2),
-      expenses: expenses.toFixed(2),
+      currentBalance: currentBalance.toFixed(2),
+      incoming: incoming.toFixed(2),
+      outgoing: outgoing.toFixed(2),
     };
-  }, [transactions]);
+  }, [transactions, dateFilteredTransactions]);
 
   function scrollTransactionsToTop() {
     if (transactionsListRef.current) {
@@ -150,18 +162,23 @@ export default function TransactionsPage() {
 
       <section className="summary-grid">
         <article className="summary-card summary-balance">
-          <h3>Total Transactions</h3>
-          <p>{totals.totalTransactions}</p>
+          <h3>Current Balance</h3>
+          <p>£{totals.currentBalance}</p>
+          <small className="summary-card-note">
+            Includes pending transactions
+          </small>
         </article>
 
         <article className="summary-card summary-incoming">
-          <h3>Money In</h3>
-          <p>£{totals.income}</p>
+          <h3>Incoming</h3>
+          <p>£{totals.incoming}</p>
+          <small className="summary-card-note">{dateRangeLabel}</small>
         </article>
 
         <article className="summary-card summary-outgoing">
-          <h3>Money Out</h3>
-          <p>£{totals.expenses}</p>
+          <h3>Outgoing</h3>
+          <p>£{totals.outgoing}</p>
+          <small className="summary-card-note">{dateRangeLabel}</small>
         </article>
       </section>
 
@@ -185,8 +202,20 @@ export default function TransactionsPage() {
             onChange={(event) => setSearchTerm(event.target.value)}
           />
 
+          <select
+            className="transactions-date-range"
+            value={selectedDateRange}
+            onChange={(event) => setSelectedDateRange(event.target.value)}
+            aria-label="Filter transactions by date range"
+          >
+            <option value="thisMonth">This month</option>
+            <option value="last30Days">Last 30 days</option>
+            <option value="last90Days">Last 90 days</option>
+            <option value="allTime">All time</option>
+          </select>
+
           <div className="transactions-filters">
-            {["All", "Income", "Outgoing", "Pending"].map((filter) => (
+            {["All", "In", "Out", "Pending"].map((filter) => (
               <button
                 key={filter}
                 type="button"

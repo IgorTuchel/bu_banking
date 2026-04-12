@@ -40,6 +40,22 @@
   border-color: var(--color-primary);
 }
 
+.transactions-date-range {
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 1rem;
+  box-sizing: border-box;
+  outline: none;
+  cursor: pointer;
+}
+
+.transactions-date-range:focus {
+  border-color: var(--color-primary);
+}
+
 .transactions-filters {
   display: flex;
   gap: 0.75rem;
@@ -178,6 +194,13 @@
   text-align: right;
 }
 
+.summary-card-note {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
 .transactions-load-more {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -227,6 +250,10 @@
   .transactions-toolbar {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .transactions-date-range {
+    width: 100%;
   }
 
   .transaction-row-detailed {
