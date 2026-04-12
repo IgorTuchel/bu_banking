@@ -8,6 +8,113 @@ function getAmountValue(amount) {
   return Number(amount.replace(/[^\d.-]/g, ""));
 }
 
+function formatTransactionDate(timestamp) {
+  return new Date(timestamp).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function isPendingStatus(status) {
+  return status.toLowerCase() === "pending";
+}
+
+function getStartOfDay(date) {
+  const copy = new Date(date);
+  copy.setHours(0, 0, 0, 0);
+  return copy;
+}
+
+function getDaysDifference(fromDate, toDate) {
+  const msPerDay = 1000 * 60 * 60 * 24;
+  return Math.floor((getStartOfDay(fromDate) - getStartOfDay(toDate)) / msPerDay);
+}
+
+function getStartOfWeek(date) {
+  const copy = new Date(date);
+  const day = copy.getDay();
+  const diff = day === 0 ? 6 : day - 1;
+  copy.setDate(copy.getDate() - diff);
+  copy.setHours(0, 0, 0, 0);
+  return copy;
+}
+
+function getGroupingLabel(timestamp, status) {
+  if (isPendingStatus(status)) {
+    return "Pending";
+  }
+
+  const now = new Date();
+  const transactionDate = new Date(timestamp);
+  const dayDifference = getDaysDifference(now, transactionDate);
+
+  if (dayDifference === 0) {
+    return "Today";
+  }
+
+  if (dayDifference === 1) {
+    return "Yesterday";
+  }
+
+  const currentWeekStart = getStartOfWeek(now);
+  const lastWeekStart = new Date(currentWeekStart);
+  lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+
+  const transactionDay = getStartOfDay(transactionDate);
+
+  if (transactionDay >= currentWeekStart) {
+    return "This Week";
+  }
+
+  if (transactionDay >= lastWeekStart && transactionDay < currentWeekStart) {
+    return "Last Week";
+  }
+
+  return transactionDate.toLocaleDateString("en-GB", {
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function sortTransactions(transactions) {
+  return [...transactions].sort((a, b) => {
+    const aPending = isPendingStatus(a.status);
+    const bPending = isPendingStatus(b.status);
+
+    if (aPending && !bPending) {
+      return -1;
+    }
+
+    if (!aPending && bPending) {
+      return 1;
+    }
+
+    return new Date(b.timestamp) - new Date(a.timestamp);
+  });
+}
+
+function groupTransactions(transactions) {
+  const sortedTransactions = sortTransactions(transactions);
+  const groups = [];
+
+  sortedTransactions.forEach((transaction) => {
+    const label = getGroupingLabel(transaction.timestamp, transaction.status);
+    const existingGroup = groups.find((group) => group.label === label);
+
+    if (existingGroup) {
+      existingGroup.items.push(transaction);
+    } else {
+      groups.push({
+        label,
+        items: [transaction],
+      });
+    }
+  });
+
+  return groups;
+}
+
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -54,6 +161,10 @@ export default function TransactionsPage() {
       return matchesSearch;
     });
   }, [transactions, searchTerm, activeFilter]);
+
+  const groupedTransactions = useMemo(() => {
+    return groupTransactions(filteredTransactions);
+  }, [filteredTransactions]);
 
   const totals = useMemo(() => {
     const income = transactions
@@ -142,7 +253,7 @@ export default function TransactionsPage() {
           />
 
           <div className="transactions-filters">
-            {["All", "Income", "Expenses", "Pending"].map((filter) => (
+            {["All", "Income", "Outgoing", "Pending"].map((filter) => (
               <button
                 key={filter}
                 type="button"
@@ -160,46 +271,54 @@ export default function TransactionsPage() {
         </div>
 
         <div className="transactions-list">
-          {filteredTransactions.length > 0 ? (
-            filteredTransactions.map((transaction) => {
-              const isPositive = transaction.amount.startsWith("+");
+          {groupedTransactions.length > 0 ? (
+            groupedTransactions.map((group) => (
+              <section key={group.label} className="transaction-group">
+                <h3 className="transaction-group-heading">{group.label}</h3>
 
-              return (
-                <div
-                  key={transaction.id}
-                  className="transaction-row transaction-row-detailed"
-                >
-                  <div className="transaction-main">
-                    <p className="transaction-name">{transaction.name}</p>
-                    <p className="transaction-date">{transaction.date}</p>
-                  </div>
+                {group.items.map((transaction) => {
+                  const isPositive = transaction.amount.startsWith("+");
 
-                  <div className="transaction-meta">
-                    <span className="transaction-category">
-                      {transaction.category}
-                    </span>
-                    <span
-                      className={`transaction-status ${
-                        transaction.status === "Pending"
-                          ? "transaction-status-pending"
-                          : "transaction-status-completed"
-                      }`}
+                  return (
+                    <div
+                      key={transaction.id}
+                      className="transaction-row transaction-row-detailed"
                     >
-                      {transaction.status}
-                    </span>
-                    <p
-                      className={`transaction-amount ${
-                        isPositive
-                          ? "transaction-positive"
-                          : "transaction-negative"
-                      }`}
-                    >
-                      {transaction.amount}
-                    </p>
-                  </div>
-                </div>
-              );
-            })
+                      <div className="transaction-main">
+                        <p className="transaction-name">{transaction.name}</p>
+                        <p className="transaction-date">
+                          {formatTransactionDate(transaction.timestamp)}
+                        </p>
+                      </div>
+
+                      <div className="transaction-meta">
+                        <span
+                          className={`transaction-status ${
+                            transaction.status === "Pending"
+                              ? "transaction-status-pending"
+                              : transaction.status === "Declined"
+                              ? "transaction-status-declined"
+                              : "transaction-status-completed"
+                          }`}
+                        >
+                          {transaction.status}
+                        </span>
+
+                        <p
+                          className={`transaction-amount ${
+                            isPositive
+                              ? "transaction-positive"
+                              : "transaction-negative"
+                          }`}
+                        >
+                          {transaction.amount}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </section>
+            ))
           ) : (
             <div className="status-card empty-card">
               <h2>No transactions found</h2>

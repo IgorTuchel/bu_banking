@@ -4,6 +4,9 @@
   --color-primary-dark: #1F5E3B;   /* dark green */
   --color-primary-light: #A8D8B9;  /* light green */
   --color-accent: #D4AF37;         /* gold */
+  --color-gradient: 
+    linear-gradient(to right, var(--color-primary), 
+    var(--color-accent));
 
   /* Backgrounds */
   --color-bg: #f5f7fb;

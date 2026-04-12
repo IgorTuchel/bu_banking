@@ -2,7 +2,7 @@ export const sampleTransactions = [
   {
     id: 1,
     name: "Starbucks",
-    date: "10 Apr 2026",
+    timestamp: "2026-04-10T09:15:00",
     amount: "-£6.40",
     category: "Food & Drink",
     status: "Completed",
@@ -10,7 +10,7 @@ export const sampleTransactions = [
   {
     id: 2,
     name: "Salary Payment",
-    date: "09 Apr 2026",
+    timestamp: "2026-04-09T08:00:00",
     amount: "+£2,850.00",
     category: "Income",
     status: "Completed",
@@ -18,7 +18,7 @@ export const sampleTransactions = [
   {
     id: 3,
     name: "Amazon",
-    date: "08 Apr 2026",
+    timestamp: "2026-04-08T14:20:00",
     amount: "-£49.99",
     category: "Shopping",
     status: "Completed",
@@ -26,7 +26,7 @@ export const sampleTransactions = [
   {
     id: 4,
     name: "Tesco",
-    date: "08 Apr 2026",
+    timestamp: "2026-04-08T18:10:00",
     amount: "-£32.18",
     category: "Groceries",
     status: "Completed",
@@ -34,7 +34,7 @@ export const sampleTransactions = [
   {
     id: 5,
     name: "Netflix",
-    date: "07 Apr 2026",
+    timestamp: "2026-04-07T07:30:00",
     amount: "-£10.99",
     category: "Subscriptions",
     status: "Completed",
@@ -42,7 +42,7 @@ export const sampleTransactions = [
   {
     id: 6,
     name: "Uber",
-    date: "07 Apr 2026",
+    timestamp: "2026-04-11T22:15:00",
     amount: "-£14.20",
     category: "Transport",
     status: "Pending",
@@ -50,7 +50,7 @@ export const sampleTransactions = [
   {
     id: 7,
     name: "Freelance Client",
-    date: "06 Apr 2026",
+    timestamp: "2026-04-06T11:00:00",
     amount: "+£450.00",
     category: "Income",
     status: "Completed",
@@ -58,7 +58,7 @@ export const sampleTransactions = [
   {
     id: 8,
     name: "Apple",
-    date: "05 Apr 2026",
+    timestamp: "2026-04-05T13:10:00",
     amount: "-£2.99",
     category: "Subscriptions",
     status: "Completed",
@@ -66,7 +66,7 @@ export const sampleTransactions = [
   {
     id: 9,
     name: "Shell",
-    date: "05 Apr 2026",
+    timestamp: "2026-04-05T17:45:00",
     amount: "-£58.00",
     category: "Transport",
     status: "Completed",
@@ -74,9 +74,9 @@ export const sampleTransactions = [
   {
     id: 10,
     name: "Boots",
-    date: "04 Apr 2026",
+    timestamp: "2026-04-04T16:05:00",
     amount: "-£12.75",
     category: "Health",
-    status: "Completed",
+    status: "Declined",
   },
 ];
