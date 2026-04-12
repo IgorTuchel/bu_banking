@@ -1,21 +1,25 @@
 :root {
   /* Brand colours */
-  --color-primary: #2E8B57;        /* green */
-  --color-primary-dark: #1F5E3B;   /* dark green */
-  --color-primary-light: #A8D8B9;  /* light green */
-  --color-accent: #D4AF37;         /* gold */
-  --color-gradient: 
-    linear-gradient(to right, var(--color-primary), 
-    var(--color-accent));
+  --color-primary: #2E8B57;
+  --color-primary-dark: #1F5E3B;
+  --color-primary-light: #A8D8B9;
+  --color-accent: #D4AF37;
+
+  --color-gradient: linear-gradient(
+    to right,
+    var(--color-primary),
+    var(--color-accent)
+  );
 
   /* Backgrounds */
   --color-bg: #f5f7fb;
   --color-surface: #ffffff;
   --color-surface-alt: #f9fafb;
+  --color-surface-muted: rgba(46, 139, 87, 0.04);
 
   /* Text */
-  --color-text: #130303;           /* coffee_bean */
-  --color-text-heading: #2D080A;   /* mahogany */
+  --color-text: #130303;
+  --color-text-heading: #2D080A;
   --color-text-muted: #6b7280;
   --color-text-alt: #ffffff;
 
@@ -26,13 +30,15 @@
 
   /* Borders */
   --color-border: #e5e7eb;
+  --color-border-light: rgba(0, 0, 0, 0.04);
 
   /* Special accents */
-  --color-highlight: #F76F8E;      /* pink (use sparingly) */
+  --color-highlight: #F76F8E;
 
   /* Shadows */
   --shadow-sm: 0 4px 10px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 12px 30px rgba(0, 0, 0, 0.12);
 
   /* Radius */
   --radius-sm: 8px;
@@ -45,4 +51,8 @@
   --space-md: 1rem;
   --space-lg: 1.5rem;
   --space-xl: 2rem;
+
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+  --transition-medium: 0.3s ease;
 }

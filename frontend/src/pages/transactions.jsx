@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import "./home.css";
 import "./transactions.css";
 
@@ -8,12 +8,9 @@ import {
   formatTransactionDate,
   groupTransactions,
 } from "../utils/transactionUtils";
-
 import { TRANSACTIONS_CONFIG } from "../constants/transactions";
 
-const { INITIAL_VISIBLE_COUNT, 
-        LOAD_MORE_COUNT 
-      } = TRANSACTIONS_CONFIG;
+const { INITIAL_VISIBLE_COUNT, LOAD_MORE_COUNT } = TRANSACTIONS_CONFIG;
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState([]);
@@ -23,6 +20,8 @@ export default function TransactionsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
+  const transactionsListRef = useRef(null);
+
   useEffect(() => {
     async function loadTransactions() {
       try {
@@ -30,7 +29,7 @@ export default function TransactionsPage() {
         setErrorMessage("");
 
         const data = await getTransactionsData();
-        setTransactions(data.transactions);
+        setTransactions(Array.isArray(data.transactions) ? data.transactions : []);
       } catch (error) {
         setErrorMessage("Unable to load transactions.");
       } finally {
@@ -47,20 +46,25 @@ export default function TransactionsPage() {
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter((transaction) => {
+      const name = transaction.name ?? "";
+      const category = transaction.category ?? "";
+      const amount = transaction.amount ?? "";
+      const status = transaction.status ?? "";
+
       const matchesSearch =
-        transaction.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        transaction.category.toLowerCase().includes(searchTerm.toLowerCase());
+        name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        category.toLowerCase().includes(searchTerm.toLowerCase());
 
       if (activeFilter === "Income") {
-        return matchesSearch && transaction.amount.startsWith("+");
+        return matchesSearch && amount.startsWith("+");
       }
 
       if (activeFilter === "Outgoing") {
-        return matchesSearch && transaction.amount.startsWith("-");
+        return matchesSearch && amount.startsWith("-");
       }
 
       if (activeFilter === "Pending") {
-        return matchesSearch && transaction.status === "Pending";
+        return matchesSearch && status === "Pending";
       }
 
       return matchesSearch;
@@ -72,21 +76,30 @@ export default function TransactionsPage() {
   }, [filteredTransactions, visibleCount]);
 
   const groupedTransactions = useMemo(() => {
-    return groupTransactions(visibleTransactions);
+    try {
+      return groupTransactions(visibleTransactions);
+    } catch (error) {
+      console.error("Grouping error:", error);
+      return [];
+    }
   }, [visibleTransactions]);
 
   const hasMoreTransactions = visibleCount < filteredTransactions.length;
+  const canCollapse = visibleCount > INITIAL_VISIBLE_COUNT;
 
   const totals = useMemo(() => {
     const income = transactions
-      .filter((transaction) => transaction.amount.startsWith("+"))
-      .reduce((sum, transaction) => sum + getAmountValue(transaction.amount), 0);
+      .filter((transaction) => (transaction.amount ?? "").startsWith("+"))
+      .reduce(
+        (sum, transaction) => sum + getAmountValue(transaction.amount ?? "0"),
+        0
+      );
 
     const expenses = transactions
-      .filter((transaction) => transaction.amount.startsWith("-"))
+      .filter((transaction) => (transaction.amount ?? "").startsWith("-"))
       .reduce(
         (sum, transaction) =>
-          sum + Math.abs(getAmountValue(transaction.amount)),
+          sum + Math.abs(getAmountValue(transaction.amount ?? "0")),
         0
       );
 
@@ -96,6 +109,15 @@ export default function TransactionsPage() {
       expenses: expenses.toFixed(2),
     };
   }, [transactions]);
+
+  function scrollTransactionsToTop() {
+    if (transactionsListRef.current) {
+      transactionsListRef.current.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    }
+  }
 
   if (isLoading) {
     return (
@@ -149,8 +171,7 @@ export default function TransactionsPage() {
             <h2>All Transactions</h2>
             <p className="transactions-subtext">
               Showing {Math.min(visibleCount, filteredTransactions.length)} of{" "}
-              {filteredTransactions.length} transaction
-              {filteredTransactions.length !== 1 ? "s" : ""}
+              {filteredTransactions.length} transactions
             </p>
           </div>
         </div>
@@ -182,7 +203,7 @@ export default function TransactionsPage() {
           </div>
         </div>
 
-        <div className="transactions-list">
+        <div className="transactions-list" ref={transactionsListRef}>
           {groupedTransactions.length > 0 ? (
             <>
               {groupedTransactions.map((group) => (
@@ -190,7 +211,10 @@ export default function TransactionsPage() {
                   <h3 className="transaction-group-heading">{group.label}</h3>
 
                   {group.items.map((transaction) => {
-                    const isPositive = transaction.amount.startsWith("+");
+                    const amount = transaction.amount ?? "£0.00";
+                    const status = transaction.status ?? "Completed";
+                    const timestamp = transaction.timestamp ?? new Date();
+                    const isPositive = amount.startsWith("+");
 
                     return (
                       <div
@@ -198,23 +222,25 @@ export default function TransactionsPage() {
                         className="transaction-row transaction-row-detailed"
                       >
                         <div className="transaction-main">
-                          <p className="transaction-name">{transaction.name}</p>
+                          <p className="transaction-name">
+                            {transaction.name ?? "Unknown"}
+                          </p>
                           <p className="transaction-date">
-                            {formatTransactionDate(transaction.timestamp)}
+                            {formatTransactionDate(timestamp)}
                           </p>
                         </div>
 
                         <div className="transaction-meta">
                           <span
                             className={`transaction-status ${
-                              transaction.status === "Pending"
+                              status === "Pending"
                                 ? "transaction-status-pending"
-                                : transaction.status === "Declined"
+                                : status === "Declined"
                                 ? "transaction-status-declined"
                                 : "transaction-status-completed"
                             }`}
                           >
-                            {transaction.status}
+                            {status}
                           </span>
 
                           <p
@@ -224,7 +250,7 @@ export default function TransactionsPage() {
                                 : "transaction-negative"
                             }`}
                           >
-                            {transaction.amount}
+                            {amount}
                           </p>
                         </div>
                       </div>
@@ -233,26 +259,48 @@ export default function TransactionsPage() {
                 </section>
               ))}
 
-              {hasMoreTransactions && (
+              {(hasMoreTransactions || canCollapse) && (
                 <div className="transactions-load-more">
-                  <button
-                    type="button"
-                    className="transactions-load-more-button"
-                    onClick={() =>
-                      setVisibleCount(
-                        (currentCount) => currentCount + LOAD_MORE_COUNT
-                      )
-                    }
-                  >
-                    Show more transactions
-                  </button>
+                  <div className="transactions-load-more-actions">
+                    {canCollapse && (
+                      <button
+                        className="transactions-collapse-button"
+                        onClick={() => {
+                          setVisibleCount(INITIAL_VISIBLE_COUNT);
+                          scrollTransactionsToTop();
+                        }}
+                      >
+                        Show less
+                      </button>
+                    )}
+
+                    {canCollapse && (
+                      <button
+                        className="transactions-top-button"
+                        onClick={scrollTransactionsToTop}
+                      >
+                        Back to top
+                      </button>
+                    )}
+                  </div>
+
+                  {hasMoreTransactions && (
+                    <button
+                      className="transactions-load-more-button"
+                      onClick={() =>
+                        setVisibleCount((prev) => prev + LOAD_MORE_COUNT)
+                      }
+                    >
+                      Show more transactions
+                    </button>
+                  )}
                 </div>
               )}
             </>
           ) : (
             <div className="status-card empty-card">
               <h2>No transactions found</h2>
-              <p>Try changing the search term or selected filter.</p>
+              <p>Try adjusting your filters.</p>
             </div>
           )}
         </div>

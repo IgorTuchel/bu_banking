@@ -49,3 +49,62 @@ h6 {
 p {
   margin: 0;
 }
+
+/* Shared section header */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+  flex-wrap: wrap;
+}
+
+/* Shared section action button */
+.section-link-button {
+  border: 1px solid var(--color-accent);
+  background: transparent;
+  color: var(--color-accent);
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.section-link-button:hover {
+  background: var(--color-accent);
+  color: var(--color-text-heading);
+}
+
+/* Shared state cards */
+.status-card {
+  width: 100%;
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-sizing: border-box;
+  box-shadow: var(--shadow-sm);
+}
+
+.status-card h2 {
+  margin: 0 0 0.5rem 0;
+  color: var(--color-text-heading);
+}
+
+.status-card p {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.loading-card {
+  border-left: 6px solid var(--color-primary);
+}
+
+.error-card {
+  border-left: 6px solid var(--color-error);
+}
+
+.empty-card {
+  border-left: 6px solid var(--color-accent);
+}
