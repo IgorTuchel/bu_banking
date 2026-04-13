@@ -6,7 +6,7 @@ import SummaryCard from "../components/SummaryCard";
 import QuickActions from "../components/QuickActions";
 import TransactionsList from "../components/TransactionsList";
 import NotificationsPanel from "../components/NotificationsPanel";
-import AccountSelector from "../components/AccountSelector";
+import AccountDropdown from "../components/AccountDropdown";
 import SelectedAccountCard from "../components/SelectedAccountCard";
 
 import { getDashboardData } from "../services/dashboardService";
@@ -53,6 +53,16 @@ function Home() {
     );
   }, [dashboardData, selectedAccountKey]);
 
+  // ✅ Map accounts into dropdown format
+  const accountOptions = useMemo(() => {
+    if (!dashboardData) return [];
+
+    return dashboardData.accounts.map((account) => ({
+      value: account.key,
+      label: `${account.name} • ${account.type}`,
+    }));
+  }, [dashboardData]);
+
   if (isLoading) {
     return (
       <main className="home-page">
@@ -93,10 +103,12 @@ function Home() {
         lastLogin={dashboardData.user.lastLogin}
       />
 
-      <AccountSelector
-        accounts={dashboardData.accounts}
-        selectedAccountKey={selectedAccountKey}
+      {/* ✅ Reusable themed dropdown */}
+      <AccountDropdown
+        label="Select account"
+        value={selectedAccountKey}
         onChange={setSelectedAccountKey}
+        options={accountOptions}
       />
 
       <SelectedAccountCard account={selectedAccount} />

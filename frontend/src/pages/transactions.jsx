@@ -2,11 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import "./home.css";
 import "./transactions.css";
 
+import AccountDropdown from "../components/AccountDropdown";
 import { getTransactionsData } from "../services/transactionsService";
 import {
   filterTransactionsByDateRange,
   formatTransactionDate,
   getAmountValue,
+  getDateRangeLabel,
   groupTransactions,
   addRunningBalance,
 } from "../utils/transactionUtils";
@@ -14,13 +16,21 @@ import { TRANSACTIONS_CONFIG } from "../constants/transactions";
 
 const { INITIAL_VISIBLE_COUNT, LOAD_MORE_COUNT } = TRANSACTIONS_CONFIG;
 
+const accountOptions = [
+  { value: "main-current", label: "Main Current Account • Current" },
+  { value: "everyday-spending", label: "Everyday Spending • Current" },
+  { value: "joint-account", label: "Joint Account • Joint" },
+];
+
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState([]);
   const [availableBalance, setAvailableBalance] = useState(0);
+  const [selectedAccountKey, setSelectedAccountKey] = useState("main-current");
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
   const [selectedDateRange, setSelectedDateRange] = useState("thisMonth");
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
+  const [collapsedGroups, setCollapsedGroups] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -43,11 +53,12 @@ export default function TransactionsPage() {
     }
 
     loadTransactions();
-  }, []);
+  }, [selectedAccountKey]);
 
   useEffect(() => {
     setVisibleCount(INITIAL_VISIBLE_COUNT);
-  }, [searchTerm, activeFilter, selectedDateRange]);
+    setCollapsedGroups({});
+  }, [searchTerm, activeFilter, selectedDateRange, selectedAccountKey]);
 
   const dateFilteredTransactions = useMemo(() => {
     return filterTransactionsByDateRange(transactions, selectedDateRange);
@@ -99,6 +110,7 @@ export default function TransactionsPage() {
 
   const hasMoreTransactions = visibleCount < filteredTransactions.length;
   const canCollapse = visibleCount > INITIAL_VISIBLE_COUNT;
+  const dateRangeLabel = getDateRangeLabel(selectedDateRange);
 
   const totals = useMemo(() => {
     let incoming = 0;
@@ -130,6 +142,13 @@ export default function TransactionsPage() {
     }
   }
 
+  function toggleGroup(label) {
+    setCollapsedGroups((current) => ({
+      ...current,
+      [label]: !current[label],
+    }));
+  }
+
   if (isLoading) {
     return (
       <main className="home-page transactions-page">
@@ -159,6 +178,13 @@ export default function TransactionsPage() {
         <p>Review, search, and filter all account activity in one place.</p>
       </header>
 
+      <AccountDropdown
+        label="Select account"
+        value={selectedAccountKey}
+        onChange={setSelectedAccountKey}
+        options={accountOptions}
+      />
+
       <section className="summary-grid">
         <article className="summary-card summary-balance">
           <h3>Current Balance</h3>
@@ -171,11 +197,13 @@ export default function TransactionsPage() {
         <article className="summary-card summary-incoming">
           <h3>Incoming</h3>
           <p>£{totals.incoming}</p>
+          <small className="summary-card-note">{dateRangeLabel}</small>
         </article>
 
         <article className="summary-card summary-outgoing">
           <h3>Outgoing</h3>
           <p>£{totals.outgoing}</p>
+          <small className="summary-card-note">{dateRangeLabel}</small>
         </article>
       </section>
 
@@ -237,12 +265,19 @@ export default function TransactionsPage() {
                   0
                 );
 
+                const isCollapsed = Boolean(collapsedGroups[group.label]);
+
                 return (
                   <section key={group.label} className="transaction-group">
-                    <h3 className="transaction-group-heading">
-                      <span>{group.label}</span>
-
-                      {group.label === "Pending" && (
+                    <button
+                      type="button"
+                      className="transaction-group-toggle"
+                      onClick={() => toggleGroup(group.label)}
+                      aria-expanded={!isCollapsed}
+                    >
+                      <span className="transaction-group-heading">
+                        <span>{group.label}</span>
+                        <span />
                         <span className="transaction-group-total">
                           <span className="transaction-group-total-label">
                             Total:
@@ -254,103 +289,83 @@ export default function TransactionsPage() {
                             })}
                           </span>
                         </span>
-                      )}
-                    </h3>
+                      </span>
 
-                    {group.items.map((transaction) => {
-                      const amount = transaction.amount ?? "£0.00";
-                      const status = transaction.status ?? "Completed";
-                      const timestamp = transaction.timestamp ?? new Date();
-                      const isPositive = amount.startsWith("+");
+                      <span
+                        className={`transaction-group-symbol ${
+                          isCollapsed ? "collapsed" : "expanded"
+                        }`}
+                      >
+                        {isCollapsed ? "+" : "−"}
+                      </span>
+                    </button>
 
-                      return (
-                        <div
-                          key={transaction.id}
-                          className="transaction-row transaction-row-detailed"
-                        >
-                          <div className="transaction-main">
-                            <p className="transaction-name">
-                              {transaction.name ?? "Unknown"}
-                            </p>
-                            <p className="transaction-date">
-                              {formatTransactionDate(timestamp)} •{" "}
-                              {transaction.category ?? "Uncategorised"}
-                            </p>
-                          </div>
+                    <div
+                      className={`transaction-group-content ${
+                        isCollapsed
+                          ? "transaction-group-content-collapsed"
+                          : "transaction-group-content-expanded"
+                      }`}
+                    >
+                      <div className="transaction-group-content-inner">
+                        {group.items.map((transaction) => {
+                          const amount = transaction.amount ?? "£0.00";
+                          const status = transaction.status ?? "Completed";
+                          const timestamp = transaction.timestamp ?? new Date();
+                          const isPositive = amount.startsWith("+");
 
-                          <div className="transaction-meta">
-                            <span
-                              className={`transaction-status ${
-                                status === "Pending"
-                                  ? "transaction-status-pending"
-                                  : status === "Declined"
-                                  ? "transaction-status-declined"
-                                  : "transaction-status-completed"
-                              }`}
+                          return (
+                            <div
+                              key={transaction.id}
+                              className="transaction-row transaction-row-detailed"
                             >
-                              {status}
-                            </span>
+                              <div className="transaction-main">
+                                <p className="transaction-name">
+                                  {transaction.name ?? "Unknown"}
+                                </p>
+                                <p className="transaction-date">
+                                  {formatTransactionDate(timestamp)} •{" "}
+                                  {transaction.category ?? "Uncategorised"}
+                                </p>
+                              </div>
 
-                            <div className="transaction-amount-wrapper">
-                              <p
-                                className={`transaction-amount ${
-                                  isPositive
-                                    ? "transaction-positive"
-                                    : "transaction-negative"
-                                }`}
-                              >
-                                {amount}
-                              </p>
+                              <div className="transaction-meta">
+                                <span
+                                  className={`transaction-status ${
+                                    status === "Pending"
+                                      ? "transaction-status-pending"
+                                      : status === "Declined"
+                                      ? "transaction-status-declined"
+                                      : "transaction-status-completed"
+                                  }`}
+                                >
+                                  {status}
+                                </span>
 
-                              <p className="transaction-balance">
-                                £{transaction.runningBalance.toFixed(2)}
-                              </p>
+                                <div className="transaction-amount-wrapper">
+                                  <p
+                                    className={`transaction-amount ${
+                                      isPositive
+                                        ? "transaction-positive"
+                                        : "transaction-negative"
+                                    }`}
+                                  >
+                                    {amount}
+                                  </p>
+
+                                  <p className="transaction-balance">
+                                    £{transaction.runningBalance.toFixed(2)}
+                                  </p>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                          );
+                        })}
+                      </div>
+                    </div>
                   </section>
                 );
               })}
-
-              {(hasMoreTransactions || canCollapse) && (
-                <div className="transactions-load-more">
-                  <div className="transactions-load-more-actions">
-                    {canCollapse && (
-                      <button
-                        className="transactions-collapse-button"
-                        onClick={() => {
-                          setVisibleCount(INITIAL_VISIBLE_COUNT);
-                          scrollTransactionsToTop();
-                        }}
-                      >
-                        Show less
-                      </button>
-                    )}
-
-                    {canCollapse && (
-                      <button
-                        className="transactions-top-button"
-                        onClick={scrollTransactionsToTop}
-                      >
-                        Back to top
-                      </button>
-                    )}
-                  </div>
-
-                  {hasMoreTransactions && (
-                    <button
-                      className="transactions-load-more-button"
-                      onClick={() =>
-                        setVisibleCount((prev) => prev + LOAD_MORE_COUNT)
-                      }
-                    >
-                      Show more transactions
-                    </button>
-                  )}
-                </div>
-              )}
             </>
           ) : (
             <div className="status-card empty-card">
