@@ -8,7 +8,6 @@ import TransactionsList from "../components/TransactionsList";
 import NotificationsPanel from "../components/NotificationsPanel";
 import AccountDropdown from "../components/AccountDropdown";
 import SelectedAccountCard from "../components/SelectedAccountCard";
-
 import Skeleton from "../components/Skeleton";
 import SkeletonSummaryCard from "../components/SkeletonSummaryCard";
 import SkeletonTransactionsList from "../components/SkeletonTransactionsList";
@@ -16,16 +15,14 @@ import SkeletonTransactionsList from "../components/SkeletonTransactionsList";
 import { getDashboardData } from "../services/dashboardService";
 import { DEFAULT_ACCOUNT_INDEX } from "../constants/dashboard";
 import { getSelectedAccount } from "../utils/dashboardUtils";
-
-import { useAccount } from "../context/AccountContext";
+import { getAccountSummaryCards } from "../utils/accountSummaryUtils";
 
 function Home() {
   const [dashboardData, setDashboardData] = useState(null);
-  const { selectedAccountKey, setSelectedAccountKey } = useAccount();
+  const [selectedAccountKey, setSelectedAccountKey] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // 🔥 Load dashboard data (async + backend-ready)
   useEffect(() => {
     async function loadDashboardData() {
       try {
@@ -35,10 +32,9 @@ function Home() {
         const data = await getDashboardData();
         setDashboardData(data);
 
-        if (!selectedAccountKey && data.accounts.length > 0) {
+        if (data.accounts && data.accounts.length > 0) {
           setSelectedAccountKey(
-          data.accounts[DEFAULT_ACCOUNT_INDEX]?.key ??
-          data.accounts[0].key
+            data.accounts[DEFAULT_ACCOUNT_INDEX]?.key ?? data.accounts[0].key
           );
         }
       } catch (error) {
@@ -52,7 +48,6 @@ function Home() {
     loadDashboardData();
   }, []);
 
-  // 🔥 Selected account (safe + reactive)
   const selectedAccount = useMemo(() => {
     if (!dashboardData || !dashboardData.accounts) return null;
 
@@ -63,7 +58,6 @@ function Home() {
     );
   }, [dashboardData, selectedAccountKey]);
 
-  // 🔥 Dynamic dropdown options (shared with Transactions page)
   const accountOptions = useMemo(() => {
     if (!dashboardData || !dashboardData.accounts) return [];
 
@@ -73,25 +67,58 @@ function Home() {
     }));
   }, [dashboardData]);
 
+  const summaryCards = useMemo(() => {
+    if (!selectedAccount) return [];
+
+    return getAccountSummaryCards({
+      account: selectedAccount,
+      incoming: 0,
+      outgoing: 0,
+      dateRangeLabel: "",
+    });
+  }, [selectedAccount]);
+
   if (isLoading) {
     return (
       <main className="home-page">
-        <Skeleton width="200px" height="2rem" />
+        <header className="dashboard-header">
+          <h1>Home</h1>
+          <p>Overview of your accounts and latest activity.</p>
+        </header>
+
+        <Skeleton width="260px" height="3rem" />
+
+        <div
+          className="selected-account-card"
+          style={{ pointerEvents: "none" }}
+          aria-hidden="true"
+        >
+          <Skeleton width="140px" height="0.9rem" />
+          <Skeleton width="200px" height="1.6rem" style={{ marginTop: "0.8rem" }} />
+          <Skeleton width="110px" height="0.9rem" style={{ marginTop: "0.75rem" }} />
+        </div>
 
         <section className="summary-grid">
-          {[...Array(3)].map((_, i) => (
-            <SkeletonSummaryCard key={i} />
+          {[...Array(3)].map((_, index) => (
+            <SkeletonSummaryCard key={index} />
           ))}
         </section>
 
         <section className="home-content-grid">
-          <SkeletonTransactionsList />
+          <div className="transactions-section">
+            <SkeletonTransactionsList />
+          </div>
+
+          <div className="notifications-section">
+            <Skeleton width="110px" height="1.2rem" />
+            <Skeleton width="100%" height="5rem" style={{ marginTop: "1rem" }} />
+            <Skeleton width="100%" height="5rem" style={{ marginTop: "1rem" }} />
+          </div>
         </section>
       </main>
     );
   }
 
-  // 🔥 Error state
   if (errorMessage) {
     return (
       <main className="home-page">
@@ -103,7 +130,6 @@ function Home() {
     );
   }
 
-  // 🔥 Empty state
   if (!dashboardData || !selectedAccount) {
     return (
       <main className="home-page">
@@ -122,7 +148,6 @@ function Home() {
         lastLogin={dashboardData.user.lastLogin}
       />
 
-      {/* 🔥 Shared account dropdown (same system as Transactions page) */}
       <AccountDropdown
         label="Select account"
         value={selectedAccountKey}
@@ -133,11 +158,12 @@ function Home() {
       <SelectedAccountCard account={selectedAccount} />
 
       <section className="summary-grid">
-        {selectedAccount.summary?.map((item) => (
+        {summaryCards.map((card) => (
           <SummaryCard
-            key={item.id}
-            title={item.title}
-            value={item.value}
+            key={card.id}
+            title={card.title}
+            value={card.value}
+            note={card.note}
           />
         ))}
       </section>
@@ -146,9 +172,7 @@ function Home() {
 
       <section className="home-content-grid">
         <TransactionsList transactions={selectedAccount.transactions ?? []} />
-        <NotificationsPanel
-          notifications={dashboardData.notifications ?? []}
-        />
+        <NotificationsPanel notifications={dashboardData.notifications ?? []} />
       </section>
     </main>
   );

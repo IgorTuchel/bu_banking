@@ -1,27 +1,51 @@
 function getCardClass(title) {
-  if (title.toLowerCase().includes("balance")) {
+  const t = title.toLowerCase();
+
+  // Primary / balance style
+  if (
+    t.includes("balance") ||
+    t.includes("available credit") ||
+    t.includes("savings")
+  ) {
     return "summary-balance";
   }
 
-  if (title.toLowerCase().includes("incoming")) {
+  // Positive / incoming style
+  if (
+    t.includes("incoming") ||
+    t.includes("interest earned")
+  ) {
     return "summary-incoming";
   }
 
-  if (title.toLowerCase().includes("outgoing")) {
+  // Negative / outgoing style
+  if (
+    t.includes("outgoing") ||
+    t.includes("interest rate") ||
+    t.includes("minimum payment") ||
+    t.includes("credit limit")
+  ) {
     return "summary-outgoing";
   }
 
   return "";
 }
 
-function SummaryCard({ title, value }) {
+function SummaryCard({ title, value, note = "" }) {
   const typeClass = getCardClass(title);
 
   return (
-    <div className={`summary-card ${typeClass}`}>
+    <article className={`summary-card ${typeClass}`}>
       <h3>{title}</h3>
+
       <p>{value}</p>
-    </div>
+
+      {note && (
+        <small className="summary-card-note">
+          {note}
+        </small>
+      )}
+    </article>
   );
 }
 

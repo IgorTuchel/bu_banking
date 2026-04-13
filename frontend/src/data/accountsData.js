@@ -20,6 +20,9 @@ export const accountsData = [
     maskedAccountNumber: "•••• 5678",
     sortCode: "12-34-56",
     status: "active",
+
+    interestRate: 4.1,
+    interestEarnedYtd: 186.42,
   },
   {
     id: "acc-003",
@@ -27,9 +30,14 @@ export const accountsData = [
     name: "Platinum Credit",
     type: "credit",
     currency: "GBP",
-    currentBalance: 5290.42,
     maskedAccountNumber: "•••• 9012",
     sortCode: "22-11-44",
     status: "active",
+
+    creditLimit: 8000.0,
+    availableCredit: 5290.42,
+    minimumPaymentDue: 95.0,
+    paymentDueDate: "2026-05-03",
+    statementBalance: 1248.77,
   },
 ];

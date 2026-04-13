@@ -1,22 +1,20 @@
 import Skeleton from "./Skeleton";
-import SkeletonTransactionRow from "./SkeletonTransactionRow";
 
-export default function SkeletonTransactionsList() {
+export default function SkeletonTransactionRow() {
   return (
-    <>
-      {["Today", "Yesterday", "Last Week"].map((label) => (
-        <div key={label} className="transaction-group">
-          <div className="transaction-group-heading">
-            <Skeleton width="120px" height="1.2rem" />
-            <div />
-            <Skeleton width="100px" height="1rem" />
-          </div>
+    <div className="transaction-row transaction-row-detailed">
+      <div className="transaction-main">
+        <Skeleton width="140px" height="1rem" />
+        <Skeleton width="180px" height="0.8rem" style={{ marginTop: "0.3rem" }} />
+      </div>
 
-          {[...Array(4)].map((_, i) => (
-            <SkeletonTransactionRow key={i} />
-          ))}
+      <div className="transaction-meta">
+        <Skeleton width="90px" height="1.2rem" />
+        <div className="transaction-amount-wrapper">
+          <Skeleton width="80px" height="1rem" />
+          <Skeleton width="60px" height="0.7rem" style={{ marginTop: "0.3rem" }} />
         </div>
-      ))}
-    </>
+      </div>
+    </div>
   );
 }

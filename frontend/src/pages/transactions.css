@@ -406,9 +406,8 @@
   display: flex;
 
   border-radius: 999px;
-  padding: 0.25rem;
+  padding: 0;
 
-  /* ✨ gradient outline */
   border: 1px solid transparent;
   background:
     linear-gradient(var(--color-surface-alt), var(--color-surface-alt)) padding-box,
@@ -419,14 +418,12 @@
 
 .segmented-indicator {
   position: absolute;
-  top: 0.25rem;
-  bottom: 0.25rem;
-  left: 0.25rem;
-  width: calc((100% - 0.5rem) / 4);
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 25%;
   border-radius: 999px;
 
-  /* gradient outline + green fill */
-  border: 2px solid transparent;
   background:
     linear-gradient(
       135deg,

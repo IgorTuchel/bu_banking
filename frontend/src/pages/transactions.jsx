@@ -5,7 +5,6 @@ import "./transactions.css";
 import AccountDropdown from "../components/AccountDropdown";
 import SearchInput from "../components/SearchInput";
 import Button from "../components/Button";
-
 import Skeleton from "../components/Skeleton";
 import SkeletonSummaryCard from "../components/SkeletonSummaryCard";
 import SkeletonTransactionsList from "../components/SkeletonTransactionsList";
@@ -25,10 +24,9 @@ import {
   groupTransactions,
   addRunningBalance,
 } from "../utils/transactionUtils";
+import { getAccountSummaryCards } from "../utils/accountSummaryUtils";
 
 import { TRANSACTIONS_CONFIG } from "../constants/transactions";
-
-import { useAccount } from "../context/AccountContext";
 
 const { INITIAL_VISIBLE_COUNT, LOAD_MORE_COUNT } = TRANSACTIONS_CONFIG;
 
@@ -42,7 +40,7 @@ const dateRangeOptions = [
 export default function TransactionsPage() {
   const [user, setUser] = useState(null);
   const [accounts, setAccounts] = useState([]);
-  const { selectedAccountKey, setSelectedAccountKey } = useAccount();
+  const [selectedAccountKey, setSelectedAccountKey] = useState("");
 
   const [transactions, setTransactions] = useState([]);
   const [availableBalance, setAvailableBalance] = useState(0);
@@ -62,7 +60,6 @@ export default function TransactionsPage() {
 
   const transactionsListRef = useRef(null);
 
-  // 🔥 Load user + accounts
   useEffect(() => {
     async function init() {
       try {
@@ -75,7 +72,7 @@ export default function TransactionsPage() {
         setUser(currentUser);
         setAccounts(userAccounts);
 
-        if (!selectedAccountKey && userAccounts.length > 0) {
+        if (userAccounts.length > 0) {
           setSelectedAccountKey(userAccounts[0].key);
         }
       } catch (error) {
@@ -88,7 +85,6 @@ export default function TransactionsPage() {
     init();
   }, []);
 
-  // 🔥 Load transactions when account changes
   useEffect(() => {
     async function loadTransactions() {
       if (!user || !selectedAccountKey) return;
@@ -97,17 +93,16 @@ export default function TransactionsPage() {
         setIsLoading(true);
         setErrorMessage("");
 
-        const account = await getAccountByKeyForUser(
-          user.id,
-          selectedAccountKey
-        );
+        const account = await getAccountByKeyForUser(user.id, selectedAccountKey);
 
         if (!account) return;
 
         const data = await getTransactionsForAccount(account.id);
 
         setTransactions(Array.isArray(data) ? data : []);
-        setAvailableBalance(Number(account.currentBalance ?? 0));
+        setAvailableBalance(
+          Number(account.currentBalance ?? account.availableCredit ?? 0)
+        );
       } catch (error) {
         setErrorMessage("Unable to load transactions.");
       } finally {
@@ -123,13 +118,16 @@ export default function TransactionsPage() {
     setCollapsedGroups({});
   }, [searchState, activeFilter, selectedDateRange, selectedAccountKey]);
 
-  // 🔥 Dynamic account dropdown (REAL data now)
   const accountOptions = useMemo(() => {
     return accounts.map((acc) => ({
       value: acc.key,
       label: `${acc.name} • ${acc.type}`,
     }));
   }, [accounts]);
+
+  const selectedAccount = useMemo(() => {
+    return accounts.find((account) => account.key === selectedAccountKey) ?? null;
+  }, [accounts, selectedAccountKey]);
 
   const dateFilteredTransactions = useMemo(() => {
     return filterTransactionsByDateRange(transactions, selectedDateRange);
@@ -209,8 +207,11 @@ export default function TransactionsPage() {
     dateFilteredTransactions.forEach((transaction) => {
       const amount = getAmountValue(transaction.amount ?? "0");
 
-      if (amount > 0) incoming += amount;
-      else outgoing += Math.abs(amount);
+      if (amount > 0) {
+        incoming += amount;
+      } else {
+        outgoing += Math.abs(amount);
+      }
     });
 
     return {
@@ -219,6 +220,15 @@ export default function TransactionsPage() {
       outgoing: outgoing.toFixed(2),
     };
   }, [dateFilteredTransactions, availableBalance]);
+
+  const summaryCards = useMemo(() => {
+    return getAccountSummaryCards({
+      account: selectedAccount,
+      incoming: Number(totals.incoming),
+      outgoing: Number(totals.outgoing),
+      dateRangeLabel,
+    });
+  }, [selectedAccount, totals.incoming, totals.outgoing, dateRangeLabel]);
 
   function scrollTransactionsToTop() {
     if (transactionsListRef.current) {
@@ -241,19 +251,22 @@ export default function TransactionsPage() {
       <main className="home-page transactions-page">
         <header className="dashboard-header">
           <h1>Transactions</h1>
-          <p>Loading account activity...</p>
+          <p>Review, search, and filter all account activity in one place.</p>
         </header>
 
+        <Skeleton width="260px" height="3rem" />
+
         <section className="summary-grid">
-          {[...Array(3)].map((_, i) => (
-            <SkeletonSummaryCard key={i} />
+          {[...Array(3)].map((_, index) => (
+            <SkeletonSummaryCard key={index} />
           ))}
         </section>
 
         <section className="transactions-section transactions-page-section">
           <div className="transactions-toolbar">
-            <Skeleton width="300px" height="2.8rem" />
-            <Skeleton width="200px" height="2.8rem" />
+            <Skeleton width="100%" height="3rem" style={{ flex: 1, minWidth: "240px" }} />
+            <Skeleton width="190px" height="3rem" />
+            <Skeleton width="340px" height="3rem" />
           </div>
 
           <div className="transactions-list">
@@ -290,25 +303,28 @@ export default function TransactionsPage() {
       />
 
       <section className="summary-grid">
-        <article className="summary-card summary-balance">
-          <h3>Current Balance</h3>
-          <p>£{totals.currentBalance}</p>
-          <small className="summary-card-note">
-            Includes pending transactions
-          </small>
-        </article>
-
-        <article className="summary-card summary-incoming">
-          <h3>Incoming</h3>
-          <p>£{totals.incoming}</p>
-          <small className="summary-card-note">{dateRangeLabel}</small>
-        </article>
-
-        <article className="summary-card summary-outgoing">
-          <h3>Outgoing</h3>
-          <p>£{totals.outgoing}</p>
-          <small className="summary-card-note">{dateRangeLabel}</small>
-        </article>
+        {summaryCards.map((card) => (
+          <article
+            key={card.id}
+            className={`summary-card ${
+              selectedAccount?.type === "credit" && card.id === "available-credit"
+                ? "summary-balance"
+                : selectedAccount?.type === "savings" && card.id === "savings-balance"
+                ? "summary-balance"
+                : card.id.includes("incoming") || card.id.includes("interest-earned")
+                ? "summary-incoming"
+                : card.id.includes("outgoing") ||
+                  card.id.includes("interest-rate") ||
+                  card.id.includes("minimum-payment")
+                ? "summary-outgoing"
+                : ""
+            }`}
+          >
+            <h3>{card.title}</h3>
+            <p>{card.value}</p>
+            <small className="summary-card-note">{card.note}</small>
+          </article>
+        ))}
       </section>
 
       <section className="transactions-section transactions-page-section">

@@ -112,10 +112,7 @@ p {
 .skeleton {
   position: relative;
   overflow: hidden;
-  display: block;
-
-  background: #dbe3ea;
-  border-radius: 8px;
+  background: #cbd5e1 !important;
 }
 
 .skeleton::after {
@@ -124,12 +121,12 @@ p {
   inset: 0;
   background: linear-gradient(
     90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.8) 50%,
-    transparent 100%
+    transparent,
+    rgba(255, 255, 255, 0.25),
+    transparent
   );
   transform: translateX(-100%);
-  animation: skeleton-shimmer 1.2s ease-in-out infinite;
+  animation: skeleton-shimmer 1.2s infinite;
 }
 
 @keyframes skeleton-shimmer {
@@ -138,6 +135,7 @@ p {
   }
 }
 
+/* Accessibility */
 @media (prefers-reduced-motion: reduce) {
   .skeleton::after {
     animation: none;
