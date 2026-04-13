@@ -9,6 +9,10 @@ import NotificationsPanel from "../components/NotificationsPanel";
 import AccountDropdown from "../components/AccountDropdown";
 import SelectedAccountCard from "../components/SelectedAccountCard";
 
+import Skeleton from "../components/Skeleton";
+import SkeletonSummaryCard from "../components/SkeletonSummaryCard";
+import SkeletonTransactionsList from "../components/SkeletonTransactionsList";
+
 import { getDashboardData } from "../services/dashboardService";
 import { DEFAULT_ACCOUNT_INDEX } from "../constants/dashboard";
 import { getSelectedAccount } from "../utils/dashboardUtils";
@@ -69,13 +73,19 @@ function Home() {
     }));
   }, [dashboardData]);
 
-  // 🔥 Loading state
   if (isLoading) {
     return (
       <main className="home-page">
-        <section className="status-card loading-card">
-          <h2>Loading dashboard</h2>
-          <p>Please wait while we load your latest account information.</p>
+        <Skeleton width="200px" height="2rem" />
+
+        <section className="summary-grid">
+          {[...Array(3)].map((_, i) => (
+            <SkeletonSummaryCard key={i} />
+          ))}
+        </section>
+
+        <section className="home-content-grid">
+          <SkeletonTransactionsList />
         </section>
       </main>
     );

@@ -6,6 +6,10 @@ import AccountDropdown from "../components/AccountDropdown";
 import SearchInput from "../components/SearchInput";
 import Button from "../components/Button";
 
+import Skeleton from "../components/Skeleton";
+import SkeletonSummaryCard from "../components/SkeletonSummaryCard";
+import SkeletonTransactionsList from "../components/SkeletonTransactionsList";
+
 import { getCurrentUser } from "../services/userService";
 import {
   getAccountsForUser,
@@ -235,9 +239,26 @@ export default function TransactionsPage() {
   if (isLoading) {
     return (
       <main className="home-page transactions-page">
-        <section className="status-card loading-card">
-          <h2>Loading transactions</h2>
-          <p>Please wait while we load your latest account activity.</p>
+        <header className="dashboard-header">
+          <h1>Transactions</h1>
+          <p>Loading account activity...</p>
+        </header>
+
+        <section className="summary-grid">
+          {[...Array(3)].map((_, i) => (
+            <SkeletonSummaryCard key={i} />
+          ))}
+        </section>
+
+        <section className="transactions-section transactions-page-section">
+          <div className="transactions-toolbar">
+            <Skeleton width="300px" height="2.8rem" />
+            <Skeleton width="200px" height="2.8rem" />
+          </div>
+
+          <div className="transactions-list">
+            <SkeletonTransactionsList />
+          </div>
         </section>
       </main>
     );
