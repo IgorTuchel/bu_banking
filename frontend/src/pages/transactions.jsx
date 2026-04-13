@@ -3,6 +3,8 @@ import "./home.css";
 import "./transactions.css";
 
 import AccountDropdown from "../components/AccountDropdown";
+import SearchInput from "../components/SearchInput";
+import Button from "../components/Button";
 import { getTransactionsData } from "../services/transactionsService";
 import {
   filterTransactionsByDateRange,
@@ -22,11 +24,21 @@ const accountOptions = [
   { value: "joint-account", label: "Joint Account • Joint" },
 ];
 
+const dateRangeOptions = [
+  { value: "thisMonth", label: "This month" },
+  { value: "last30Days", label: "Last 30 days" },
+  { value: "last90Days", label: "Last 90 days" },
+  { value: "allTime", label: "All time" },
+];
+
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState([]);
   const [availableBalance, setAvailableBalance] = useState(0);
   const [selectedAccountKey, setSelectedAccountKey] = useState("main-current");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchState, setSearchState] = useState({
+    inputValue: "",
+    tags: [],
+  });
   const [activeFilter, setActiveFilter] = useState("All");
   const [selectedDateRange, setSelectedDateRange] = useState("thisMonth");
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
@@ -58,7 +70,7 @@ export default function TransactionsPage() {
   useEffect(() => {
     setVisibleCount(INITIAL_VISIBLE_COUNT);
     setCollapsedGroups({});
-  }, [searchTerm, activeFilter, selectedDateRange, selectedAccountKey]);
+  }, [searchState, activeFilter, selectedDateRange, selectedAccountKey]);
 
   const dateFilteredTransactions = useMemo(() => {
     return filterTransactionsByDateRange(transactions, selectedDateRange);
@@ -71,9 +83,28 @@ export default function TransactionsPage() {
       const amount = transaction.amount ?? "";
       const status = transaction.status ?? "";
 
-      const matchesSearch =
-        name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        category.toLowerCase().includes(searchTerm.toLowerCase());
+      const amountValue = getAmountValue(amount);
+      const absoluteAmount = Math.abs(amountValue);
+
+      const searchableText = [
+        name,
+        category,
+        amount,
+        absoluteAmount.toFixed(2),
+        absoluteAmount.toString(),
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      const inputTerm = searchState.inputValue.trim().toLowerCase();
+      const tagTerms = searchState.tags.map((tag) => tag.toLowerCase());
+
+      const matchesInput = !inputTerm || searchableText.includes(inputTerm);
+      const matchesTags =
+        tagTerms.length === 0 ||
+        tagTerms.every((tag) => searchableText.includes(tag));
+
+      const matchesSearch = matchesInput && matchesTags;
 
       if (activeFilter === "In") {
         return matchesSearch && amount.startsWith("+");
@@ -89,7 +120,7 @@ export default function TransactionsPage() {
 
       return matchesSearch;
     });
-  }, [dateFilteredTransactions, searchTerm, activeFilter]);
+  }, [dateFilteredTransactions, searchState, activeFilter]);
 
   const visibleTransactions = useMemo(() => {
     return filteredTransactions.slice(0, visibleCount);
@@ -109,7 +140,7 @@ export default function TransactionsPage() {
   }, [transactionsWithBalance]);
 
   const hasMoreTransactions = visibleCount < filteredTransactions.length;
-  const canCollapse = visibleCount > INITIAL_VISIBLE_COUNT;
+  const canCollapseVisible = visibleCount > INITIAL_VISIBLE_COUNT;
   const dateRangeLabel = getDateRangeLabel(selectedDateRange);
 
   const totals = useMemo(() => {
@@ -219,41 +250,53 @@ export default function TransactionsPage() {
         </div>
 
         <div className="transactions-toolbar">
-          <input
-            type="text"
-            className="transactions-search"
-            placeholder="Search by name, merchant or category"
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
+          <SearchInput
+            value={searchState}
+            onChange={setSearchState}
+            placeholder="Search by name, merchant, category or amount"
+            ariaLabel="Search transactions"
           />
 
-          <select
-            className="transactions-date-range"
-            value={selectedDateRange}
-            onChange={(event) => setSelectedDateRange(event.target.value)}
-          >
-            <option value="thisMonth">This month</option>
-            <option value="last30Days">Last 30 days</option>
-            <option value="last90Days">Last 90 days</option>
-            <option value="allTime">All time</option>
-          </select>
+          <div className="transactions-date-range-popover">
+            <AccountDropdown
+              value={selectedDateRange}
+              onChange={setSelectedDateRange}
+              options={dateRangeOptions}
+            />
+          </div>
 
-          <div className="transactions-filters">
+          <div className="transactions-filters segmented">
+            <div
+              className="segmented-indicator"
+              style={{
+                transform: `translateX(${
+                  ["All", "In", "Out", "Pending"].indexOf(activeFilter) * 100
+                }%)`,
+              }}
+            />
+
             {["All", "In", "Out", "Pending"].map((filter) => (
-              <button
+              <Button
                 key={filter}
-                className={`transactions-filter-button ${
-                  activeFilter === filter
-                    ? "transactions-filter-button-active"
-                    : ""
-                }`}
+                variant="pill"
+                active={activeFilter === filter}
                 onClick={() => setActiveFilter(filter)}
+                icon={
+                  filter === "In"
+                    ? "↓"
+                    : filter === "Out"
+                    ? "↑"
+                    : filter === "Pending"
+                    ? "⏳"
+                    : null
+                }
+                className="segmented-btn"
               >
                 {filter}
-              </button>
+              </Button>
             ))}
           </div>
-        </div>
+                  </div>
 
         <div className="transactions-list" ref={transactionsListRef}>
           {groupedTransactions.length > 0 ? (
@@ -366,6 +409,50 @@ export default function TransactionsPage() {
                   </section>
                 );
               })}
+
+              {(hasMoreTransactions || canCollapseVisible) && (
+                <div className="transactions-load-more">
+                  <div className="transactions-load-more-actions">
+                    {canCollapseVisible && (
+                      <Button
+                        type="button"
+                        variant="pill"
+                        onClick={() => {
+                          setVisibleCount(INITIAL_VISIBLE_COUNT);
+                          scrollTransactionsToTop();
+                        }}
+                        icon="↑"
+                      >
+                        Show less
+                      </Button>
+                    )}
+
+                    {canCollapseVisible && (
+                      <Button
+                        type="button"
+                        variant="pill"
+                        onClick={scrollTransactionsToTop}
+                        icon="⇧"
+                      >
+                        Back to top
+                      </Button>
+                    )}
+                  </div>
+
+                  {hasMoreTransactions && (
+                    <Button
+                      type="button"
+                      variant="pill"
+                      onClick={() =>
+                        setVisibleCount((prev) => prev + LOAD_MORE_COUNT)
+                      }
+                      icon="↓"
+                    >
+                      Show more transactions
+                    </Button>
+                  )}
+                </div>
+              )}
             </>
           ) : (
             <div className="status-card empty-card">
