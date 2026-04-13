@@ -147,17 +147,34 @@
 }
 
 .transaction-group-toggle {
-  width: 100%;
+  width: calc(100% + 2.5rem);
+  margin-left: -1.25rem;
+  margin-right: -1.25rem;
+  margin-top: -1rem;
+
   border: none;
-  background: transparent;
-  padding: 0;
-  margin: 0 0 0.25rem 0;
+  background: var(--color-surface-alt);
+
+  border-top-left-radius: var(--radius-md);
+  border-top-right-radius: var(--radius-md);
+  border-bottom-left-radius: var(--radius-sm);
+  border-bottom-right-radius: var(--radius-sm);
+
+  padding: 0.75rem 0.75rem 0.0rem 0.75rem;
+
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: start;
   gap: 0.75rem;
+
   cursor: pointer;
   text-align: left;
+
+  position: sticky;
+  top: 0;
+  z-index: 2;
+
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 }
 
 .transaction-group-toggle:hover .transaction-group-symbol {
@@ -319,6 +336,74 @@
   padding-inline: 1.1rem;
 }
 
+.transactions-filters.segmented {
+  position: relative;
+  display: flex;
+  border-radius: 999px;
+  padding: 0;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--color-surface-alt), var(--color-surface-alt)) padding-box,
+    var(--color-gradient) border-box;
+  overflow: hidden;
+}
+
+.segmented-indicator {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 25%;
+  border-radius: 999px;
+  background:
+    linear-gradient(
+      135deg,
+      var(--color-primary-dark),
+      var(--color-primary)
+    ) padding-box,
+    var(--color-gradient) border-box;
+  box-shadow: none;
+  transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 0;
+}
+
+.segmented-btn {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  justify-content: center;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--color-text);
+  transition: color 0.25s ease;
+}
+
+.segmented-btn.btn-active {
+  color: white;
+}
+
+.segmented-btn .btn-icon {
+  transition:
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.25s ease,
+    opacity 0.25s ease;
+}
+
+.segmented-btn.btn-active .btn-icon {
+  color: white;
+  transform: translateY(-1px) scale(1.06);
+  opacity: 1;
+}
+
+.segmented-btn:not(.btn-active) .btn-icon {
+  color: var(--color-primary);
+  opacity: 0.9;
+}
+
+.segmented-btn:hover .btn-icon {
+  transform: scale(1.06);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .transaction-group-heading::after {
     animation: none;
@@ -350,6 +435,17 @@
   .transaction-group-content-collapsed {
     grid-template-rows: 0fr;
     opacity: 0;
+  }
+
+  .segmented-indicator,
+  .segmented-btn,
+  .segmented-btn .btn-icon {
+    transition: none;
+  }
+
+  .segmented-btn.btn-active .btn-icon,
+  .segmented-btn:hover .btn-icon {
+    transform: none;
   }
 }
 
@@ -398,95 +494,5 @@
     width: 100%;
     text-align: center;
     justify-content: center;
-  }
-}
-
-.transactions-filters.segmented {
-  position: relative;
-  display: flex;
-
-  border-radius: 999px;
-  padding: 0;
-
-  border: 1px solid transparent;
-  background:
-    linear-gradient(var(--color-surface-alt), var(--color-surface-alt)) padding-box,
-    var(--color-gradient) border-box;
-
-  overflow: hidden;
-}
-
-.segmented-indicator {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 25%;
-  border-radius: 999px;
-
-  background:
-    linear-gradient(
-      135deg,
-      var(--color-primary-dark),
-      var(--color-primary)
-    ) padding-box,
-    var(--color-gradient) border-box;
-
-  /* no raised effect */
-  box-shadow: none;
-
-  /* liquid slide only */
-  transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
-
-  z-index: 0;
-}
-
-.segmented-btn {
-  position: relative;
-  z-index: 1;
-  flex: 1;
-  justify-content: center;
-  background: transparent !important;
-  box-shadow: none !important;
-  color: var(--color-text);
-  transition: color 0.25s ease;
-}
-
-.segmented-btn.btn-active {
-  color: white;
-}
-
-.segmented-btn .btn-icon {
-  transition:
-    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-    color 0.25s ease,
-    opacity 0.25s ease;
-}
-
-.segmented-btn.btn-active .btn-icon {
-  color: white;
-  transform: translateY(-1px) scale(1.06);
-  opacity: 1;
-}
-
-.segmented-btn:not(.btn-active) .btn-icon {
-  color: var(--color-primary);
-  opacity: 0.9;
-}
-
-.segmented-btn:hover .btn-icon {
-  transform: scale(1.06);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .segmented-indicator,
-  .segmented-btn,
-  .segmented-btn .btn-icon {
-    transition: none;
-  }
-
-  .segmented-btn.btn-active .btn-icon,
-  .segmented-btn:hover .btn-icon {
-    transform: none;
   }
 }
