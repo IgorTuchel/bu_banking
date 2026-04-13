@@ -6,10 +6,15 @@ import App from "./App.jsx";
 import "./styles/variables.css";
 import "./styles/global.css";
 
+// ✅ IMPORT
+import { AccountProvider } from "./context/AccountContext";
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
-      <App />
+      <AccountProvider>
+        <App />
+      </AccountProvider>
     </BrowserRouter>
   </StrictMode>
 );

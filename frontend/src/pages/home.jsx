@@ -13,12 +13,15 @@ import { getDashboardData } from "../services/dashboardService";
 import { DEFAULT_ACCOUNT_INDEX } from "../constants/dashboard";
 import { getSelectedAccount } from "../utils/dashboardUtils";
 
+import { useAccount } from "../context/AccountContext";
+
 function Home() {
   const [dashboardData, setDashboardData] = useState(null);
-  const [selectedAccountKey, setSelectedAccountKey] = useState("");
+  const { selectedAccountKey, setSelectedAccountKey } = useAccount();
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
+  // 🔥 Load dashboard data (async + backend-ready)
   useEffect(() => {
     async function loadDashboardData() {
       try {
@@ -28,10 +31,14 @@ function Home() {
         const data = await getDashboardData();
         setDashboardData(data);
 
-        if (data.accounts.length > 0) {
-          setSelectedAccountKey(data.accounts[DEFAULT_ACCOUNT_INDEX].key);
+        if (!selectedAccountKey && data.accounts.length > 0) {
+          setSelectedAccountKey(
+          data.accounts[DEFAULT_ACCOUNT_INDEX]?.key ??
+          data.accounts[0].key
+          );
         }
       } catch (error) {
+        console.error(error);
         setErrorMessage("Unable to load dashboard data.");
       } finally {
         setIsLoading(false);
@@ -41,10 +48,9 @@ function Home() {
     loadDashboardData();
   }, []);
 
+  // 🔥 Selected account (safe + reactive)
   const selectedAccount = useMemo(() => {
-    if (!dashboardData) {
-      return null;
-    }
+    if (!dashboardData || !dashboardData.accounts) return null;
 
     return getSelectedAccount(
       dashboardData.accounts,
@@ -53,9 +59,9 @@ function Home() {
     );
   }, [dashboardData, selectedAccountKey]);
 
-  // ✅ Map accounts into dropdown format
+  // 🔥 Dynamic dropdown options (shared with Transactions page)
   const accountOptions = useMemo(() => {
-    if (!dashboardData) return [];
+    if (!dashboardData || !dashboardData.accounts) return [];
 
     return dashboardData.accounts.map((account) => ({
       value: account.key,
@@ -63,6 +69,7 @@ function Home() {
     }));
   }, [dashboardData]);
 
+  // 🔥 Loading state
   if (isLoading) {
     return (
       <main className="home-page">
@@ -74,6 +81,7 @@ function Home() {
     );
   }
 
+  // 🔥 Error state
   if (errorMessage) {
     return (
       <main className="home-page">
@@ -85,6 +93,7 @@ function Home() {
     );
   }
 
+  // 🔥 Empty state
   if (!dashboardData || !selectedAccount) {
     return (
       <main className="home-page">
@@ -103,7 +112,7 @@ function Home() {
         lastLogin={dashboardData.user.lastLogin}
       />
 
-      {/* ✅ Reusable themed dropdown */}
+      {/* 🔥 Shared account dropdown (same system as Transactions page) */}
       <AccountDropdown
         label="Select account"
         value={selectedAccountKey}
@@ -114,16 +123,22 @@ function Home() {
       <SelectedAccountCard account={selectedAccount} />
 
       <section className="summary-grid">
-        {selectedAccount.summary.map((item) => (
-          <SummaryCard key={item.id} title={item.title} value={item.value} />
+        {selectedAccount.summary?.map((item) => (
+          <SummaryCard
+            key={item.id}
+            title={item.title}
+            value={item.value}
+          />
         ))}
       </section>
 
       <QuickActions actions={dashboardData.quickActions} />
 
       <section className="home-content-grid">
-        <TransactionsList transactions={selectedAccount.transactions} />
-        <NotificationsPanel notifications={dashboardData.notifications} />
+        <TransactionsList transactions={selectedAccount.transactions ?? []} />
+        <NotificationsPanel
+          notifications={dashboardData.notifications ?? []}
+        />
       </section>
     </main>
   );

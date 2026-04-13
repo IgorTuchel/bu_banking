@@ -1,454 +1,279 @@
-export const transactionsAccountSummary = {
-  currentBalance: 3166.68,
-};
+export const transactionsData = (() => {
+  const data = [];
 
-export const sampleTransactions = [
-  {
-    id: 1,
-    name: "Uber",
-    timestamp: "2026-04-12T09:20:00",
-    amount: "-£14.20",
-    category: "Transport",
-    status: "Pending",
-  },
-  {
-    id: 2,
-    name: "Amazon Marketplace",
-    timestamp: "2026-04-12T08:45:00",
-    amount: "-£29.99",
-    category: "Shopping",
-    status: "Pending",
-  },
-  {
-    id: 3,
-    name: "Starbucks",
-    timestamp: "2026-04-11T10:12:00",
-    amount: "-£6.40",
-    category: "Food & Drink",
-    status: "Completed",
-  },
-  {
-    id: 4,
-    name: "Salary Payment",
-    timestamp: "2026-04-10T08:00:00",
-    amount: "+£2,850.00",
-    category: "Income",
-    status: "Completed",
-  },
-  {
-    id: 5,
-    name: "Tesco",
-    timestamp: "2026-04-10T18:10:00",
-    amount: "-£32.18",
-    category: "Groceries",
-    status: "Completed",
-  },
-  {
-    id: 6,
-    name: "Netflix",
-    timestamp: "2026-04-09T07:30:00",
-    amount: "-£10.99",
-    category: "Subscriptions",
-    status: "Completed",
-  },
-  {
-    id: 7,
-    name: "Apple",
-    timestamp: "2026-04-08T13:10:00",
-    amount: "-£2.99",
-    category: "Subscriptions",
-    status: "Completed",
-  },
-  {
-    id: 8,
-    name: "Shell",
-    timestamp: "2026-04-07T17:45:00",
-    amount: "-£58.00",
-    category: "Transport",
-    status: "Completed",
-  },
-  {
-    id: 9,
-    name: "Boots",
-    timestamp: "2026-04-06T16:05:00",
-    amount: "-£12.75",
-    category: "Health",
-    status: "Declined",
-  },
-  {
-    id: 10,
-    name: "Freelance Client",
-    timestamp: "2026-04-05T11:00:00",
-    amount: "+£450.00",
-    category: "Income",
-    status: "Completed",
-  },
-  {
-    id: 11,
-    name: "Costa Coffee",
-    timestamp: "2026-04-03T09:14:00",
-    amount: "-£5.80",
-    category: "Food & Drink",
-    status: "Completed",
-  },
-  {
-    id: 12,
-    name: "National Rail",
-    timestamp: "2026-04-02T07:42:00",
-    amount: "-£21.40",
-    category: "Transport",
-    status: "Completed",
-  },
-  {
-    id: 13,
-    name: "Sainsbury's",
-    timestamp: "2026-03-30T18:22:00",
-    amount: "-£41.67",
-    category: "Groceries",
-    status: "Completed",
-  },
-  {
-    id: 14,
-    name: "Spotify",
-    timestamp: "2026-03-27T06:55:00",
-    amount: "-£10.99",
-    category: "Subscriptions",
-    status: "Completed",
-  },
-  {
-    id: 15,
-    name: "HMRC Refund",
-    timestamp: "2026-03-25T12:25:00",
-    amount: "+£126.40",
-    category: "Income",
-    status: "Completed",
-  },
-  {
-    id: 16,
-    name: "Deliveroo",
-    timestamp: "2026-03-21T20:11:00",
-    amount: "-£18.75",
-    category: "Food & Drink",
-    status: "Completed",
-  },
-  {
-    id: 17,
-    name: "ASOS",
-    timestamp: "2026-03-18T14:03:00",
-    amount: "-£64.00",
-    category: "Shopping",
-    status: "Completed",
-  },
-  {
-    id: 18,
-    name: "John Lewis",
-    timestamp: "2026-03-12T16:45:00",
-    amount: "-£82.50",
-    category: "Shopping",
-    status: "Completed",
-  },
-  {
-    id: 19,
-    name: "Water Bill",
-    timestamp: "2026-03-01T09:10:00",
-    amount: "-£34.00",
-    category: "Bills",
-    status: "Completed",
-  },
-  {
-    id: 20,
-    name: "Gas & Electric",
-    timestamp: "2026-02-24T08:30:00",
-    amount: "-£96.20",
-    category: "Bills",
-    status: "Completed",
-  },
-  {
-    id: 21,
-    name: "Gym Membership",
-    timestamp: "2026-02-15T06:30:00",
-    amount: "-£28.00",
-    category: "Health",
-    status: "Completed",
-  },
-  {
-    id: 22,
-    name: "Airbnb Refund",
-    timestamp: "2026-02-10T15:14:00",
-    amount: "+£88.00",
-    category: "Income",
-    status: "Completed",
-  },
-  {
-    id: 23,
-    name: "M&S Food",
-    timestamp: "2026-01-28T19:01:00",
-    amount: "-£23.46",
-    category: "Groceries",
-    status: "Completed",
-  },
-  {
-    id: 24,
-    name: "Trainline",
-    timestamp: "2026-01-15T07:20:00",
-    amount: "-£43.80",
-    category: "Transport",
-    status: "Completed",
-  },
-  {
-    id: 25,
-    name: "Bonus Payment",
-    timestamp: "2026-01-05T08:00:00",
-    amount: "+£600.00",
-    category: "Income",
-    status: "Completed",
-  },
-  {
-    id: 26,
-    name: "Tesco",
-    timestamp: "2025-12-22T18:20:00",
-    amount: "-£51.18",
-    category: "Groceries",
-    status: "Completed",
-  },
-  {
-    id: 27,
-    name: "Amazon Prime",
-    timestamp: "2025-12-14T09:00:00",
-    amount: "-£8.99",
-    category: "Subscriptions",
-    status: "Completed",
-  },
-  {
-    id: 28,
-    name: "Council Tax",
-    timestamp: "2025-12-01T08:15:00",
-    amount: "-£145.00",
-    category: "Bills",
-    status: "Completed",
-  },
-  {
-    id: 29,
-    name: "Interest Payment",
-    timestamp: "2025-11-20T08:40:00",
-    amount: "+£14.52",
-    category: "Income",
-    status: "Completed",
-  },
-  {
-    id: 30,
-    name: "IKEA",
-    timestamp: "2025-11-10T16:30:00",
-    amount: "-£119.00",
-    category: "Shopping",
-    status: "Completed",
-  },
-  {
-    id: 31,
-    name: "Uber Eats",
-    timestamp: "2025-10-28T19:12:00",
-    amount: "-£22.40",
-    category: "Food & Drink",
-    status: "Completed",
-  },
-  {
-    id: 32,
-    name: "Salary Payment",
-    timestamp: "2025-10-10T08:00:00",
-    amount: "+£2,850.00",
-    category: "Income",
-    status: "Completed",
-  },
-  {
-    id: 33,
-    name: "Apple Store",
-    timestamp: "2025-09-25T13:05:00",
-    amount: "-£899.00",
-    category: "Shopping",
-    status: "Completed",
-  },
-  {
-    id: 34,
-    name: "Travel Insurance",
-    timestamp: "2025-09-12T11:45:00",
-    amount: "-£64.99",
-    category: "Bills",
-    status: "Completed",
-  },
-  {
-    id: 35,
-    name: "Holiday Deposit",
-    timestamp: "2025-08-30T10:25:00",
-    amount: "-£250.00",
-    category: "Travel",
-    status: "Completed",
-  },
-  {
-    id: 36,
-    name: "Freelance Client",
-    timestamp: "2025-08-14T14:10:00",
-    amount: "+£520.00",
-    category: "Income",
-    status: "Completed",
-  },
-  {
-    id: 37,
-    name: "Cinema",
-    timestamp: "2025-07-22T20:30:00",
-    amount: "-£15.50",
-    category: "Entertainment",
-    status: "Completed",
-  },
-  {
-    id: 38,
-    name: "Hotel Booking",
-    timestamp: "2025-06-18T09:55:00",
-    amount: "-£179.00",
-    category: "Travel",
-    status: "Completed",
-  },
-  {
-    id: 39,
-    name: "Salary Payment",
-    timestamp: "2025-06-10T08:00:00",
-    amount: "+£2,850.00",
-    category: "Income",
-    status: "Completed",
-  },
-  {
-    id: 40,
-    name: "Fuel Station",
-    timestamp: "2025-05-28T18:42:00",
-    amount: "-£61.30",
-    category: "Transport",
-    status: "Completed",
-  },
-  {
-    id: 41,
-    name: "HomeSense",
-    timestamp: "2025-05-14T15:08:00",
-    amount: "-£46.75",
-    category: "Shopping",
-    status: "Completed",
-  },
-  {
-    id: 42,
-    name: "Amazon Marketplace",
-    timestamp: "2025-04-29T12:12:00",
-    amount: "-£17.99",
-    category: "Shopping",
-    status: "Completed",
-  },
-  {
-    id: 43,
-    name: "Salary Payment",
-    timestamp: "2025-04-10T08:00:00",
-    amount: "+£2,850.00",
-    category: "Income",
-    status: "Completed",
-  },
-  {
-    id: 44,
-    name: "Waterstones",
-    timestamp: "2025-03-19T13:34:00",
-    amount: "-£24.99",
-    category: "Shopping",
-    status: "Completed",
-  },
-  {
-    id: 45,
-    name: "British Gas",
-    timestamp: "2025-02-25T08:18:00",
-    amount: "-£84.11",
-    category: "Bills",
-    status: "Completed",
-  },
-  {
-    id: 46,
-    name: "Tax Rebate",
-    timestamp: "2025-02-12T10:00:00",
-    amount: "+£210.00",
-    category: "Income",
-    status: "Completed",
-  },
-  {
-    id: 47,
-    name: "Trainline",
-    timestamp: "2025-01-16T07:28:00",
-    amount: "-£34.90",
-    category: "Transport",
-    status: "Completed",
-  },
-  {
-    id: 48,
-    name: "Salary Payment",
-    timestamp: "2025-01-10T08:00:00",
-    amount: "+£2,850.00",
-    category: "Income",
-    status: "Completed",
-  },
-  {
-    id: 49,
-    name: "Holiday Booking",
-    timestamp: "2024-12-18T16:15:00",
-    amount: "-£420.00",
-    category: "Travel",
-    status: "Completed",
-  },
-  {
-    id: 50,
-    name: "Freelance Client",
-    timestamp: "2024-11-22T11:10:00",
-    amount: "+£300.00",
-    category: "Income",
-    status: "Completed",
-  },
-  {
-    id: 51,
-    name: "Sainsbury's",
-    timestamp: "2024-10-07T18:40:00",
-    amount: "-£39.45",
-    category: "Groceries",
-    status: "Completed",
-  },
-  {
-    id: 52,
-    name: "Salary Payment",
-    timestamp: "2024-09-10T08:00:00",
-    amount: "+£2,850.00",
-    category: "Income",
-    status: "Completed",
-  },
-  {
-    id: 53,
-    name: "IKEA",
-    timestamp: "2024-08-16T15:25:00",
-    amount: "-£220.00",
-    category: "Shopping",
-    status: "Completed",
-  },
-  {
-    id: 54,
-    name: "Spotify",
-    timestamp: "2024-07-27T06:45:00",
-    amount: "-£10.99",
-    category: "Subscriptions",
-    status: "Completed",
-  },
-  {
-    id: 55,
-    name: "Council Tax",
-    timestamp: "2024-06-01T08:12:00",
-    amount: "-£145.00",
-    category: "Bills",
-    status: "Completed",
-  },
-  {
-    id: 56,
-    name: "Salary Payment",
-    timestamp: "2024-05-10T08:00:00",
-    amount: "+£2,850.00",
-    category: "Income",
-    status: "Completed",
-  },
-];
+  const currentMerchants = [
+    "Tesco",
+    "Sainsbury's",
+    "Amazon",
+    "Uber",
+    "McDonald's",
+    "Starbucks",
+    "Shell",
+    "Deliveroo",
+    "Trainline",
+    "ASOS",
+    "Apple",
+    "Argos",
+    "Costa",
+    "Greggs",
+    "Co-op",
+    "Lidl",
+  ];
+
+  const currentSubscriptions = [
+    { name: "Spotify", amount: 9.99 },
+    { name: "Netflix", amount: 10.99 },
+    { name: "Apple Music", amount: 10.99 },
+  ];
+
+  const creditMerchants = [
+    "Amazon",
+    "Apple Store",
+    "Currys",
+    "Argos",
+    "John Lewis",
+    "Nike",
+    "Zara",
+    "H&M",
+    "Booking.com",
+    "Airbnb",
+    "B&Q",
+    "Halfords",
+    "Very",
+    "eBay",
+  ];
+
+  let idCounter = 1;
+
+  function add(txn) {
+    data.push({
+      id: `txn-${String(idCounter++).padStart(4, "0")}`,
+      ...txn,
+    });
+  }
+
+  function rand(min, max) {
+    return Math.random() * (max - min) + min;
+  }
+
+  function randInt(min, max) {
+    return Math.floor(rand(min, max + 1));
+  }
+
+  function pick(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function randomTime(date, hourMin = 7, hourMax = 22) {
+    const d = new Date(date);
+    d.setHours(randInt(hourMin, hourMax), randInt(0, 59), 0, 0);
+    return d.toISOString();
+  }
+
+  const today = new Date();
+
+  // =====================================
+  // CURRENT ACCOUNT (acc-001)
+  // =====================================
+  for (let i = 0; i < 900; i++) {
+    const date = new Date();
+    date.setDate(today.getDate() - i);
+
+    if (date.getDate() === 1 || date.getDate() === 2) {
+      add({
+        accountId: "acc-001",
+        name: "Salary Payment",
+        category: "Income",
+        amount: `+£${(2600 + rand(-150, 200)).toFixed(2)}`,
+        timestamp: randomTime(date, 7, 9),
+        status: "Completed",
+      });
+      continue;
+    }
+
+    if (date.getDate() === 5) {
+      currentSubscriptions.forEach((sub) => {
+        add({
+          accountId: "acc-001",
+          name: sub.name,
+          category: "Subscription",
+          amount: `-£${sub.amount.toFixed(2)}`,
+          timestamp: randomTime(date, 1, 7),
+          status: "Completed",
+        });
+      });
+    }
+
+    const isRecent = i < 30;
+    const activityChance = isRecent ? 0.8 : 0.55;
+
+    if (Math.random() > activityChance) continue;
+
+    const count =
+      Math.random() < 0.7 ? 1 : Math.random() < 0.9 ? 2 : 3;
+
+    for (let j = 0; j < count; j++) {
+      const merchant = pick(currentMerchants);
+
+      let category = "Shopping";
+      if (
+        merchant === "Tesco" ||
+        merchant === "Sainsbury's" ||
+        merchant === "Lidl" ||
+        merchant === "Co-op"
+      ) {
+        category = "Groceries";
+      } else if (merchant === "Uber" || merchant === "Trainline") {
+        category = "Transport";
+      } else if (
+        merchant === "Starbucks" ||
+        merchant === "Costa" ||
+        merchant === "Greggs" ||
+        merchant === "McDonald's" ||
+        merchant === "Deliveroo"
+      ) {
+        category = "Food";
+      } else if (merchant === "Shell") {
+        category = "Fuel";
+      }
+
+      const amount = rand(3, 120);
+
+      let status = "Completed";
+      if (i < 3 && Math.random() < 0.4) status = "Pending";
+      if (Math.random() < 0.03) status = "Declined";
+
+      add({
+        accountId: "acc-001",
+        name: merchant,
+        category,
+        amount: `-£${amount.toFixed(2)}`,
+        timestamp: randomTime(date),
+        status,
+      });
+    }
+  }
+
+  // =====================================
+  // SAVINGS ACCOUNT (acc-002)
+  // =====================================
+  for (let i = 0; i < 36; i++) {
+    const baseDate = new Date();
+    baseDate.setMonth(today.getMonth() - i);
+
+    const depositDay = randInt(2, 8);
+    const depositDate = new Date(baseDate);
+    depositDate.setDate(depositDay);
+
+    add({
+      accountId: "acc-002",
+      name: "Savings Deposit",
+      category: "Transfer",
+      amount: `+£${(200 + rand(50, 450)).toFixed(2)}`,
+      timestamp: randomTime(depositDate, 8, 10),
+      status: "Completed",
+    });
+
+    if (Math.random() < 0.75) {
+      const interestDate = new Date(baseDate);
+      interestDate.setDate(randInt(26, 28));
+
+      add({
+        accountId: "acc-002",
+        name: "Interest Payment",
+        category: "Interest",
+        amount: `+£${(4 + rand(1, 18)).toFixed(2)}`,
+        timestamp: randomTime(interestDate, 1, 5),
+        status: "Completed",
+      });
+    }
+
+    if (Math.random() < 0.28) {
+      const withdrawalDate = new Date(baseDate);
+      withdrawalDate.setDate(randInt(10, 24));
+
+      add({
+        accountId: "acc-002",
+        name: "Transfer to Main Current Account",
+        category: "Transfer",
+        amount: `-£${(100 + rand(20, 350)).toFixed(2)}`,
+        timestamp: randomTime(withdrawalDate, 9, 18),
+        status: "Completed",
+      });
+    }
+  }
+
+  for (let i = 0; i < 6; i++) {
+    const recentDate = new Date();
+    recentDate.setDate(today.getDate() - randInt(0, 60));
+
+    add({
+      accountId: "acc-002",
+      name: i % 2 === 0 ? "Round-up Transfer" : "Savings Deposit",
+      category: "Transfer",
+      amount: `+£${(15 + rand(5, 120)).toFixed(2)}`,
+      timestamp: randomTime(recentDate, 8, 20),
+      status: i === 0 ? "Pending" : "Completed",
+    });
+  }
+
+  // =====================================
+  // CREDIT ACCOUNT (acc-003)
+  // =====================================
+  for (let i = 0; i < 730; i++) {
+    const date = new Date();
+    date.setDate(today.getDate() - i);
+
+    const isRecent = i < 45;
+    const activityChance = isRecent ? 0.42 : 0.2;
+
+    if (Math.random() > activityChance) continue;
+
+    const count =
+      Math.random() < 0.72 ? 1 : Math.random() < 0.92 ? 2 : 3;
+
+    for (let j = 0; j < count; j++) {
+      const merchant = pick(creditMerchants);
+
+      let category = "Shopping";
+      if (merchant === "Booking.com" || merchant === "Airbnb") {
+        category = "Travel";
+      } else if (merchant === "B&Q" || merchant === "Halfords") {
+        category = "Home";
+      }
+
+      let amount = rand(18, 260);
+      if (merchant === "Apple Store" || merchant === "Currys") {
+        amount = rand(120, 1400);
+      }
+
+      let status = "Completed";
+      if (i < 5 && Math.random() < 0.35) status = "Pending";
+      if (Math.random() < 0.045) status = "Declined";
+
+      add({
+        accountId: "acc-003",
+        name: merchant,
+        category,
+        amount: `-£${amount.toFixed(2)}`,
+        timestamp: randomTime(date, 9, 22),
+        status,
+      });
+    }
+
+    if (date.getDate() === 12 || date.getDate() === 13) {
+      add({
+        accountId: "acc-003",
+        name: "Credit Card Payment",
+        category: "Payment",
+        amount: `+£${(180 + rand(80, 650)).toFixed(2)}`,
+        timestamp: randomTime(date, 7, 9),
+        status: "Completed",
+      });
+    }
+  }
+
+  data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+  return data;
+})();

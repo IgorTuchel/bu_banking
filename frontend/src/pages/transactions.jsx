@@ -5,7 +5,14 @@ import "./transactions.css";
 import AccountDropdown from "../components/AccountDropdown";
 import SearchInput from "../components/SearchInput";
 import Button from "../components/Button";
-import { getTransactionsData } from "../services/transactionsService";
+
+import { getCurrentUser } from "../services/userService";
+import {
+  getAccountsForUser,
+  getAccountByKeyForUser,
+} from "../services/accountService";
+import { getTransactionsForAccount } from "../services/transactionService";
+
 import {
   filterTransactionsByDateRange,
   formatTransactionDate,
@@ -14,15 +21,12 @@ import {
   groupTransactions,
   addRunningBalance,
 } from "../utils/transactionUtils";
+
 import { TRANSACTIONS_CONFIG } from "../constants/transactions";
 
-const { INITIAL_VISIBLE_COUNT, LOAD_MORE_COUNT } = TRANSACTIONS_CONFIG;
+import { useAccount } from "../context/AccountContext";
 
-const accountOptions = [
-  { value: "main-current", label: "Main Current Account • Current" },
-  { value: "everyday-spending", label: "Everyday Spending • Current" },
-  { value: "joint-account", label: "Joint Account • Joint" },
-];
+const { INITIAL_VISIBLE_COUNT, LOAD_MORE_COUNT } = TRANSACTIONS_CONFIG;
 
 const dateRangeOptions = [
   { value: "thisMonth", label: "This month" },
@@ -32,31 +36,74 @@ const dateRangeOptions = [
 ];
 
 export default function TransactionsPage() {
+  const [user, setUser] = useState(null);
+  const [accounts, setAccounts] = useState([]);
+  const { selectedAccountKey, setSelectedAccountKey } = useAccount();
+
   const [transactions, setTransactions] = useState([]);
   const [availableBalance, setAvailableBalance] = useState(0);
-  const [selectedAccountKey, setSelectedAccountKey] = useState("main-current");
+
   const [searchState, setSearchState] = useState({
     inputValue: "",
     tags: [],
   });
+
   const [activeFilter, setActiveFilter] = useState("All");
   const [selectedDateRange, setSelectedDateRange] = useState("thisMonth");
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
   const [collapsedGroups, setCollapsedGroups] = useState({});
+
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
   const transactionsListRef = useRef(null);
 
+  // 🔥 Load user + accounts
   useEffect(() => {
-    async function loadTransactions() {
+    async function init() {
       try {
         setIsLoading(true);
         setErrorMessage("");
 
-        const data = await getTransactionsData();
-        setTransactions(Array.isArray(data.transactions) ? data.transactions : []);
-        setAvailableBalance(Number(data.accountSummary?.currentBalance ?? 0));
+        const currentUser = await getCurrentUser();
+        const userAccounts = await getAccountsForUser(currentUser.id);
+
+        setUser(currentUser);
+        setAccounts(userAccounts);
+
+        if (!selectedAccountKey && userAccounts.length > 0) {
+          setSelectedAccountKey(userAccounts[0].key);
+        }
+      } catch (error) {
+        setErrorMessage("Failed to load account data.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    init();
+  }, []);
+
+  // 🔥 Load transactions when account changes
+  useEffect(() => {
+    async function loadTransactions() {
+      if (!user || !selectedAccountKey) return;
+
+      try {
+        setIsLoading(true);
+        setErrorMessage("");
+
+        const account = await getAccountByKeyForUser(
+          user.id,
+          selectedAccountKey
+        );
+
+        if (!account) return;
+
+        const data = await getTransactionsForAccount(account.id);
+
+        setTransactions(Array.isArray(data) ? data : []);
+        setAvailableBalance(Number(account.currentBalance ?? 0));
       } catch (error) {
         setErrorMessage("Unable to load transactions.");
       } finally {
@@ -65,12 +112,20 @@ export default function TransactionsPage() {
     }
 
     loadTransactions();
-  }, [selectedAccountKey]);
+  }, [user, selectedAccountKey]);
 
   useEffect(() => {
     setVisibleCount(INITIAL_VISIBLE_COUNT);
     setCollapsedGroups({});
   }, [searchState, activeFilter, selectedDateRange, selectedAccountKey]);
+
+  // 🔥 Dynamic account dropdown (REAL data now)
+  const accountOptions = useMemo(() => {
+    return accounts.map((acc) => ({
+      value: acc.key,
+      label: `${acc.name} • ${acc.type}`,
+    }));
+  }, [accounts]);
 
   const dateFilteredTransactions = useMemo(() => {
     return filterTransactionsByDateRange(transactions, selectedDateRange);
@@ -150,11 +205,8 @@ export default function TransactionsPage() {
     dateFilteredTransactions.forEach((transaction) => {
       const amount = getAmountValue(transaction.amount ?? "0");
 
-      if (amount > 0) {
-        incoming += amount;
-      } else {
-        outgoing += Math.abs(amount);
-      }
+      if (amount > 0) incoming += amount;
+      else outgoing += Math.abs(amount);
     });
 
     return {
@@ -296,7 +348,7 @@ export default function TransactionsPage() {
               </Button>
             ))}
           </div>
-                  </div>
+        </div>
 
         <div className="transactions-list" ref={transactionsListRef}>
           {groupedTransactions.length > 0 ? (
@@ -415,7 +467,6 @@ export default function TransactionsPage() {
                   <div className="transactions-load-more-actions">
                     {canCollapseVisible && (
                       <Button
-                        type="button"
                         variant="pill"
                         onClick={() => {
                           setVisibleCount(INITIAL_VISIBLE_COUNT);
@@ -429,7 +480,6 @@ export default function TransactionsPage() {
 
                     {canCollapseVisible && (
                       <Button
-                        type="button"
                         variant="pill"
                         onClick={scrollTransactionsToTop}
                         icon="⇧"
@@ -441,7 +491,6 @@ export default function TransactionsPage() {
 
                   {hasMoreTransactions && (
                     <Button
-                      type="button"
                       variant="pill"
                       onClick={() =>
                         setVisibleCount((prev) => prev + LOAD_MORE_COUNT)
