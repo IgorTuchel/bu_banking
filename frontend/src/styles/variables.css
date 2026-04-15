@@ -17,6 +17,12 @@
     var(--color-primary)
   );
 
+    --color-green-gradient-reverse: linear-gradient(
+    to bottom,
+    var(--color-primary-dark),
+    var(--color-primary)
+  );
+
   /* Backgrounds */
   --color-bg: #f5f7fb;
   --color-surface: #ffffff;
