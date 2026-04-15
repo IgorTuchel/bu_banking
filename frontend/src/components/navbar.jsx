@@ -6,6 +6,10 @@ export default function Navbar() {
   return (
     <nav className="navbar">
       <div className="navLeft">
+        <button className="menuButton" aria-label="Open menu">
+          ☰
+        </button>
+
         <div className="navBrand">
           <div className="navLogoWrapper">
             <img src={logo} alt="Aurix logo" className="navLogo" />
@@ -17,15 +21,11 @@ export default function Navbar() {
           </div>
         </div>
 
-        <button className="menuButton" aria-label="Open menu">
-          ☰
-        </button>
-
         <div className="navLinks">
           <NavLink to="/">Home</NavLink>
           <NavLink to="/transactions">Transactions</NavLink>
-          <NavLink to="/spendingInsights">Spending Insights</NavLink>
-          <NavLink to="/creditScore">Credit Score</NavLink>
+          <NavLink to="/rewards">Rewards</NavLink>
+          <NavLink to="/support">Help &amp; Support</NavLink>
         </div>
       </div>
 
