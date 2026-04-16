@@ -11,11 +11,88 @@ function sanitizeNameForMatching(value) {
   return normalize(value).replace(/[^a-z0-9]/g, "");
 }
 
+function firstDefined(...values) {
+  return values.find(
+    (value) => value !== undefined && value !== null && value !== ""
+  );
+}
+
+function getNormalizedLocation(transaction) {
+  const transactionLocationObject =
+    transaction.location &&
+    typeof transaction.location === "object" &&
+    !Array.isArray(transaction.location)
+      ? transaction.location
+      : null;
+
+  const nestedLocation = firstDefined(
+    transactionLocationObject,
+    transaction.locationData,
+    transaction.locationDetails,
+    transaction.locationInfo,
+    transaction.merchantLocation
+  );
+
+  const objectLocation =
+    nestedLocation &&
+    typeof nestedLocation === "object" &&
+    !Array.isArray(nestedLocation)
+      ? nestedLocation
+      : null;
+
+  const city = firstDefined(
+    transaction.city,
+    transaction.cityName,
+    transaction.locationCity,
+    transaction.town,
+    transaction.townName,
+    transactionLocationObject?.city,
+    transactionLocationObject?.cityName,
+    transactionLocationObject?.town,
+    transactionLocationObject?.townName,
+    objectLocation?.city,
+    objectLocation?.cityName,
+    objectLocation?.town,
+    objectLocation?.townName
+  );
+
+  const country = firstDefined(
+    transaction.country,
+    transaction.countryName,
+    transaction.locationCountry,
+    transactionLocationObject?.country,
+    transactionLocationObject?.countryName,
+    objectLocation?.country,
+    objectLocation?.countryName
+  );
+
+  const location = firstDefined(
+    typeof transaction.location === "string" ? transaction.location : null,
+    transaction.locationName,
+    transaction.place,
+    transactionLocationObject?.displayName,
+    transactionLocationObject?.formatted,
+    transactionLocationObject?.address,
+    transactionLocationObject?.place,
+    objectLocation?.displayName,
+    objectLocation?.formatted,
+    objectLocation?.address,
+    objectLocation?.place
+  );
+
+  return {
+    ...(city ? { city } : {}),
+    ...(country ? { country } : {}),
+    ...(location ? { location } : {}),
+  };
+}
+
 function getMerchantAliases(merchant) {
   const aliasField = merchant.aliases ?? merchant.alias ?? [];
   const aliases = Array.isArray(aliasField) ? aliasField : [aliasField];
 
   return [
+    merchant.merchantId,
     merchant.id,
     merchant.name,
     merchant.displayName,
@@ -52,9 +129,11 @@ function getParsedTransferDetails(transaction) {
 
 function getMerchantForTransaction(transaction) {
   const transactionMerchantId = normalize(transaction.merchantId);
+
   if (transactionMerchantId) {
     const byId = merchantsData.find(
-      (merchant) => normalize(merchant.id) === transactionMerchantId
+      (merchant) =>
+        normalize(merchant.merchantId ?? merchant.id) === transactionMerchantId
     );
 
     if (byId) return byId;
@@ -66,26 +145,30 @@ function getMerchantForTransaction(transaction) {
 
   if (!transactionMerchantName) return null;
 
-  return merchantsData.find((merchant) =>
-    getMerchantAliases(merchant).includes(transactionMerchantName)
-  ) ?? null;
+  return (
+    merchantsData.find((merchant) =>
+      getMerchantAliases(merchant).includes(transactionMerchantName)
+    ) ?? null
+  );
 }
 
 export async function getTransactionsForAccount(accountId) {
   await new Promise((resolve) => setTimeout(resolve, 150));
 
-  return transactionsData.filter(
-    (txn) => txn.accountId === accountId
-  ).map((transaction) => {
-    const merchant = getMerchantForTransaction(transaction);
+  return transactionsData
+    .filter((txn) => txn.accountId === accountId)
+    .map((transaction) => {
+      const merchant = getMerchantForTransaction(transaction);
+      const normalizedLocation = getNormalizedLocation(transaction);
 
-    return {
-      ...transaction,
-      ...getParsedTransferDetails(transaction),
-      merchant,
-      paymentType: transaction.paymentType ?? merchant?.type,
-      currency: transaction.currency ?? merchant?.currency,
-      exchangeRate: transaction.exchangeRate ?? merchant?.exchangeRate,
-    };
-  });
+      return {
+        ...transaction,
+        ...getParsedTransferDetails(transaction),
+        ...normalizedLocation,
+        merchant,
+        paymentType: transaction.paymentType ?? merchant?.type,
+        currency: transaction.currency ?? merchant?.currency,
+        exchangeRate: transaction.exchangeRate ?? merchant?.exchangeRate,
+      };
+    });
 }
