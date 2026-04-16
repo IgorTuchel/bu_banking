@@ -37,36 +37,146 @@ const dateRangeOptions = [
   { value: "allTime", label: "All time" },
 ];
 
-const PAYMENT_TYPE_BY_CATEGORY = {
-  Bills: "Direct debit",
-  Food: "Card payment",
-  Income: "Salary deposit",
-  Payment: "Card payment",
-  Shopping: "Card payment",
-  Transfer: "Bank transfer",
-  Transport: "Contactless payment",
-  Travel: "Card payment",
-};
-
-function buildPaymentReference(transaction) {
-  const numericId = (transaction.id ?? "")
-    .replace(/\D/g, "")
-    .slice(-6)
-    .padStart(6, "0");
-
-  return `REF-${numericId}`;
+function firstDefined(...values) {
+  return values.find((value) => value !== undefined && value !== null && value !== "");
 }
 
-function getTransactionLocation(transaction) {
-  const name = (transaction.name ?? "").toLowerCase();
+function getLocationLabel(transaction) {
+  const merchant = transaction.merchant ?? {};
+  return firstDefined(
+    merchant.location,
+    transaction.location,
+    [merchant.city, merchant.country].filter(Boolean).join(", "),
+    [transaction.city, transaction.country].filter(Boolean).join(", ")
+  );
+}
 
-  if (name.includes("uber")) return "London, UK";
-  if (name.includes("amazon")) return "Online";
-  if (name.includes("transfer")) return "Online banking";
-  if (name.includes("booking")) return "Online";
-  if (name.includes("energy")) return "United Kingdom";
+function getCurrencyCode(transaction, accountCurrency) {
+  return firstDefined(
+    transaction.currency,
+    transaction.transactionCurrency,
+    transaction.originalCurrency,
+    accountCurrency
+  );
+}
 
-  return "Card terminal - UK";
+function getTransferCounterparty(transaction) {
+  return firstDefined(
+    transaction.payerName,
+    transaction.payeeName,
+    transaction.counterpartyName,
+    transaction.beneficiaryName
+  );
+}
+
+function getTransactionDetails(transaction, accountType, accountCurrency) {
+  const merchant = transaction.merchant ?? {};
+  const paymentType = firstDefined(transaction.paymentType, merchant.type);
+  const normalizedType = String(paymentType).toLowerCase();
+  const isTransfer =
+    String(transaction.category ?? "").toLowerCase() === "transfer" ||
+    normalizedType.includes("transfer");
+  const shouldHideLocation = [
+    "recurrent card",
+    "recurring card",
+    "direct debit",
+    "standing order",
+    "standing order payment",
+  ].some((keyword) => normalizedType.includes(keyword));
+
+  const baseDetails = [
+    {
+      label: "Transaction ID",
+      value: transaction.id,
+    },
+    {
+      label: "Category",
+      value: firstDefined(transaction.category, merchant.category),
+    },
+    {
+      label: "Type",
+      value: paymentType,
+    },
+    {
+      label: "Payment reference",
+      value: firstDefined(
+        transaction.paymentReference,
+        transaction.reference,
+        transaction.transferReference
+      ),
+    },
+    {
+      label: "Currency",
+      value: getCurrencyCode(transaction, accountCurrency),
+    },
+    {
+      label: "Exchange rate",
+      value: firstDefined(
+        transaction.exchangeRate,
+        transaction.fxRate,
+        transaction.forexRate
+      ),
+    },
+  ];
+
+  if (!isTransfer) {
+    baseDetails.splice(1, 0, {
+      label: "Merchant",
+      value: firstDefined(merchant.name, transaction.merchantName, transaction.name),
+    });
+  }
+
+  if (!isTransfer && !shouldHideLocation) {
+    baseDetails.splice(4, 0, {
+      label: "Location",
+      value: getLocationLabel(transaction),
+    });
+  }
+
+  if (isTransfer) {
+    baseDetails.push(
+      {
+        label: "Payer / Payee",
+        value: getTransferCounterparty(transaction),
+      },
+      {
+        label: "Transfer reference",
+        value: firstDefined(
+          transaction.transferReference,
+          transaction.reference,
+          transaction.paymentReference
+        ),
+      }
+    );
+  }
+
+  if (accountType === "savings") {
+    baseDetails.push(
+      {
+        label: "Transfer method",
+        value: transaction.transferMethod ?? transaction.transferType,
+      },
+      {
+        label: "Counterparty",
+        value: transaction.counterpartyName ?? transaction.beneficiaryName,
+      }
+    );
+  }
+
+  if (accountType === "credit") {
+    baseDetails.push(
+      {
+        label: "Card last 4",
+        value: transaction.cardLast4 ?? transaction.cardEnding,
+      },
+      {
+        label: "Authorisation code",
+        value: transaction.authCode ?? transaction.authorisationCode,
+      }
+    );
+  }
+
+  return baseDetails.filter((detail) => Boolean(detail.value));
 }
 
 export default function TransactionsPage() {
@@ -173,6 +283,11 @@ export default function TransactionsPage() {
       const category = transaction.category ?? "";
       const amount = transaction.amount ?? "";
       const status = transaction.status ?? "";
+      const merchant = transaction.merchant ?? {};
+      const merchantName = merchant.name ?? transaction.merchantName ?? "";
+      const merchantCategory = merchant.category ?? "";
+      const merchantType = merchant.type ?? "";
+      const merchantLocation = merchant.location ?? "";
 
       const amountValue = getAmountValue(amount);
       const absoluteAmount = Math.abs(amountValue);
@@ -181,6 +296,10 @@ export default function TransactionsPage() {
         name,
         category,
         amount,
+        merchantName,
+        merchantCategory,
+        merchantType,
+        merchantLocation,
         absoluteAmount.toFixed(2),
         absoluteAmount.toString(),
       ]
@@ -458,7 +577,7 @@ export default function TransactionsPage() {
                           <span className="transaction-group-total-value">
                             {groupTotal.toLocaleString("en-GB", {
                               style: "currency",
-                              currency: "GBP",
+                              currency: selectedAccount?.currency ?? "GBP",
                             })}
                           </span>
                         </span>
@@ -486,9 +605,18 @@ export default function TransactionsPage() {
                           const status = transaction.status ?? "Completed";
                           const timestamp = transaction.timestamp ?? new Date();
                           const isPositive = amount.startsWith("+");
-                          const paymentType =
-                            PAYMENT_TYPE_BY_CATEGORY[transaction.category] ??
-                            "Card payment";
+                          const merchantName =
+                            transaction.merchant?.name ??
+                            transaction.merchantName ??
+                            transaction.name;
+                          const merchantCategory =
+                            transaction.merchant?.category ??
+                            transaction.category;
+                          const detailRows = getTransactionDetails(
+                            transaction,
+                            selectedAccount?.type,
+                            selectedAccount?.currency
+                          );
                           const isExpanded = Boolean(
                             expandedTransactions[transaction.id]
                           );
@@ -508,11 +636,11 @@ export default function TransactionsPage() {
                               >
                                 <div className="transaction-main">
                                   <p className="transaction-name">
-                                    {transaction.name ?? "Unknown"}
+                                    {merchantName}
                                   </p>
                                   <p className="transaction-date">
                                     {formatTransactionDate(timestamp)} •{" "}
-                                    {transaction.category ?? "Uncategorised"}
+                                    {merchantCategory}
                                   </p>
                                 </div>
 
@@ -566,17 +694,11 @@ export default function TransactionsPage() {
                                 }`}
                               >
                                 <div className="transaction-extra-details-inner">
-                                  <p>
-                                    <span>Payment reference:</span>{" "}
-                                    {buildPaymentReference(transaction)}
-                                  </p>
-                                  <p>
-                                    <span>Payment type:</span> {paymentType}
-                                  </p>
-                                  <p>
-                                    <span>Location:</span>{" "}
-                                    {getTransactionLocation(transaction)}
-                                  </p>
+                                  {detailRows.map((detail) => (
+                                    <p key={`${transaction.id}-${detail.label}`}>
+                                      <span>{detail.label}:</span> {detail.value}
+                                    </p>
+                                  ))}
                                 </div>
                               </div>
                             </div>
