@@ -37,6 +37,38 @@ const dateRangeOptions = [
   { value: "allTime", label: "All time" },
 ];
 
+const PAYMENT_TYPE_BY_CATEGORY = {
+  Bills: "Direct debit",
+  Food: "Card payment",
+  Income: "Salary deposit",
+  Payment: "Card payment",
+  Shopping: "Card payment",
+  Transfer: "Bank transfer",
+  Transport: "Contactless payment",
+  Travel: "Card payment",
+};
+
+function buildPaymentReference(transaction) {
+  const numericId = (transaction.id ?? "")
+    .replace(/\D/g, "")
+    .slice(-6)
+    .padStart(6, "0");
+
+  return `REF-${numericId}`;
+}
+
+function getTransactionLocation(transaction) {
+  const name = (transaction.name ?? "").toLowerCase();
+
+  if (name.includes("uber")) return "London, UK";
+  if (name.includes("amazon")) return "Online";
+  if (name.includes("transfer")) return "Online banking";
+  if (name.includes("booking")) return "Online";
+  if (name.includes("energy")) return "United Kingdom";
+
+  return "Card terminal - UK";
+}
+
 export default function TransactionsPage() {
   const [user, setUser] = useState(null);
   const [accounts, setAccounts] = useState([]);
@@ -54,6 +86,7 @@ export default function TransactionsPage() {
   const [selectedDateRange, setSelectedDateRange] = useState("thisMonth");
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
   const [collapsedGroups, setCollapsedGroups] = useState({});
+  const [expandedTransactions, setExpandedTransactions] = useState({});
 
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -75,7 +108,7 @@ export default function TransactionsPage() {
         if (userAccounts.length > 0) {
           setSelectedAccountKey(userAccounts[0].key);
         }
-      } catch (error) {
+      } catch {
         setErrorMessage("Failed to load account data.");
       } finally {
         setIsLoading(false);
@@ -103,7 +136,7 @@ export default function TransactionsPage() {
         setAvailableBalance(
           Number(account.currentBalance ?? account.availableCredit ?? 0)
         );
-      } catch (error) {
+      } catch {
         setErrorMessage("Unable to load transactions.");
       } finally {
         setIsLoading(false);
@@ -116,6 +149,7 @@ export default function TransactionsPage() {
   useEffect(() => {
     setVisibleCount(INITIAL_VISIBLE_COUNT);
     setCollapsedGroups({});
+    setExpandedTransactions({});
   }, [searchState, activeFilter, selectedDateRange, selectedAccountKey]);
 
   const accountOptions = useMemo(() => {
@@ -243,6 +277,13 @@ export default function TransactionsPage() {
     setCollapsedGroups((current) => ({
       ...current,
       [label]: !current[label],
+    }));
+  }
+
+  function toggleTransaction(transactionId) {
+    setExpandedTransactions((current) => ({
+      ...current,
+      [transactionId]: !current[transactionId],
     }));
   }
 
@@ -445,48 +486,96 @@ export default function TransactionsPage() {
                           const status = transaction.status ?? "Completed";
                           const timestamp = transaction.timestamp ?? new Date();
                           const isPositive = amount.startsWith("+");
+                          const paymentType =
+                            PAYMENT_TYPE_BY_CATEGORY[transaction.category] ??
+                            "Card payment";
+                          const isExpanded = Boolean(
+                            expandedTransactions[transaction.id]
+                          );
 
                           return (
                             <div
                               key={transaction.id}
-                              className="transaction-row transaction-row-detailed"
+                              className={`transaction-row transaction-row-detailed transaction-row-expandable ${
+                                isExpanded ? "transaction-row-open" : ""
+                              }`}
                             >
-                              <div className="transaction-main">
-                                <p className="transaction-name">
-                                  {transaction.name ?? "Unknown"}
-                                </p>
-                                <p className="transaction-date">
-                                  {formatTransactionDate(timestamp)} •{" "}
-                                  {transaction.category ?? "Uncategorised"}
-                                </p>
-                              </div>
-
-                              <div className="transaction-meta">
-                                <span
-                                  className={`transaction-status ${
-                                    status === "Pending"
-                                      ? "transaction-status-pending"
-                                      : status === "Declined"
-                                      ? "transaction-status-declined"
-                                      : "transaction-status-completed"
-                                  }`}
-                                >
-                                  {status}
-                                </span>
-
-                                <div className="transaction-amount-wrapper">
-                                  <p
-                                    className={`transaction-amount ${
-                                      isPositive
-                                        ? "transaction-positive"
-                                        : "transaction-negative"
-                                    }`}
-                                  >
-                                    {amount}
+                              <button
+                                type="button"
+                                className="transaction-row-toggle"
+                                onClick={() => toggleTransaction(transaction.id)}
+                                aria-expanded={isExpanded}
+                              >
+                                <div className="transaction-main">
+                                  <p className="transaction-name">
+                                    {transaction.name ?? "Unknown"}
                                   </p>
+                                  <p className="transaction-date">
+                                    {formatTransactionDate(timestamp)} •{" "}
+                                    {transaction.category ?? "Uncategorised"}
+                                  </p>
+                                </div>
 
-                                  <p className="transaction-balance">
-                                    £{transaction.runningBalance.toFixed(2)}
+                                <div className="transaction-right">
+                                  <div className="transaction-meta">
+                                    <span
+                                      className={`transaction-status ${
+                                        status === "Pending"
+                                          ? "transaction-status-pending"
+                                          : status === "Declined"
+                                          ? "transaction-status-declined"
+                                          : "transaction-status-completed"
+                                      }`}
+                                    >
+                                      {status}
+                                    </span>
+
+                                    <div className="transaction-amount-wrapper">
+                                      <p
+                                        className={`transaction-amount ${
+                                          isPositive
+                                            ? "transaction-positive"
+                                            : "transaction-negative"
+                                        }`}
+                                      >
+                                        {amount}
+                                      </p>
+
+                                      <p className="transaction-balance">
+                                        £{transaction.runningBalance.toFixed(2)}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <span
+                                    className={`transaction-expand-icon ${
+                                      isExpanded ? "expanded" : ""
+                                    }`}
+                                    aria-hidden="true"
+                                  >
+                                    ▾
+                                  </span>
+                                </div>
+                              </button>
+
+                              <div
+                                className={`transaction-extra-details ${
+                                  isExpanded
+                                    ? "transaction-extra-details-expanded"
+                                    : "transaction-extra-details-collapsed"
+                                }`}
+                              >
+                                <div className="transaction-extra-details-inner">
+                                  <p>
+                                    <span>Payment reference:</span>{" "}
+                                    {buildPaymentReference(transaction)}
+                                  </p>
+                                  <p>
+                                    <span>Payment type:</span> {paymentType}
+                                  </p>
+                                  <p>
+                                    <span>Location:</span>{" "}
+                                    {getTransactionLocation(transaction)}
                                   </p>
                                 </div>
                               </div>
