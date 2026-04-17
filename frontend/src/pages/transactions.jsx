@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
-import { MapContainer, Marker, TileLayer } from "react-leaflet";
+import { MapContainer, Marker, TileLayer, Popup, Circle } from "react-leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
@@ -36,12 +36,21 @@ import { TRANSACTIONS_CONFIG } from "../constants/transactions";
 
 const { INITIAL_VISIBLE_COUNT, LOAD_MORE_COUNT } = TRANSACTIONS_CONFIG;
 const GEOCODE_CACHE = new Map();
-const GEOCODE_PENDING = new Map();
+
+delete L.Icon.Default.prototype._getIconUrl;
 
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x,
   iconUrl: markerIcon,
   shadowUrl: markerShadow,
+});
+
+const customMarkerIcon = L.divIcon({
+  className: "custom-green-marker",
+  html: `<div class="custom-green-marker-pin"></div>`,
+  iconSize: [38, 54],
+  iconAnchor: [19, 54],
+  popupAnchor: [0, -46],
 });
 
 const dateRangeOptions = [
@@ -105,21 +114,6 @@ function getCountryName(value) {
   return countryMap[normalized] ?? value;
 }
 
-function getCountryCode(transaction) {
-  const merchant = transaction.merchant ?? {};
-
-  const value = firstDefined(
-    transaction.country,
-    transaction.countryCode,
-    merchant.country,
-    merchant.countryCode
-  );
-
-  const normalized = String(value ?? "").trim().toUpperCase();
-
-  return normalized || null;
-}
-
 function getLocationLabel(transaction) {
   const merchant = transaction.merchant ?? {};
 
@@ -163,19 +157,6 @@ function getGeocodeQuery(transaction) {
     merchant.town
   );
 
-  const country = firstDefined(
-    transaction.country,
-    transaction.countryName,
-    merchant.country,
-    merchant.countryName
-  );
-
-  const readableCountry = getCountryName(country);
-
-  if (city && readableCountry) {
-    return normalizeLocationValue(`${city}, ${readableCountry}`);
-  }
-
   if (city) {
     return normalizeLocationValue(city);
   }
@@ -192,15 +173,13 @@ function getGeocodeQuery(transaction) {
     : null;
 }
 
-async function geocodeFromOpenMeteo(query, signal, countryCode) {
+async function geocodeFromOpenMeteo(query, signal) {
   const params = new URLSearchParams({
     count: "1",
     name: query,
+    language: "en",
+    format: "json",
   });
-
-  if (countryCode) {
-    params.append("countryCode", countryCode.toLowerCase());
-  }
 
   const url = `https://geocoding-api.open-meteo.com/v1/search?${params.toString()}`;
   const response = await fetch(url, { signal });
@@ -224,111 +203,21 @@ async function geocodeFromOpenMeteo(query, signal, countryCode) {
   return null;
 }
 
-async function geocodeFromNominatim(query, signal, countryCode) {
-  const params = new URLSearchParams({
-    format: "json",
-    limit: "1",
-    q: query,
-  });
-
-  if (countryCode) {
-    params.append("countrycodes", countryCode.toLowerCase());
-  }
-
-  const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
-  const response = await fetch(url, { signal });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(
-      `Nominatim geocoding failed: ${response.status} ${response.statusText} | ${text}`
-    );
-  }
-
-  const data = await response.json();
-  const firstMatch = data?.[0];
-  const latitude = Number(firstMatch?.lat);
-  const longitude = Number(firstMatch?.lon);
-
-  if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
-    return [latitude, longitude];
-  }
-
-  return null;
-}
-
-async function geocodeLocationQuery(query, countryCode, signal) {
+async function geocodeLocationQuery(query, signal) {
   if (!query) {
     return null;
   }
 
-  const candidates = [...new Set([query].filter(Boolean))];
-
-  for (const candidate of candidates) {
-    try {
-      const openMeteoResult = await geocodeFromOpenMeteo(
-        candidate,
-        signal,
-        countryCode
-      );
-
-      if (openMeteoResult) {
-        console.log("Geocoding success:", {
-          provider: "Open-Meteo",
-          candidate,
-          countryCode,
-          coordinates: openMeteoResult,
-        });
-        return openMeteoResult;
-      }
-
-      console.warn("Open-Meteo returned no result:", candidate, countryCode);
-    } catch (error) {
-      if (error?.name === "AbortError") {
-        return null;
-      }
-
-      console.error(
-        "Open-Meteo failed:",
-        candidate,
-        countryCode,
-        error?.message ?? error
-      );
+  try {
+    return await geocodeFromOpenMeteo(query, signal);
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw error;
     }
 
-    try {
-      const nominatimResult = await geocodeFromNominatim(
-        candidate,
-        signal,
-        countryCode
-      );
-
-      if (nominatimResult) {
-        console.log("Geocoding success:", {
-          provider: "Nominatim",
-          candidate,
-          countryCode,
-          coordinates: nominatimResult,
-        });
-        return nominatimResult;
-      }
-
-      console.warn("Nominatim returned no result:", candidate, countryCode);
-    } catch (error) {
-      if (error?.name === "AbortError") {
-        return null;
-      }
-
-      console.error(
-        "Nominatim failed:",
-        candidate,
-        countryCode,
-        error?.message ?? error
-      );
-    }
+    console.error("Open-Meteo failed:", query, error?.message ?? error);
+    return null;
   }
-
-  return null;
 }
 
 function TransactionLocationMap({ transaction }) {
@@ -336,9 +225,14 @@ function TransactionLocationMap({ transaction }) {
   const [isResolving, setIsResolving] = useState(false);
 
   const geocodeQuery = getGeocodeQuery(transaction);
-  const countryCode = getCountryCode(transaction);
-  const cacheKey = `${geocodeQuery ?? ""}::${countryCode ?? ""}`;
+  const cacheKey = geocodeQuery ?? "";
   const locationLabel = getLocationLabel(transaction) ?? geocodeQuery;
+  const transactionTitle = firstDefined(
+    transaction.merchant?.name,
+    transaction.merchantName,
+    transaction.name,
+    "Transaction"
+  );
 
   useEffect(() => {
     if (!geocodeQuery) {
@@ -348,71 +242,55 @@ function TransactionLocationMap({ transaction }) {
     }
 
     if (GEOCODE_CACHE.has(cacheKey)) {
-      const cached = GEOCODE_CACHE.get(cacheKey);
-      setCenter(cached);
+      setCenter(GEOCODE_CACHE.get(cacheKey));
       setIsResolving(false);
       return;
     }
 
-    let isCancelled = false;
     const controller = new AbortController();
+    let isActive = true;
 
-    async function geocodeLocation() {
+    async function run() {
       try {
         setIsResolving(true);
 
-        if (GEOCODE_PENDING.has(cacheKey)) {
-          const pendingCenter = await GEOCODE_PENDING.get(cacheKey);
-
-          if (!isCancelled) {
-            setCenter(pendingCenter);
-          }
-
-          return;
-        }
-
-        const requestPromise = geocodeLocationQuery(
+        const resolvedCoordinates = await geocodeLocationQuery(
           geocodeQuery,
-          countryCode,
           controller.signal
         );
 
-        GEOCODE_PENDING.set(cacheKey, requestPromise);
-
-        const resolvedCoordinates = await requestPromise;
-        GEOCODE_PENDING.delete(cacheKey);
+        if (!isActive) {
+          return;
+        }
 
         if (resolvedCoordinates) {
           GEOCODE_CACHE.set(cacheKey, resolvedCoordinates);
-        }
-
-        if (!isCancelled) {
           setCenter(resolvedCoordinates);
+        } else {
+          setCenter(null);
         }
       } catch (error) {
-        GEOCODE_PENDING.delete(cacheKey);
-
         if (error?.name !== "AbortError") {
-          console.error("Geocoding failed:", geocodeQuery, countryCode, error);
+          console.error("Geocoding failed:", geocodeQuery, error);
         }
 
-        if (!isCancelled) {
+        if (isActive) {
           setCenter(null);
         }
       } finally {
-        if (!isCancelled) {
+        if (isActive) {
           setIsResolving(false);
         }
       }
     }
 
-    geocodeLocation();
+    run();
 
     return () => {
-      isCancelled = true;
+      isActive = false;
       controller.abort();
     };
-  }, [geocodeQuery, countryCode, cacheKey]);
+  }, [transaction.id, geocodeQuery, cacheKey]);
 
   if (isResolving) {
     return (
@@ -442,10 +320,28 @@ function TransactionLocationMap({ transaction }) {
     <div className="transaction-map">
       <MapContainer center={center} zoom={13} scrollWheelZoom={false}>
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          attribution="&copy; OpenStreetMap contributors"
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <Marker position={center} />
+        <Circle
+          center={center}
+          radius={4000}
+          pathOptions={{
+            color: "#2E8B57",
+            fillColor: "#2E8B57",
+            fillOpacity: 0.15,
+            weight: 2,
+          }}
+        />
+        <Marker position={center} icon={customMarkerIcon}>
+          <Popup>
+            <strong>{transaction.name}</strong>
+            <br />
+            {locationLabel}
+            <br />
+            {transaction.amount}
+          </Popup>
+        </Marker>
       </MapContainer>
     </div>
   );

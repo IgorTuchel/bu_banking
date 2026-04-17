@@ -17,7 +17,16 @@ function firstDefined(...values) {
   );
 }
 
-function getNormalizedLocation(transaction) {
+function cleanText(value) {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  const cleaned = String(value).trim();
+  return cleaned || undefined;
+}
+
+function getNormalizedLocation(transaction, merchant = null) {
   const transactionLocationObject =
     transaction.location &&
     typeof transaction.location === "object" &&
@@ -40,44 +49,56 @@ function getNormalizedLocation(transaction) {
       ? nestedLocation
       : null;
 
-  const city = firstDefined(
-    transaction.city,
-    transaction.cityName,
-    transaction.locationCity,
-    transaction.town,
-    transaction.townName,
-    transactionLocationObject?.city,
-    transactionLocationObject?.cityName,
-    transactionLocationObject?.town,
-    transactionLocationObject?.townName,
-    objectLocation?.city,
-    objectLocation?.cityName,
-    objectLocation?.town,
-    objectLocation?.townName
+  const city = cleanText(
+    firstDefined(
+      transaction.city,
+      transaction.cityName,
+      transaction.locationCity,
+      transaction.town,
+      transaction.townName,
+      transactionLocationObject?.city,
+      transactionLocationObject?.cityName,
+      transactionLocationObject?.town,
+      transactionLocationObject?.townName,
+      objectLocation?.city,
+      objectLocation?.cityName,
+      objectLocation?.town,
+      objectLocation?.townName,
+      merchant?.city,
+      merchant?.cityName,
+      merchant?.town
+    )
   );
 
-  const country = firstDefined(
-    transaction.country,
-    transaction.countryName,
-    transaction.locationCountry,
-    transactionLocationObject?.country,
-    transactionLocationObject?.countryName,
-    objectLocation?.country,
-    objectLocation?.countryName
+  const country = cleanText(
+    firstDefined(
+      transaction.country,
+      transaction.countryName,
+      transaction.locationCountry,
+      transactionLocationObject?.country,
+      transactionLocationObject?.countryName,
+      objectLocation?.country,
+      objectLocation?.countryName,
+      merchant?.country,
+      merchant?.countryName
+    )
   );
 
-  const location = firstDefined(
-    typeof transaction.location === "string" ? transaction.location : null,
-    transaction.locationName,
-    transaction.place,
-    transactionLocationObject?.displayName,
-    transactionLocationObject?.formatted,
-    transactionLocationObject?.address,
-    transactionLocationObject?.place,
-    objectLocation?.displayName,
-    objectLocation?.formatted,
-    objectLocation?.address,
-    objectLocation?.place
+  const location = cleanText(
+    firstDefined(
+      typeof transaction.location === "string" ? transaction.location : null,
+      transaction.locationName,
+      transaction.place,
+      transactionLocationObject?.displayName,
+      transactionLocationObject?.formatted,
+      transactionLocationObject?.address,
+      transactionLocationObject?.place,
+      objectLocation?.displayName,
+      objectLocation?.formatted,
+      objectLocation?.address,
+      objectLocation?.place,
+      merchant?.location
+    )
   );
 
   return {
@@ -136,14 +157,18 @@ function getMerchantForTransaction(transaction) {
         normalize(merchant.merchantId ?? merchant.id) === transactionMerchantId
     );
 
-    if (byId) return byId;
+    if (byId) {
+      return byId;
+    }
   }
 
   const transactionMerchantName = sanitizeNameForMatching(
     transaction.merchantName ?? transaction.name
   );
 
-  if (!transactionMerchantName) return null;
+  if (!transactionMerchantName) {
+    return null;
+  }
 
   return (
     merchantsData.find((merchant) =>
@@ -159,9 +184,9 @@ export async function getTransactionsForAccount(accountId) {
     .filter((txn) => txn.accountId === accountId)
     .map((transaction) => {
       const merchant = getMerchantForTransaction(transaction);
-      const normalizedLocation = getNormalizedLocation(transaction);
+      const normalizedLocation = getNormalizedLocation(transaction, merchant);
 
-      return {
+      const enrichedTransaction = {
         ...transaction,
         ...getParsedTransferDetails(transaction),
         ...normalizedLocation,
@@ -170,5 +195,17 @@ export async function getTransactionsForAccount(accountId) {
         currency: transaction.currency ?? merchant?.currency,
         exchangeRate: transaction.exchangeRate ?? merchant?.exchangeRate,
       };
+
+      // Temporary debug:
+      // console.log("ENRICHED TXN LOCATION", {
+      //   id: enrichedTransaction.id,
+      //   name: enrichedTransaction.name,
+      //   city: enrichedTransaction.city,
+      //   country: enrichedTransaction.country,
+      //   location: enrichedTransaction.location,
+      //   merchant: enrichedTransaction.merchant,
+      // });
+
+      return enrichedTransaction;
     });
 }

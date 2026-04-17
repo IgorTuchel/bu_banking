@@ -420,6 +420,68 @@
   background: var(--color-surface-alt);
 }
 
+.custom-green-marker {
+  background: transparent;
+  border: none;
+}
+
+.custom-green-marker-pin {
+  width: 32px;
+  height: 32px;
+  background: #2e8b57;
+  border: 3px solid white;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  position: relative;
+  animation:
+    marker-drop-in 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    marker-pulse 1.8s ease-in-out 0.5s infinite;
+  transform-origin: center bottom;
+}
+
+.custom-green-marker-pin::after {
+  content: "";
+  width: 12px;
+  height: 12px;
+  background: #d4af37;
+  border-radius: 50%;
+  position: absolute;
+  top: 7px;
+  left: 7px;
+}
+
+@keyframes marker-drop-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-18px) scale(0.7) rotate(-45deg);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(4px) scale(1.08) rotate(-45deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(-45deg);
+  }
+}
+
+@keyframes marker-pulse {
+  0%,
+  100% {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  }
+  50% {
+    box-shadow:
+      0 4px 10px rgba(0, 0, 0, 0.25),
+      0 0 0 8px rgba(46, 139, 87, 0.12);
+  }
+}
+
+.leaflet-interactive {
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
 .summary-card-note {
   display: block;
   margin-top: 0.35rem;
