@@ -1,10 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import L from "leaflet";
-import { MapContainer, Marker, TileLayer, Popup, Circle } from "react-leaflet";
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import "leaflet/dist/leaflet.css";
 import "./home.css";
 import "./transactions.css";
 
@@ -14,6 +8,7 @@ import Button from "../components/Button";
 import Skeleton from "../components/Skeleton";
 import SkeletonSummaryCard from "../components/SkeletonSummaryCard";
 import SkeletonTransactionsList from "../components/SkeletonTransactionsList";
+import TransactionLocationMap from "../components/TransactionLocationMap";
 
 import { getCurrentUser } from "../services/userService";
 import {
@@ -31,455 +26,12 @@ import {
   addRunningBalance,
 } from "../utils/transactionUtils";
 import { getAccountSummaryCards } from "../utils/accountSummaryUtils";
+import { getTransactionDetails } from "../utils/transactionDetailsUtils";
+import { shouldRenderTransactionMap } from "../utils/transactionLocationUtils";
 
-import { TRANSACTIONS_CONFIG } from "../constants/transactions";
+import { DATE_RANGE_OPTIONS, TRANSACTIONS_CONFIG } from "../constants/transactions";
 
 const { INITIAL_VISIBLE_COUNT, LOAD_MORE_COUNT } = TRANSACTIONS_CONFIG;
-const GEOCODE_CACHE = new Map();
-
-delete L.Icon.Default.prototype._getIconUrl;
-
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: markerIcon2x,
-  iconUrl: markerIcon,
-  shadowUrl: markerShadow,
-});
-
-const customMarkerIcon = L.divIcon({
-  className: "custom-green-marker",
-  html: `<div class="custom-green-marker-pin"></div>`,
-  iconSize: [38, 54],
-  iconAnchor: [19, 54],
-  popupAnchor: [0, -46],
-});
-
-const dateRangeOptions = [
-  { value: "thisMonth", label: "This month" },
-  { value: "last30Days", label: "Last 30 days" },
-  { value: "last90Days", label: "Last 90 days" },
-  { value: "allTime", label: "All time" },
-];
-
-function firstDefined(...values) {
-  return values.find(
-    (value) => value !== undefined && value !== null && value !== ""
-  );
-}
-
-function normalizeLocationValue(value) {
-  return String(value ?? "").trim();
-}
-
-function shouldUseLocationText(value) {
-  const normalized = normalizeLocationValue(value).toLowerCase();
-
-  if (!normalized) {
-    return false;
-  }
-
-  return ![
-    "card terminal",
-    "online",
-    "online banking",
-    "not provided",
-  ].some((term) => normalized.includes(term));
-}
-
-function getCountryName(value) {
-  const normalized = String(value ?? "").trim().toUpperCase();
-
-  const countryMap = {
-    GB: "United Kingdom",
-    UK: "United Kingdom",
-    US: "United States",
-    USA: "United States",
-    NL: "Netherlands",
-    FR: "France",
-    DE: "Germany",
-    ES: "Spain",
-    IT: "Italy",
-    IE: "Ireland",
-    PT: "Portugal",
-    BE: "Belgium",
-    CH: "Switzerland",
-    AT: "Austria",
-    SE: "Sweden",
-    NO: "Norway",
-    DK: "Denmark",
-    FI: "Finland",
-    PL: "Poland",
-    CZ: "Czech Republic",
-  };
-
-  return countryMap[normalized] ?? value;
-}
-
-function getLocationLabel(transaction) {
-  const merchant = transaction.merchant ?? {};
-
-  const city = firstDefined(
-    transaction.city,
-    transaction.cityName,
-    transaction.town,
-    transaction.locationCity,
-    merchant.city,
-    merchant.cityName,
-    merchant.town
-  );
-
-  const country = firstDefined(
-    transaction.country,
-    transaction.countryName,
-    merchant.country,
-    merchant.countryName
-  );
-
-  const readableCountry = getCountryName(country);
-
-  return firstDefined(
-    merchant.location,
-    transaction.location,
-    city && readableCountry ? `${city}, ${readableCountry}` : null,
-    city
-  );
-}
-
-function getGeocodeQuery(transaction) {
-  const merchant = transaction.merchant ?? {};
-
-  const city = firstDefined(
-    transaction.city,
-    transaction.cityName,
-    transaction.town,
-    transaction.locationCity,
-    merchant.city,
-    merchant.cityName,
-    merchant.town
-  );
-
-  if (city) {
-    return normalizeLocationValue(city);
-  }
-
-  const fallbackLocation = firstDefined(
-    typeof transaction.location === "string" ? transaction.location : null,
-    transaction.locationName,
-    transaction.place,
-    typeof merchant.location === "string" ? merchant.location : null
-  );
-
-  return shouldUseLocationText(fallbackLocation)
-    ? normalizeLocationValue(fallbackLocation)
-    : null;
-}
-
-async function geocodeFromOpenMeteo(query, signal) {
-  const params = new URLSearchParams({
-    count: "1",
-    name: query,
-    language: "en",
-    format: "json",
-  });
-
-  const url = `https://geocoding-api.open-meteo.com/v1/search?${params.toString()}`;
-  const response = await fetch(url, { signal });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(
-      `Open-Meteo geocoding failed: ${response.status} ${response.statusText} | ${text}`
-    );
-  }
-
-  const data = await response.json();
-  const match = data?.results?.[0];
-  const latitude = Number(match?.latitude);
-  const longitude = Number(match?.longitude);
-
-  if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
-    return [latitude, longitude];
-  }
-
-  return null;
-}
-
-async function geocodeLocationQuery(query, signal) {
-  if (!query) {
-    return null;
-  }
-
-  try {
-    return await geocodeFromOpenMeteo(query, signal);
-  } catch (error) {
-    if (error?.name === "AbortError") {
-      throw error;
-    }
-
-    console.error("Open-Meteo failed:", query, error?.message ?? error);
-    return null;
-  }
-}
-
-function TransactionLocationMap({ transaction }) {
-  const [center, setCenter] = useState(null);
-  const [isResolving, setIsResolving] = useState(false);
-
-  const geocodeQuery = getGeocodeQuery(transaction);
-  const cacheKey = geocodeQuery ?? "";
-  const locationLabel = getLocationLabel(transaction) ?? geocodeQuery;
-  const transactionTitle = firstDefined(
-    transaction.merchant?.name,
-    transaction.merchantName,
-    transaction.name,
-    "Transaction"
-  );
-
-  useEffect(() => {
-    if (!geocodeQuery) {
-      setCenter(null);
-      setIsResolving(false);
-      return;
-    }
-
-    if (GEOCODE_CACHE.has(cacheKey)) {
-      setCenter(GEOCODE_CACHE.get(cacheKey));
-      setIsResolving(false);
-      return;
-    }
-
-    const controller = new AbortController();
-    let isActive = true;
-
-    async function run() {
-      try {
-        setIsResolving(true);
-
-        const resolvedCoordinates = await geocodeLocationQuery(
-          geocodeQuery,
-          controller.signal
-        );
-
-        if (!isActive) {
-          return;
-        }
-
-        if (resolvedCoordinates) {
-          GEOCODE_CACHE.set(cacheKey, resolvedCoordinates);
-          setCenter(resolvedCoordinates);
-        } else {
-          setCenter(null);
-        }
-      } catch (error) {
-        if (error?.name !== "AbortError") {
-          console.error("Geocoding failed:", geocodeQuery, error);
-        }
-
-        if (isActive) {
-          setCenter(null);
-        }
-      } finally {
-        if (isActive) {
-          setIsResolving(false);
-        }
-      }
-    }
-
-    run();
-
-    return () => {
-      isActive = false;
-      controller.abort();
-    };
-  }, [transaction.id, geocodeQuery, cacheKey]);
-
-  if (isResolving) {
-    return (
-      <div className="transaction-map transaction-map-status">
-        Resolving map location{locationLabel ? ` for ${locationLabel}` : ""}…
-      </div>
-    );
-  }
-
-  if (!geocodeQuery) {
-    return (
-      <div className="transaction-map transaction-map-status">
-        No city location stored for this transaction.
-      </div>
-    );
-  }
-
-  if (!center) {
-    return (
-      <div className="transaction-map transaction-map-status">
-        Could not resolve map coordinates for {locationLabel ?? geocodeQuery}.
-      </div>
-    );
-  }
-
-  return (
-    <div className="transaction-map">
-      <MapContainer center={center} zoom={13} scrollWheelZoom={false}>
-        <TileLayer
-          attribution="&copy; OpenStreetMap contributors"
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <Circle
-          center={center}
-          radius={4000}
-          pathOptions={{
-            color: "#2E8B57",
-            fillColor: "#2E8B57",
-            fillOpacity: 0.15,
-            weight: 2,
-          }}
-        />
-        <Marker position={center} icon={customMarkerIcon}>
-          <Popup>
-            <strong>{transaction.name}</strong>
-            <br />
-            {locationLabel}
-            <br />
-            {transaction.amount}
-          </Popup>
-        </Marker>
-      </MapContainer>
-    </div>
-  );
-}
-
-function getCurrencyCode(transaction, accountCurrency) {
-  return firstDefined(
-    transaction.currency,
-    transaction.transactionCurrency,
-    transaction.originalCurrency,
-    accountCurrency
-  );
-}
-
-function getTransferCounterparty(transaction) {
-  return firstDefined(
-    transaction.payerName,
-    transaction.payeeName,
-    transaction.counterpartyName,
-    transaction.beneficiaryName
-  );
-}
-
-function getTransactionDetails(transaction, accountType, accountCurrency) {
-  const merchant = transaction.merchant ?? {};
-  const paymentType = firstDefined(transaction.paymentType, merchant.type);
-  const normalizedType = String(paymentType).toLowerCase();
-
-  const isTransfer =
-    String(transaction.category ?? "").toLowerCase() === "transfer" ||
-    normalizedType.includes("transfer");
-
-  const shouldHideLocation = [
-    "recurrent card",
-    "recurring card",
-    "direct debit",
-    "standing order",
-    "standing order payment",
-  ].some((keyword) => normalizedType.includes(keyword));
-
-  const baseDetails = [
-    {
-      label: "Transaction ID",
-      value: transaction.id,
-    },
-    {
-      label: "Category",
-      value: firstDefined(transaction.category, merchant.category),
-    },
-    {
-      label: "Type",
-      value: paymentType,
-    },
-    {
-      label: "Payment reference",
-      value: firstDefined(
-        transaction.paymentReference,
-        transaction.reference,
-        transaction.transferReference
-      ),
-    },
-    {
-      label: "Currency",
-      value: getCurrencyCode(transaction, accountCurrency),
-    },
-    {
-      label: "Exchange rate",
-      value: firstDefined(
-        transaction.exchangeRate,
-        transaction.fxRate,
-        transaction.forexRate
-      ),
-    },
-  ];
-
-  if (!isTransfer) {
-    baseDetails.splice(1, 0, {
-      label: "Merchant",
-      value: firstDefined(
-        merchant.name,
-        transaction.merchantName,
-        transaction.name
-      ),
-    });
-  }
-
-  if (!isTransfer && !shouldHideLocation) {
-    baseDetails.splice(4, 0, {
-      label: "Location",
-      value: getLocationLabel(transaction),
-    });
-  }
-
-  if (isTransfer) {
-    baseDetails.push(
-      {
-        label: "Payer / Payee",
-        value: getTransferCounterparty(transaction),
-      },
-      {
-        label: "Transfer reference",
-        value: firstDefined(
-          transaction.transferReference,
-          transaction.reference,
-          transaction.paymentReference
-        ),
-      }
-    );
-  }
-
-  if (accountType === "savings") {
-    baseDetails.push(
-      {
-        label: "Transfer method",
-        value: transaction.transferMethod ?? transaction.transferType,
-      },
-      {
-        label: "Counterparty",
-        value: transaction.counterpartyName ?? transaction.beneficiaryName,
-      }
-    );
-  }
-
-  if (accountType === "credit") {
-    baseDetails.push(
-      {
-        label: "Card last 4",
-        value: transaction.cardLast4 ?? transaction.cardEnding,
-      },
-      {
-        label: "Authorisation code",
-        value: transaction.authCode ?? transaction.authorisationCode,
-      }
-    );
-  }
-
-  return baseDetails.filter((detail) => Boolean(detail.value));
-}
 
 export default function TransactionsPage() {
   const [user, setUser] = useState(null);
@@ -821,7 +373,7 @@ export default function TransactionsPage() {
             <AccountDropdown
               value={selectedDateRange}
               onChange={setSelectedDateRange}
-              options={dateRangeOptions}
+              options={DATE_RANGE_OPTIONS}
             />
           </div>
 
@@ -931,6 +483,8 @@ export default function TransactionsPage() {
                           const isExpanded = Boolean(
                             expandedTransactions[transaction.id]
                           );
+                          const showTransactionMap =
+                            isExpanded && shouldRenderTransactionMap(transaction);
 
                           return (
                             <div
@@ -1012,7 +566,7 @@ export default function TransactionsPage() {
                                   ))}
                                 </div>
 
-                                {isExpanded ? (
+                                {showTransactionMap ? (
                                   <TransactionLocationMap
                                     transaction={transaction}
                                   />
