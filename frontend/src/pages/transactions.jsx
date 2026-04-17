@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { NavLink} from "react-router-dom";
 import "./home.css";
 import "./transactions.css";
 
@@ -258,10 +259,9 @@ export default function TransactionsPage() {
   }
 
   function toggleTransaction(transactionId) {
-    setExpandedTransactions((current) => ({
-      ...current,
-      [transactionId]: !current[transactionId],
-    }));
+    setExpandedTransactions((current) =>
+      current[transactionId] ? {} : { [transactionId]: true }
+    );
   }
 
   if (isLoading) {
@@ -558,19 +558,26 @@ export default function TransactionsPage() {
                                     : "transaction-extra-details-collapsed"
                                 }`}
                               >
-                                <div className="transaction-extra-details-inner">
-                                  {detailRows.map((detail) => (
-                                    <p key={`${transaction.id}-${detail.label}`}>
-                                      <span>{detail.label}:</span> {detail.value}
-                                    </p>
-                                  ))}
-                                </div>
+                                <div className="transaction-extra-details-content">
+                                  <div className="transaction-extra-details-inner">
+                                    {detailRows.map((detail) => (
+                                      <p key={`${transaction.id}-${detail.label}`}>
+                                        <span>{detail.label}:</span> {detail.value}
+                                      </p>
+                                    ))}
+                                  </div>
 
-                                {showTransactionMap ? (
-                                  <TransactionLocationMap
-                                    transaction={transaction}
-                                  />
-                                ) : null}
+                                  {showTransactionMap ? (
+                                    <TransactionLocationMap transaction={transaction} />
+                                  ) : null}
+
+                                  <NavLink
+                                    to="/support"
+                                    className="transaction-support-link"
+                                  >
+                                    Don&apos;t recognise this transaction?
+                                  </NavLink>
+                                </div>
                               </div>
                             </div>
                           );
