@@ -141,3 +141,20 @@ p {
     animation: none;
   }
 }
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+.app-layout {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}

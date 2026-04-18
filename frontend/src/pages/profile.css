@@ -1,0 +1,56 @@
+.profile-hero-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.profile-hero-subtext {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 0.95rem;
+}
+
+.profile-details-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.profile-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-md);
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.profile-detail-label {
+  font-weight: 600;
+  color: var(--color-text-heading);
+}
+
+.profile-detail-value {
+  color: var(--color-text-muted);
+  text-align: right;
+}
+
+.profile-actions-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.profile-action-button {
+  justify-content: center;
+}
+
+@media (max-width: 600px) {
+  .profile-detail-row {
+    flex-direction: column;
+  }
+
+  .profile-detail-value {
+    text-align: left;
+  }
+}
