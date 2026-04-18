@@ -1,8 +1,20 @@
 import "./navbar.css";
 import logo from "../assets/logo.png";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 
 export default function Navbar() {
+  const navigate = useNavigate();
+
+  function handleProfileClick() {
+    const loggedInUser = localStorage.getItem("loggedInUser");
+
+    if (loggedInUser) {
+      navigate("/profile");
+    } else {
+      navigate("/login");
+    }
+  }
+
   return (
     <header className="navbarFrame">
       <div className="navbarTopGold" />
@@ -42,7 +54,12 @@ export default function Navbar() {
             <button className="navIconButton" aria-label="Notifications">
               🔔
             </button>
-            <button className="navIconButton" aria-label="Profile">
+
+            <button
+              className="navIconButton"
+              aria-label="Profile"
+              onClick={handleProfileClick}
+            >
               👤
             </button>
           </div>

@@ -5,6 +5,7 @@ import Home from "./pages/home";
 import Transactions from "./pages/transactions";
 import Rewards from "./pages/rewards";
 import Support from "./pages/support";
+import Login from "./pages/Login";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/transactions" element={<Transactions />} />
         <Route path="/rewards" element={<Rewards />} />
         <Route path="/support" element={<Support />} />
+        <Route path="/login" element={<Login />} />
       </Routes>
 
       <Footer />
