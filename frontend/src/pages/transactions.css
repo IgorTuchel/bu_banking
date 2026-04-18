@@ -15,12 +15,37 @@
   font-size: 0.95rem;
 }
 
-.transactions-toolbar {
+.section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: var(--space-md);
   flex-wrap: wrap;
+}
+
+.section-header-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.view-statements-btn {
+   
+  height: 48px;
+  margin-right: 18px;
+}
+
+.view-statements-btn:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 6px 16px rgba(46, 139, 87, 0.35);
+}
+
+.transactions-toolbar {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: var(--space-md);
+  padding-right: 12px;
 }
 
 .transactions-date-range-popover {
@@ -566,6 +591,7 @@
 
   border-radius: 0.75rem;
   padding: 3px;
+  margin-right: 4px;
   background:
     linear-gradient(var(--color-surface), var(--color-surface)) padding-box,
     var(--color-gradient) border-box;
@@ -588,7 +614,7 @@
   top: 3px;
   bottom: 3px;
   left: 3px;
-  width: calc(25% - 6px);
+  width: calc((100% - 6px) / 4);
 
   border-radius: 0.55rem;
 

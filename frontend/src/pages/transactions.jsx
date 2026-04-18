@@ -352,13 +352,18 @@ export default function TransactionsPage() {
 
       <section className="transactions-section transactions-page-section">
         <div className="section-header">
-          <div>
+          <div className="section-header-left">
             <h2>All Transactions</h2>
             <p className="transactions-subtext">
               Showing {Math.min(visibleCount, filteredTransactions.length)} of{" "}
               {filteredTransactions.length} transactions
             </p>
           </div>
+
+          <NavLink to="/statements" className="btn btn-primary view-statements-btn">
+            <span className="btn-icon">📄</span>
+            <span className="btn-label">View Statements</span>
+          </NavLink>
         </div>
 
         <div className="transactions-toolbar">
