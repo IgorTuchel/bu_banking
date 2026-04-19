@@ -9,6 +9,7 @@
   gap: var(--space-md);
 }
 
+
 .transactions-subtext {
   margin: 0.35rem 0 0 0.5rem;
   color: var(--color-text-muted);

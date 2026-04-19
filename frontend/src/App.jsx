@@ -1,4 +1,6 @@
 import { Routes, Route, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+
 import Navbar from "./components/navbar";
 import Footer from "./components/Footer";
 import Home from "./pages/home";
@@ -12,6 +14,28 @@ function App() {
   const location = useLocation();
   const isLoginPage = location.pathname === "/login";
 
+  /* ✅ SET SCROLLBAR WIDTH AS CSS VARIABLE */
+  useEffect(() => {
+    function setScrollbarWidth() {
+      const scrollBarWidth =
+        window.innerWidth - document.documentElement.clientWidth;
+
+      document.documentElement.style.setProperty(
+        "--scrollbar-width",
+        `${scrollBarWidth}px`
+      );
+    }
+
+    setScrollbarWidth();
+
+    /* update on resize (important for responsive) */
+    window.addEventListener("resize", setScrollbarWidth);
+
+    return () => {
+      window.removeEventListener("resize", setScrollbarWidth);
+    };
+  }, []);
+
   return (
     <div className="app-layout">
       {!isLoginPage && <Navbar />}
@@ -24,7 +48,7 @@ function App() {
           <Route path="/support" element={<Support />} />
           <Route path="/login" element={<Login />} />
           <Route path="/profile" element={<Profile />} />
-         </Routes>
+        </Routes>
       </div>
 
       {!isLoginPage && <Footer />}
