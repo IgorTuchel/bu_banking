@@ -1,25 +1,10 @@
 import "./navbar.css";
 import logo from "../assets/logo.png";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 export default function Navbar() {
-  const navigate = useNavigate();
-
-  function handleProfileClick() {
-    const loggedInUser = localStorage.getItem("loggedInUser");
-
-    if (loggedInUser) {
-      navigate("/profile");
-    } else {
-      navigate("/login");
-    }
-  }
-
   return (
     <header className="navbarFrame">
-      <div className="navbarTopGold" />
-      <div className="navbarTopGreen" />
-
       <nav className="navbarLayout">
         <div className="navbarBrandBlock">
           <div className="navBrand">
@@ -36,32 +21,27 @@ export default function Navbar() {
 
         <div className="navbarCenterZone">
           <div className="navCapsuleGroup">
-            <button className="navCapsuleMenuButton" aria-label="Open menu">
-              ☰
-            </button>
+            <div className="navStrip">
+              <button className="navStripMenuButton" aria-label="Open menu">
+                ☰
+              </button>
 
-            <div className="navLinksCapsule">
-              <NavLink to="/">Home</NavLink>
-              <NavLink to="/transactions">Transactions</NavLink>
-              <NavLink to="/rewards">Rewards</NavLink>
-              <NavLink to="/support">Help &amp; Support</NavLink>
+              <div className="navLinksRow">
+                <NavLink to="/">Home</NavLink>
+                <NavLink to="/transactions">Transactions</NavLink>
+                <NavLink to="/rewards">Rewards</NavLink>
+                <NavLink to="/support">Help &amp; Support</NavLink>
+              </div>
+
+              <div className="navStripIcons">
+                <button className="navStripIconButton" aria-label="Notifications">
+                  🔔
+                </button>
+                <button className="navStripIconButton" aria-label="Profile">
+                  👤
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-
-        <div className="navbarRightBlock">
-          <div className="navbarRight">
-            <button className="navIconButton" aria-label="Notifications">
-              🔔
-            </button>
-
-            <button
-              className="navIconButton"
-              aria-label="Profile"
-              onClick={handleProfileClick}
-            >
-              👤
-            </button>
           </div>
         </div>
       </nav>
