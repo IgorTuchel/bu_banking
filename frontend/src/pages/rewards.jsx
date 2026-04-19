@@ -37,11 +37,33 @@ function Rewards() {
   });
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 900);
+    async function preloadRewardImages() {
+      const imageSources = rewardsData
+        .map((offer) => offer.image)
+        .filter(Boolean);
 
-    return () => clearTimeout(timer);
+      const minimumDelay = new Promise((resolve) => setTimeout(resolve, 700));
+
+      const imagePromises = imageSources.map(
+        (src) =>
+          new Promise((resolve) => {
+            const img = new Image();
+            img.src = src;
+            img.onload = resolve;
+            img.onerror = resolve;
+          })
+      );
+
+      try {
+        await Promise.all([minimumDelay, ...imagePromises]);
+      } catch (error) {
+        console.error("Failed to preload reward images:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    preloadRewardImages();
   }, []);
 
   useEffect(() => {

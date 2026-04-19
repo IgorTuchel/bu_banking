@@ -1,14 +1,22 @@
+import lifestyleImg from "../assets/rewards/Lifestyle.jpg";
+import shoppingImg from "../assets/rewards/Shopping.jpg";
+import entertainmentImg from "../assets/rewards/Entertainment.jpg";
+import transportImg from "../assets/rewards/Transport.jpg";
+import groceryImg from "../assets/rewards/Grocery.jpg";
+import travelImg from "../assets/rewards/Travel.jpg";
+import diningImg from "../assets/rewards/Dining.jpg";
+
 const rewardsData = [
   {
-    id: "coffee-cashback",
-    title: "Coffee Shop Cashback",
-    description: "Earn cashback when you pay at selected coffee shops this month.",
+    id: "dining-cashback",
+    title: "Dining Cashback",
+    description: "Earn cashback when you eat out at selected restaurants this month.",
     category: "Dining",
     cashback: "5% cashback",
     expiry: "Ends 18 May",
-    image: "",
+    image: diningImg,
     activated: false,
-  },
+},
   {
     id: "travel-boost",
     title: "Travel Rewards Boost",
@@ -16,17 +24,17 @@ const rewardsData = [
     category: "Travel",
     cashback: "2x points",
     expiry: "Ends 25 May",
-    image: "",
+    image: travelImg,
     activated: false,
   },
   {
     id: "grocery-offer",
     title: "Grocery Saver",
     description: "Unlock cashback on eligible grocery spending this week.",
-    category: "Shopping",
+    category: "Groceries",
     cashback: "3% cashback",
     expiry: "Ends 28 May",
-    image: "",
+    image: groceryImg,
     activated: false,
   },
   {
@@ -36,7 +44,7 @@ const rewardsData = [
     category: "Transport",
     cashback: "4% cashback",
     expiry: "Ends 02 Jun",
-    image: "",
+    image: transportImg,
     activated: false,
   },
   {
@@ -46,7 +54,7 @@ const rewardsData = [
     category: "Entertainment",
     cashback: "6% cashback",
     expiry: "Ends 06 Jun",
-    image: "",
+    image: entertainmentImg,
     activated: false,
   },
   {
@@ -56,7 +64,7 @@ const rewardsData = [
     category: "Shopping",
     cashback: "7% cashback",
     expiry: "Ends 10 Jun",
-    image: "",
+    image: shoppingImg,
     activated: false,
   },
   {
@@ -66,7 +74,7 @@ const rewardsData = [
     category: "Lifestyle",
     cashback: "5% cashback",
     expiry: "Ends 14 Jun",
-    image: "",
+    image: lifestyleImg,
     activated: false,
   },
 ];
