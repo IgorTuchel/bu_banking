@@ -49,24 +49,6 @@ function Landing() {
               Manage your accounts, track rewards, review transactions, and access
               support from a premium banking experience built for modern customers.
             </p>
-
-            <div className="landing-hero-actions">
-              <button
-                type="button"
-                className="landing-cta-button landing-cta-button-primary"
-                onClick={() => navigate("/login")}
-              >
-                Login
-              </button>
-
-              <button
-                type="button"
-                className="landing-cta-button landing-cta-button-secondary"
-                onClick={() => navigate("/register")}
-              >
-                Register
-              </button>
-            </div>
           </div>
 
           <div className="landing-hero-card">

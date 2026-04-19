@@ -69,7 +69,7 @@ export default function Navbar() {
                   </button>
 
                   <div className="navLinksRow">
-                    <NavLink to="/" onClick={closeMenu}>
+                    <NavLink to="/dashboard" onClick={closeMenu}>
                       Home
                     </NavLink>
                     <NavLink to="/transactions" onClick={closeMenu}>

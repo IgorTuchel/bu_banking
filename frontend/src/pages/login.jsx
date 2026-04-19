@@ -52,7 +52,7 @@ function Login() {
     };
 
       localStorage.setItem("loggedInUser", JSON.stringify(mockUser));
-      navigate("/profile");
+      navigate("/dashboard");
       }, 800);
   }
 
