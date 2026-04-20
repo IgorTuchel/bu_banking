@@ -126,7 +126,7 @@ export default function Navbar() {
               <NavLink to="/spending-insights" onClick={closeMenu}>
                 Spending Insights
               </NavLink>
-              <NavLink to="/credit-score" onClick={closeMenu}>
+              <NavLink to="/creditScore" onClick={closeMenu}>
                 Credit Score
               </NavLink>
             </div>
