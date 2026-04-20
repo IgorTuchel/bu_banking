@@ -3,6 +3,7 @@ import { useEffect } from "react";
 
 import Navbar from "./components/navbar";
 import Footer from "./components/Footer";
+import Landing from "./pages/landing";
 import Home from "./pages/home";
 import Transactions from "./pages/transactions";
 import Rewards from "./pages/rewards";
@@ -12,7 +13,9 @@ import Profile from "./pages/Profile";
 
 function App() {
   const location = useLocation();
-  const isLoginPage = location.pathname === "/login";
+
+  const hideMainLayout =
+    location.pathname === "/" || location.pathname === "/login";
 
   /* ✅ SET SCROLLBAR WIDTH AS CSS VARIABLE */
   useEffect(() => {
@@ -27,8 +30,6 @@ function App() {
     }
 
     setScrollbarWidth();
-
-    /* update on resize (important for responsive) */
     window.addEventListener("resize", setScrollbarWidth);
 
     return () => {
@@ -38,20 +39,25 @@ function App() {
 
   return (
     <div className="app-layout">
-      {!isLoginPage && <Navbar />}
+      {!hideMainLayout && <Navbar />}
 
       <div className="app-content">
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Landing />} />
+          <Route path="/dashboard" element={<Home />} />
           <Route path="/transactions" element={<Transactions />} />
           <Route path="/rewards" element={<Rewards />} />
           <Route path="/support" element={<Support />} />
           <Route path="/login" element={<Login />} />
           <Route path="/profile" element={<Profile />} />
+          <Route
+            path="/register"
+            element={<div style={{ padding: "2rem" }}>Register page coming soon.</div>}
+          />
         </Routes>
       </div>
 
-      {!isLoginPage && <Footer />}
+      {!hideMainLayout && <Footer />}
     </div>
   );
 }

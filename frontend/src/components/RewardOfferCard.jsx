@@ -28,38 +28,33 @@ function RewardOfferCard({
       } ${isAnimating ? "reward-offer-card-animating" : ""}`}
     >
       <div className="reward-offer-image-wrap">
-        {image ? (
-          <img src={image} alt={title} className="reward-offer-image" />
-        ) : (
-          <div className="reward-offer-image-placeholder">
-            <span>{category}</span>
+        {image && (
+          <div className="reward-card-image">
+            <img src={image} alt={title} />
+            <span className="reward-card-image-badge">{category}</span>
           </div>
         )}
       </div>
 
       <div className="reward-offer-content">
-        <div className="reward-offer-top">
-          <span className="reward-offer-tag">{category}</span>
-        </div>
+  <h3>{title}</h3>
+  <p>{description}</p>
 
-        <h3>{title}</h3>
-        <p>{description}</p>
+  <div className="reward-offer-meta">
+    <span className="reward-offer-cashback">{cashback}</span>
+    <span className="reward-offer-expiry">{expiry}</span>
+  </div>
 
-        <div className="reward-offer-meta">
-          <span className="reward-offer-cashback">{cashback}</span>
-          <span className="reward-offer-expiry">{expiry}</span>
-        </div>
-
-        <button
-          type="button"
-          className={`reward-offer-button ${
-            activated ? "reward-offer-button-active" : ""
-          }`}
-          onClick={handleClick}
-        >
-          {activated ? "Activated" : "Activate"}
-        </button>
-      </div>
+  <button
+    type="button"
+    className={`reward-offer-button ${
+      activated ? "reward-offer-button-active" : ""
+    }`}
+    onClick={handleClick}
+  >
+    {activated ? "✓ Activated" : "Activate"}
+  </button>
+</div>
     </article>
   );
 }
