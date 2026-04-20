@@ -19,6 +19,11 @@ export default function Navbar() {
     const scrollBarWidth =
       window.innerWidth - document.documentElement.clientWidth;
 
+    document.documentElement.style.setProperty(
+      "--scrollbar-width",
+      `${scrollBarWidth}px`
+    );
+
     if (isMenuOpen) {
       document.body.style.overflow = "hidden";
       document.body.style.paddingRight = `${scrollBarWidth}px`;
@@ -35,7 +40,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="navbarFrame">
+      <header className={`navbarFrame ${isMenuOpen ? "menu-open" : ""}`}>
         <nav className="navbarLayout">
           <div className="navbarBrandBlock">
             <div className="navBrand">
