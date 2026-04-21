@@ -16,7 +16,7 @@ import SkeletonTransactionsList from "../components/SkeletonTransactionsList";
 import { getDashboardData } from "../services/dashboardService";
 import { DEFAULT_ACCOUNT_INDEX } from "../constants/dashboard";
 import { getSelectedAccount } from "../utils/dashboardUtils";
-import { getAccountSummaryCards } from "../utils/accountSummaryUtils";
+import { getHomeAccountSummaryCards } from "../utils/accountSummaryUtils";
 
 function Home() {
   const [dashboardData, setDashboardData] = useState(null);
@@ -71,11 +71,8 @@ function Home() {
   const summaryCards = useMemo(() => {
     if (!selectedAccount) return [];
 
-    return getAccountSummaryCards({
+    return getHomeAccountSummaryCards({
       account: selectedAccount,
-      incoming: 0,
-      outgoing: 0,
-      dateRangeLabel: "",
     });
   }, [selectedAccount]);
 
@@ -95,8 +92,16 @@ function Home() {
           aria-hidden="true"
         >
           <Skeleton width="140px" height="0.9rem" />
-          <Skeleton width="200px" height="1.6rem" style={{ marginTop: "0.8rem" }} />
-          <Skeleton width="110px" height="0.9rem" style={{ marginTop: "0.75rem" }} />
+          <Skeleton
+            width="200px"
+            height="1.6rem"
+            style={{ marginTop: "0.8rem" }}
+          />
+          <Skeleton
+            width="110px"
+            height="0.9rem"
+            style={{ marginTop: "0.75rem" }}
+          />
         </div>
 
         <section className="summary-grid">

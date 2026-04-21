@@ -6,10 +6,15 @@ import Footer from "./components/Footer";
 import Landing from "./pages/landing";
 import Home from "./pages/home";
 import Transactions from "./pages/transactions";
+import ScheduledPayments from "./pages/scheduledPayments";
 import Rewards from "./pages/rewards";
 import Support from "./pages/support";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
+import TransferPage from "./pages/transfer";
+import CreditScore from "./pages/creditScore"
+import RequestPaymentPage from "./pages/requestPayment";
+import Cards from "./pages/cards";
 
 function App() {
   const location = useLocation();
@@ -46,10 +51,15 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/dashboard" element={<Home />} />
           <Route path="/transactions" element={<Transactions />} />
+          <Route path="/scheduled-payments" element={<ScheduledPayments />} />
           <Route path="/rewards" element={<Rewards />} />
           <Route path="/support" element={<Support />} />
           <Route path="/login" element={<Login />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/transfer" element={<TransferPage />} />
+          <Route path="/credit-score" element={<CreditScore />} />
+          <Route path="/request-payment" element={<RequestPaymentPage />} />
+          <Route path="/cards" element={<Cards />} />
           <Route
             path="/register"
             element={<div style={{ padding: "2rem" }}>Register page coming soon.</div>}

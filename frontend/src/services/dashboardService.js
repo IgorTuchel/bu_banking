@@ -4,10 +4,34 @@ import { getTransactionsForAccount } from "./transactionService";
 
 function buildQuickActions() {
   return [
-    { id: "transfer", label: "Transfer", icon: "↗" },
-    { id: "request", label: "Request", icon: "↩" },
-    { id: "cards", label: "Cards", icon: "💳" },
-    { id: "scheduled-payments", label: "Scheduled Payments", icon: "📅" },
+    {
+      id: "transfer",
+      label: "Transfer",
+      description: "Send money instantly",
+      icon: "↗",
+      path: "/transfer",
+    },
+    {
+      id: "request",
+      label: "Request",
+      description: "Ask for a payment",
+      icon: "↩",
+      path: "/request-payment",
+    },
+    {
+      id: "cards",
+      label: "Cards",
+      description: "View, freeze & manage",
+      icon: "💳",
+      path: "/cards",
+    },
+    {
+      id: "scheduled-payments",
+      label: "Scheduled",
+      description: "Direct debits & standing orders",
+      icon: "📅",
+      path: "/scheduled-payments",
+    },
   ];
 }
 

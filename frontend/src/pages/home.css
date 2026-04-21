@@ -260,6 +260,7 @@
   border-radius: var(--radius-lg);
   cursor: pointer;
   width: 100%;
+  height: 7rem;
   box-sizing: border-box;
   background: var(--color-green-gradient);
   color: white;
@@ -268,6 +269,33 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   transition: all 0.2s ease;
 }
+.quick-action-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;  
+  text-align: center;
+  gap: 0.2rem;
+  padding-left: 5rem;
+}
+
+.quick-action-label {
+  color: var(--color-accent);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.quick-action-description {
+  font-size: 0.8rem;
+  opacity: 0.8;
+  font-weight: 400;
+  line-height: 1.2;
+
+  /* prevent overflow */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 
 .quick-action-button:hover {
   transform: translateY(-2px);
@@ -275,14 +303,16 @@
 }
 
 .quick-action-icon {
-  width: 42px;
-  height: 42px;
+  width: 48px;
+  height: 48px;
+
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.18);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 1.2rem;
 }
 
 .home-content-grid {

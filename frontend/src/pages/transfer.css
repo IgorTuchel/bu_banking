@@ -1,0 +1,163 @@
+.transfer-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+  padding: var(--space-xl);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.transfer-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
+  gap: var(--space-md);
+  width: 100%;
+  align-items: start;
+}
+
+.transfer-panel,
+.transfer-side-panel {
+  position: relative;
+  padding: 1.25rem;
+  border-radius: var(--radius-md);
+  border-top: 5px solid transparent;
+  background:
+    linear-gradient(var(--color-surface), var(--color-surface)) padding-box,
+    var(--color-gradient) border-box;
+  box-shadow: var(--shadow-sm);
+  box-sizing: border-box;
+}
+
+.section-header-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.transfer-subtext {
+  margin: 0.35rem 0 0 0.5rem;
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+}
+
+.transfer-type-toggle {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.transfer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+}
+
+.transfer-form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.transfer-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.transfer-form-group label {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--color-text-heading);
+}
+
+.transfer-form-group input,
+.transfer-form-group select {
+  width: 100%;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.95rem;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.transfer-form-group input:focus,
+.transfer-form-group select:focus {
+  border-color: var(--color-primary);
+}
+
+.transfer-form-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 0.25rem;
+}
+
+.transfer-help-card {
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-alt);
+  box-shadow: var(--shadow-sm);
+  box-sizing: border-box;
+  border: 1px solid var(--color-border);
+}
+
+.transfer-help-card + .transfer-help-card {
+  margin-top: 1rem;
+}
+
+.transfer-help-card h3 {
+  margin: 0 0 0.65rem 0;
+  color: var(--color-text-heading);
+  font-size: 1rem;
+}
+
+.transfer-help-card p {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.transfer-help-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--color-text-muted);
+}
+
+.transfer-help-list li + li {
+  margin-top: 0.45rem;
+}
+
+.success-card {
+  border-left: 6px solid var(--color-success);
+}
+
+@media (max-width: 992px) {
+  .transfer-page {
+    padding: var(--space-lg);
+  }
+
+  .transfer-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .transfer-page {
+    padding: var(--space-md);
+    gap: var(--space-lg);
+  }
+
+  .transfer-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .transfer-type-toggle {
+    flex-direction: column;
+  }
+
+  .transfer-type-toggle .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

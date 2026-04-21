@@ -1,0 +1,323 @@
+.request-payment-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+  padding: var(--space-xl);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.request-payment-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
+  gap: var(--space-md);
+  width: 100%;
+  align-items: start;
+}
+
+.request-payment-panel,
+.request-payment-side-panel {
+  position: relative;
+  padding: 1.25rem;
+  border-radius: var(--radius-md);
+  border-top: 5px solid transparent;
+  background:
+    linear-gradient(var(--color-surface), var(--color-surface)) padding-box,
+    var(--color-gradient) border-box;
+  box-shadow: var(--shadow-sm);
+  box-sizing: border-box;
+}
+
+.section-header-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.request-payment-subtext {
+  margin: 0.35rem 0 0 0.5rem;
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+}
+
+.request-method-toggle {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.request-payment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+}
+
+.request-payment-form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.request-payment-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.request-payment-form-group label {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--color-text-heading);
+}
+
+.request-payment-form-group input,
+.request-payment-form-group textarea {
+  width: 100%;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.95rem;
+  box-sizing: border-box;
+  outline: none;
+  resize: vertical;
+}
+
+.request-payment-form-group input:focus,
+.request-payment-form-group textarea:focus {
+  border-color: var(--color-primary);
+}
+
+.request-payment-form-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 0.25rem;
+}
+
+.request-help-card {
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-alt);
+  box-shadow: var(--shadow-sm);
+  box-sizing: border-box;
+  border: 1px solid var(--color-border);
+}
+
+.request-help-card + .request-help-card {
+  margin-top: 1rem;
+}
+
+.request-help-card h3 {
+  margin: 0 0 0.65rem 0;
+  color: var(--color-text-heading);
+  font-size: 1rem;
+}
+
+.request-help-card p {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.request-help-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--color-text-muted);
+}
+
+.request-help-list li + li {
+  margin-top: 0.45rem;
+}
+
+.success-card {
+  border-left: 6px solid var(--color-success);
+}
+
+.request-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.request-history-card {
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-alt);
+  box-shadow: var(--shadow-sm);
+  box-sizing: border-box;
+  border: 1px solid var(--color-border);
+}
+
+.request-history-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.request-history-top h3 {
+  margin: 0;
+  color: var(--color-text-heading);
+  font-size: 1rem;
+}
+
+.request-history-amount {
+  margin: 0.45rem 0 0 0;
+  font-weight: 700;
+  color: var(--color-text-heading);
+}
+
+.request-history-meta {
+  margin: 0.35rem 0 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.request-history-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 0.8rem;
+}
+
+.request-history-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 86px;
+  padding: 0.32rem 0.6rem;
+  border-radius: 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  text-transform: capitalize;
+}
+
+.request-history-status-pending {
+  background: rgba(245, 158, 11, 0.14);
+  color: #b7791f;
+}
+
+.request-history-status-paid {
+  background: rgba(34, 197, 94, 0.12);
+  color: var(--color-success);
+}
+
+.request-history-status-cancelled,
+.request-history-status-expired {
+  background: rgba(220, 38, 38, 0.12);
+  color: var(--color-error);
+}
+
+.request-payment-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-md);
+  width: 100%;
+}
+
+.request-status-filters.segmented {
+  position: relative;
+  display: flex;
+  border-radius: 0.75rem;
+  padding: 3px;
+  margin-bottom: 1rem;
+  background:
+    linear-gradient(var(--color-surface), var(--color-surface)) padding-box,
+    var(--color-gradient) border-box;
+  border: 1px solid transparent;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 4px 14px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.request-status-indicator {
+  width: calc((100% - 6px) / 5);
+}
+
+.request-status-btn {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  justify-content: center;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--color-text);
+  border-radius: 0;
+  padding: 0.5rem 0.6rem;
+  transition: color 0.25s ease;
+  min-width: 0;
+}
+
+.request-status-btn.btn-active {
+  color: white;
+}
+
+.request-status-btn:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 20%;
+  bottom: 20%;
+  width: 1px;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 992px) {
+  .request-payment-page {
+    padding: var(--space-lg);
+  }
+
+  .request-payment-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .request-payment-page {
+    padding: var(--space-md);
+    gap: var(--space-lg);
+  }
+
+  .request-payment-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .request-method-toggle {
+    flex-direction: column;
+  }
+
+  .request-method-toggle .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 1200px) {
+  .request-payment-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .request-payment-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .request-status-filters.segmented {
+    flex-wrap: wrap;
+  }
+
+  .request-status-indicator {
+    display: none;
+  }
+
+  .request-status-btn {
+    width: 100%;
+  }
+}
