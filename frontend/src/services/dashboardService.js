@@ -4,10 +4,10 @@ import { getTransactionsForAccount } from "./transactionService";
 
 function buildQuickActions() {
   return [
-    { id: "pay", label: "Pay" },
-    { id: "transfer", label: "Transfer" },
-    { id: "request", label: "Request" },
-    { id: "cards", label: "Cards" },
+    { id: "transfer", label: "Transfer", icon: "↗" },
+    { id: "request", label: "Request", icon: "↩" },
+    { id: "cards", label: "Cards", icon: "💳" },
+    { id: "scheduled-payments", label: "Scheduled Payments", icon: "📅" },
   ];
 }
 

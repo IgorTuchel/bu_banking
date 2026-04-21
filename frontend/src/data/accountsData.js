@@ -6,8 +6,11 @@ export const accountsData = [
     type: "current",
     currency: "GBP",
     currentBalance: 3166.68,
+
+    accountNumber: "56781234",
     maskedAccountNumber: "•••• 1234",
     sortCode: "12-34-56",
+
     status: "active",
   },
   {
@@ -17,8 +20,11 @@ export const accountsData = [
     type: "savings",
     currency: "GBP",
     currentBalance: 8420.15,
+
+    accountNumber: "12345678",
     maskedAccountNumber: "•••• 5678",
     sortCode: "12-34-56",
+
     status: "active",
 
     interestRate: 4.1,
@@ -30,8 +36,11 @@ export const accountsData = [
     name: "Platinum Credit",
     type: "credit",
     currency: "GBP",
+
+    accountNumber: "34569012",
     maskedAccountNumber: "•••• 9012",
     sortCode: "22-11-44",
+
     status: "active",
 
     creditLimit: 8000.0,

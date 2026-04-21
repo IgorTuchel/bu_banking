@@ -82,7 +82,9 @@
   );
   color: white;
   box-sizing: border-box;
-  box-shadow: var(--shadow-md);
+  box-shadow:
+    var(--shadow-md),
+    0 0 0 1px var(--color-accent);
 }
 
 .selected-account-card-top {
@@ -92,12 +94,6 @@
   gap: var(--space-md);
   margin-bottom: var(--space-sm);
   flex-wrap: wrap;
-}
-
-.selected-account-card {
-  box-shadow:
-    var(--shadow-md),
-    0 0 0 1px var(--color-accent);
 }
 
 .selected-account-label {
@@ -119,7 +115,86 @@
   font-size: 1.5rem;
   font-weight: 700;
   margin: 0;
+  color: var(--color-accent);
+}
+
+.selected-account-details {
+  margin-top: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.selected-account-detail {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.selected-account-detail-label {
+  min-width: 7.25rem;
+  font-weight: 700;
   color: white;
+}
+
+.selected-account-detail-value {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.selected-account-detail-reveal {
+  display: inline-block;
+  min-width: 5.5rem;
+  transition:
+    opacity 0.28s ease,
+    transform 0.28s ease,
+    filter 0.28s ease;
+  opacity: 0.9;
+  filter: blur(2px);
+  transform: translateY(1px);
+}
+
+.selected-account-detail-reveal.is-revealed {
+  opacity: 1;
+  filter: blur(0);
+  transform: translateY(0);
+}
+
+.selected-account-eye-btn {
+  margin-left: 0.35rem;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.selected-account-eye-btn:hover {
+  transform: translateY(-1px) scale(1.05);
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.selected-account-eye-btn:active {
+  transform: scale(0.95);
+}
+
+.selected-account-eye-btn:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 3px;
 }
 
 .summary-grid {
@@ -135,7 +210,6 @@
   background: var(--color-surface);
   box-sizing: border-box;
   box-shadow: var(--shadow-sm);
-
   border-left: 5px solid var(--color-accent);
 }
 
@@ -152,14 +226,6 @@
   color: var(--color-text-heading);
 }
 
-.summary-card {
-  padding: 1.25rem;
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-sm);
-  border-left: 5px solid var(--color-accent);
-}
-
 .summary-balance {
   border-left-color: var(--color-accent);
 }
@@ -171,7 +237,6 @@
 .summary-outgoing {
   border-left-color: var(--color-accent);
 }
-
 
 .quick-actions-section {
   display: flex;
@@ -200,19 +265,15 @@
   cursor: pointer;
   width: 100%;
   box-sizing: border-box;
-
   background: linear-gradient(
     135deg,
     var(--color-primary-dark),
     var(--color-primary)
   );
-
   color: white;
   font-weight: 600;
-
   box-shadow: var(--shadow-sm);
   border: 1px solid rgba(255, 255, 255, 0.08);
-
   transition: all 0.2s ease;
 }
 
@@ -225,10 +286,8 @@
   width: 42px;
   height: 42px;
   border-radius: var(--radius-md);
-
   background: rgba(255, 255, 255, 0.18);
   color: white;
-
   display: flex;
   align-items: center;
   justify-content: center;
@@ -247,11 +306,9 @@
   padding: 1.25rem;
   border-radius: var(--radius-md);
   border-top: 5px solid transparent;
-
   background:
     linear-gradient(var(--color-surface), var(--color-surface)) padding-box,
     var(--color-gradient) border-box;
-
   box-shadow: var(--shadow-sm);
   box-sizing: border-box;
 }
@@ -261,10 +318,6 @@
   margin-top: 0;
   margin-bottom: var(--space-md);
   color: var(--color-text-heading);
-}
-
-.transactions-section h2,
-.notifications-section h2 {
   padding-left: 0.5rem;
 }
 
@@ -415,6 +468,14 @@
 
   .selected-account-name {
     font-size: 1.25rem;
+  }
+
+  .selected-account-detail {
+    font-size: 0.9rem;
+  }
+
+  .selected-account-detail-label {
+    min-width: 6.5rem;
   }
 
   .summary-grid {

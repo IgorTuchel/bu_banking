@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { NavLink} from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import "./home.css";
 import "./transactions.css";
 
@@ -10,6 +10,7 @@ import Skeleton from "../components/Skeleton";
 import SkeletonSummaryCard from "../components/SkeletonSummaryCard";
 import SkeletonTransactionsList from "../components/SkeletonTransactionsList";
 import TransactionLocationMap from "../components/TransactionLocationMap";
+import SelectedAccountCard from "../components/SelectedAccountCard";
 
 import { getCurrentUser } from "../services/userService";
 import {
@@ -30,7 +31,10 @@ import { getAccountSummaryCards } from "../utils/accountSummaryUtils";
 import { getTransactionDetails } from "../utils/transactionDetailsUtils";
 import { shouldRenderTransactionMap } from "../utils/transactionLocationUtils";
 
-import { DATE_RANGE_OPTIONS, TRANSACTIONS_CONFIG } from "../constants/transactions";
+import {
+  DATE_RANGE_OPTIONS,
+  TRANSACTIONS_CONFIG,
+} from "../constants/transactions";
 
 const { INITIAL_VISIBLE_COUNT, LOAD_MORE_COUNT } = TRANSACTIONS_CONFIG;
 
@@ -274,6 +278,24 @@ export default function TransactionsPage() {
 
         <Skeleton width="260px" height="3rem" />
 
+        <div
+          className="selected-account-card"
+          style={{ pointerEvents: "none" }}
+          aria-hidden="true"
+        >
+          <Skeleton width="140px" height="0.9rem" />
+          <Skeleton
+            width="200px"
+            height="1.6rem"
+            style={{ marginTop: "0.8rem" }}
+          />
+          <Skeleton
+            width="110px"
+            height="0.9rem"
+            style={{ marginTop: "0.75rem" }}
+          />
+        </div>
+
         <section className="summary-grid">
           {[...Array(3)].map((_, index) => (
             <SkeletonSummaryCard key={index} />
@@ -323,6 +345,8 @@ export default function TransactionsPage() {
         onChange={setSelectedAccountKey}
         options={accountOptions}
       />
+
+      <SelectedAccountCard account={selectedAccount} />
 
       <section className="summary-grid">
         {summaryCards.map((card) => (
