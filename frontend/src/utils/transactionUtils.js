@@ -83,6 +83,9 @@ export function getGroupingLabel(timestamp, status) {
   });
 }
 
+/* ============================= */
+/* 🔹 TRANSACTIONS PAGE SORT     */
+/* ============================= */
 export function sortTransactions(transactions) {
   return [...transactions].sort((a, b) => {
     const aPending = isPendingStatus(a.status);
@@ -100,6 +103,38 @@ export function sortTransactions(transactions) {
   });
 }
 
+/* ============================= */
+/* 🔹 HOME PAGE SORT             */
+/* ============================= */
+export function sortTransactionsByNewest(transactions) {
+  return [...transactions].sort(
+    (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+  );
+}
+
+export function getHomeRecentTransactions(transactions, limit = 15) {
+  const newestFirst = sortTransactionsByNewest(transactions);
+  const limited = newestFirst.slice(0, limit);
+
+  return [...limited].sort((a, b) => {
+    const aPending = isPendingStatus(a.status);
+    const bPending = isPendingStatus(b.status);
+
+    if (aPending && !bPending) {
+      return -1;
+    }
+
+    if (!aPending && bPending) {
+      return 1;
+    }
+
+    return new Date(b.timestamp) - new Date(a.timestamp);
+  });
+}
+
+/* ============================= */
+/* 🔹 GROUPING                   */
+/* ============================= */
 export function groupTransactions(transactions) {
   const sortedTransactions = sortTransactions(transactions);
   const groups = [];
@@ -121,6 +156,9 @@ export function groupTransactions(transactions) {
   return groups;
 }
 
+/* ============================= */
+/* 🔹 FILTERING                  */
+/* ============================= */
 export function filterTransactionsByDateRange(transactions, selectedDateRange) {
   if (!Array.isArray(transactions)) {
     return [];
@@ -182,6 +220,9 @@ export function getDateRangeLabel(selectedDateRange) {
   return "Selected period";
 }
 
+/* ============================= */
+/* 🔹 RUNNING BALANCE            */
+/* ============================= */
 export function addRunningBalance(transactions, currentBalance = 0) {
   if (!Array.isArray(transactions) || transactions.length === 0) {
     return [];

@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import "./home.css";
+import "./transactions.css";
 
 import DashboardHeader from "../components/DashboardHeader";
 import SummaryCard from "../components/SummaryCard";
 import QuickActions from "../components/QuickActions";
-import TransactionsList from "../components/TransactionsList";
+import HomeTransactionsPanel from "../components/HomeTransactionsPanel";
 import NotificationsPanel from "../components/NotificationsPanel";
 import AccountDropdown from "../components/AccountDropdown";
 import SelectedAccountCard from "../components/SelectedAccountCard";
@@ -171,7 +172,10 @@ function Home() {
       <QuickActions actions={dashboardData.quickActions} />
 
       <section className="home-content-grid">
-        <TransactionsList transactions={selectedAccount.transactions ?? []} />
+        <HomeTransactionsPanel
+          transactions={selectedAccount.transactions ?? []}
+          account={selectedAccount}
+        />
         <NotificationsPanel notifications={dashboardData.notifications ?? []} />
       </section>
     </main>
