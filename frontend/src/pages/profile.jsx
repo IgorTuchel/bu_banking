@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./home.css";
 import "./profile.css";
 import profileData from "../data/profileData";
 

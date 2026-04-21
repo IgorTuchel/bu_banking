@@ -1,11 +1,12 @@
 import "./navbar.css";
 import logo from "../assets/logo.png";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import MenuSlideshow from "./MenuSlideshow";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   function toggleMenu() {
     setIsMenuOpen((prev) => !prev);
@@ -100,8 +101,9 @@ export default function Navbar() {
                       className="navStripIconButton"
                       aria-label="Profile"
                       type="button"
+                      onClick={() => navigate("/profile")}
                     >
-                      👤
+                    👤
                     </button>
                   </div>
                 </div>
