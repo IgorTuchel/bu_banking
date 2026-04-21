@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import "./home.css";
 import "./Support.css";
 
 import FaqItem from "../components/FaqItem";
@@ -107,8 +106,8 @@ function HelpSupport() {
           through app features, and direct you to the right support options.
         </p>
 
-        <div className="support-hero-actions">
-          <button type="button" className="quick-action-button support-hero-button">
+        <div className="chat-cta-wrapper">
+          <button type="button" className="chat-cta-button">
             Start Chat
           </button>
         </div>
