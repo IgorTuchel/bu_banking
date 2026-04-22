@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 function SelectedAccountCard({ account }) {
   const [isRevealed, setIsRevealed] = useState(false);
@@ -39,7 +40,11 @@ function SelectedAccountCard({ account }) {
               isRevealed ? "Hide account number" : "Show account number"
             }
           >
-            {isRevealed ? "🙈" : "👁"}
+            {isRevealed ? (
+              <EyeOff size={18} strokeWidth={2.4} />
+            ) : (
+              <Eye size={18} strokeWidth={2.4} />
+            )}
           </button>
         </p>
 

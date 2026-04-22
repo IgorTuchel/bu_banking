@@ -3,6 +3,7 @@ import logo from "../assets/logo.png";
 import { NavLink } from "react-router-dom";
 import { useEffect, useState } from "react";
 import MenuSlideshow from "./MenuSlideshow";
+import {Mail, UserRoundCog } from "lucide-react";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -94,14 +95,14 @@ export default function Navbar() {
                       aria-label="Notifications"
                       type="button"
                     >
-                      🔔
+                      <Mail strokeWidth={2.7} />
                     </button>
                     <button
                       className="navStripIconButton"
                       aria-label="Profile"
                       type="button"
                     >
-                      👤
+                      <UserRoundCog strokeWidth={2.7} />
                     </button>
                   </div>
                 </div>
@@ -186,7 +187,6 @@ export default function Navbar() {
           {/* STATIC CARD */}
           <div className="navMenuStaticCard">
             <div className="navMenuStaticCardPanel">
-
               <div className="navMenuStaticLogo">
                 <img src={logo} alt="Aurix logo large" />
               </div>
@@ -208,7 +208,6 @@ export default function Navbar() {
                   spending, rewards, insights, and account management.
                 </p>
               </div>
-
             </div>
           </div>
 

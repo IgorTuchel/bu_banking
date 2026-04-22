@@ -14,15 +14,15 @@ function QuickActions({ actions }) {
             className="quick-action-button"
             onClick={() => navigate(action.path)}
           >
-            <span className="quick-action-icon">{action.icon}</span>
+            <span className="quick-action-icon">
+              <action.icon size={26} strokeWidth={2.2} />
+            </span>
 
-            {/* 🔥 NEW TEXT BLOCK */}
             <div className="quick-action-text">
               <span className="quick-action-label">
                 {action.label}
               </span>
 
-              {/* only render if exists (safe fallback) */}
               {action.description && (
                 <span className="quick-action-description">
                   {action.description}

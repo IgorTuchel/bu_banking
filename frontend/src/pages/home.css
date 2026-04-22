@@ -160,37 +160,52 @@
 }
 
 .selected-account-eye-btn {
-  margin-left: 0.35rem;
-  width: 28px;
-  height: 28px;
+  margin-left: 0.4rem;
+  background: transparent;
+  border: none;
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  font-size: 0.85rem;
+
   cursor: pointer;
+  color: white;
+
   transition:
     transform 0.2s ease,
-    background 0.2s ease,
-    border-color 0.2s ease;
+    color 0.2s ease;
+}
+
+.selected-account-eye-btn svg {
+  width: 1.25rem;           
+  height: 1.25rem;
+  stroke: currentColor;
+  stroke-width: 2.4;       
+  transition:
+    transform 0.2s ease,
+    stroke-width 0.2s ease,
+    color 0.2s ease;
 }
 
 .selected-account-eye-btn:hover {
-  transform: translateY(-1px) scale(1.05);
-  background: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 0.45);
+  color: var(--color-accent); 
+  transform: scale(1.1);
+}
+
+.selected-account-eye-btn:hover svg {
+  transform: scale(1.15);
+  stroke-width: 2.9;          
 }
 
 .selected-account-eye-btn:active {
   transform: scale(0.95);
 }
 
+
 .selected-account-eye-btn:focus-visible {
-  outline: 2px solid white;
+  outline: 2px solid var(--color-accent);
   outline-offset: 3px;
+  border-radius: 0.4rem;
 }
 
 .summary-grid {
@@ -297,22 +312,37 @@
   overflow: hidden;
 }
 
-.quick-action-button:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
 .quick-action-icon {
   width: 48px;
   height: 48px;
 
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.18);
+  background: transparent;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.2rem;
+}
+
+.quick-action-icon svg {
+  width: 1.8rem;
+  height: 1.8rem;
+  stroke: currentColor;
+  stroke-width: 2.3;
+  transition:
+    transform 0.2s ease,
+    stroke-width 0.2s ease,
+    color 0.2s ease;
+}
+
+.quick-action-button:hover .quick-action-icon {
+  color: var(--color-accent);
+}
+
+.quick-action-button:hover .quick-action-icon svg {
+  transform: scale(1.12);
+  stroke-width: 2.7;
 }
 
 .home-content-grid {

@@ -6,13 +6,6 @@ export const userData = {
   },
 };
 
-export const quickActions = [
-  { id: 1, label: "Transfer Money", icon: "💸" },
-  { id: 2, label: "Pay Bills", icon: "🧾" },
-  { id: 3, label: "View Cards", icon: "💳" },
-  { id: 4, label: "Transaction History", icon: "📊" },
-];
-
 export const notifications = [
   { id: 1, message: "Your credit card payment is due in 3 days." },
   { id: 2, message: "No suspicious activity detected on your account." },

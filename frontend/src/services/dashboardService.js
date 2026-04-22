@@ -1,3 +1,9 @@
+import {
+  ArrowUpDown,
+  ArrowDownLeft,
+  CreditCard,
+  CalendarClock,
+} from "lucide-react";
 import { getCurrentUser } from "./userService";
 import { getAccountsForUser } from "./accountService";
 import { getTransactionsForAccount } from "./transactionService";
@@ -8,28 +14,28 @@ function buildQuickActions() {
       id: "transfer",
       label: "Transfer",
       description: "Send money instantly",
-      icon: "↗",
+      icon: ArrowUpDown,
       path: "/transfer",
     },
     {
       id: "request",
       label: "Request",
       description: "Ask for a payment",
-      icon: "↩",
+      icon: ArrowDownLeft,
       path: "/request-payment",
     },
     {
       id: "cards",
       label: "Cards",
       description: "View, freeze & manage",
-      icon: "💳",
+      icon: CreditCard,
       path: "/cards",
     },
     {
       id: "scheduled-payments",
       label: "Scheduled",
       description: "Direct debits & standing orders",
-      icon: "📅",
+      icon: CalendarClock,
       path: "/scheduled-payments",
     },
   ];

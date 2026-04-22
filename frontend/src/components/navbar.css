@@ -310,20 +310,44 @@
   width: clamp(2.25rem, 1.7rem + 0.75vw, 2.625rem);
   height: clamp(2.25rem, 1.7rem + 0.75vw, 2.625rem);
   border-radius: var(--radius-md);
-  background: rgba(23, 71, 45, 0.08);
+  background: transparent;
   color: #183b26;
   border: none;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition:
     transform var(--transition-fast),
-    background var(--transition-fast),
     color var(--transition-fast);
 }
 
+.navStripIconButton svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  display: block;
+  flex-shrink: 0;
+  stroke: currentColor;
+  transition:
+    transform var(--transition-fast),
+    stroke-width var(--transition-fast);
+}
+
+
+
 .navStripIconButton:hover {
-  background: var(--color-accent);
-  color: var(--color-text);
-  transform: translateY(-1px);
+  background: transparent;
+  color: #12311f;
+  transform: translateY(-1px) scale(1.06);
+}
+
+.navStripIconButton:hover svg {
+  transform: scale(1.08);
+  stroke-width: 2.5;
+}
+
+.navStripIconButton:active {
+  transform: translateY(0) scale(1.02);
 }
 
 .navStripIconButton:focus-visible {
