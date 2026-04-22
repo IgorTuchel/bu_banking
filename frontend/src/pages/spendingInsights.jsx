@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import "./home.css";
 import "./spendingInsights.css";
 
 const sampleTransactions = [
