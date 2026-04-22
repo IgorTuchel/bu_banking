@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { FileText } from "lucide-react";
+import {
+  FileText,
+  ArrowDown,
+  ArrowUp,
+  ClockFading,
+} from "lucide-react";
 import "./home.css";
 import "./transactions.css";
 
@@ -420,24 +425,30 @@ export default function TransactionsPage() {
               }}
             />
 
-            {["All", "In", "Out", "Pending"].map((filter) => (
+            {[
+              { label: "All", icon: null },
+              {
+                label: "In",
+                icon: <ArrowDown size={16} strokeWidth={2.2} />,
+              },
+              {
+                label: "Out",
+                icon: <ArrowUp size={16} strokeWidth={2.2} />,
+              },
+              {
+                label: "Pending",
+                icon: <ClockFading size={16} strokeWidth={2.2} />,
+              },
+            ].map((filter) => (
               <Button
-                key={filter}
+                key={filter.label}
                 variant="pill"
-                active={activeFilter === filter}
-                onClick={() => setActiveFilter(filter)}
-                icon={
-                  filter === "In"
-                    ? "↓"
-                    : filter === "Out"
-                    ? "↑"
-                    : filter === "Pending"
-                    ? "⏳"
-                    : null
-                }
+                active={activeFilter === filter.label}
+                onClick={() => setActiveFilter(filter.label)}
+                icon={filter.icon}
                 className="segmented-btn"
               >
-                {filter}
+                {filter.label}
               </Button>
             ))}
           </div>

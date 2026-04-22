@@ -18,6 +18,7 @@ import Cards from "./pages/cards";
 import Notifications from "./pages/Notifications";
 import Statements from "./pages/statements";
 import NotFound from "./pages/NotFound";
+import SpendingInsights from "./pages/spendingInsights";
 
 function App() {
   const location = useLocation();
@@ -66,6 +67,7 @@ function App() {
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/statements" element={<Statements />} />
           <Route path="*" element={<NotFound />} />
+          <Route path="/spending-insights" element={<SpendingInsights />} />
           <Route
             path="/register"
             element={<div style={{ padding: "2rem" }}>Register page coming soon.</div>}
