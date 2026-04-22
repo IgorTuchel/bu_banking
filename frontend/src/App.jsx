@@ -12,7 +12,6 @@ import Support from "./pages/support";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import TransferPage from "./pages/transfer";
-import CreditScore from "./pages/creditScore"
 import RequestPaymentPage from "./pages/requestPayment";
 import Cards from "./pages/cards";
 import Notifications from "./pages/Notifications";
