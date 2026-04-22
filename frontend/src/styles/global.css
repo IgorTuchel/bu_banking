@@ -74,7 +74,7 @@ p {
 
 .section-link-button:hover {
   background: var(--color-green-gradient);
-  color: white);
+  color: white;
 }
 
 /* Shared state cards */

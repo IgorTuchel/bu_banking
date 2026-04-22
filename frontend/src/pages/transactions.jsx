@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
+import { FileText } from "lucide-react";
 import "./home.css";
 import "./transactions.css";
 
@@ -384,9 +385,12 @@ export default function TransactionsPage() {
             </p>
           </div>
 
-          <NavLink to="/statements" className="btn btn-primary view-statements-btn">
-            <span className="btn-icon">📄</span>
-            <span className="btn-label">View Statements</span>
+          <NavLink
+            to="/statements"
+            className="section-link-button view-statements-btn"
+          >
+            <FileText className="view-statements-icon" aria-hidden="true" />
+            <span>View Statements</span>
           </NavLink>
         </div>
 
