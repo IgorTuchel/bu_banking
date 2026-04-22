@@ -44,6 +44,10 @@
 .view-statements-btn:hover {
   background: var(--color-green-gradient) !important;
   color: var(--color-accent);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.18),
+    0 6px 14px rgba(46, 139, 87, 0.35);
 }
 
 .view-statements-icon {
@@ -639,12 +643,17 @@
   z-index: 1;
   flex: 1;
   justify-content: center;
+  align-items: center;
+  gap: 0.45rem;
   background: transparent !important;
   box-shadow: none !important;
   color: var(--color-text);
   border-radius: 0;
-  padding: 0.5rem 0.75rem;
-  transition: color 0.25s ease;
+  padding: 0.55rem 0.8rem;
+  min-height: 2.75rem;
+  transition:
+    color 0.25s ease,
+    transform 0.25s ease;
 }
 
 .segmented-btn.btn-active {
@@ -668,21 +677,47 @@
 }
 
 .segmented-btn .btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
   transition:
     transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
     color 0.25s ease,
-    opacity 0.25s ease;
+    opacity 0.25s ease,
+    stroke 0.25s ease;
 }
 
-.segmented-btn.btn-active .btn-icon {
-  color: white;
+.segmented-btn .btn-label {
+  display: inline-flex;
+  align-items: center;
+}
+
+.segmented-btn svg {
+  width: 1.2rem;
+  height: 1.2rem;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  transition:
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.25s ease,
+    opacity 0.25s ease,
+    stroke 0.25s ease;
+}
+
+.segmented-btn.btn-active .btn-icon,
+.segmented-btn.btn-active svg {
+  color: var(--color-accent);
+  stroke: var(--color-accent);
   transform: translateY(-1px) scale(1.06);
   opacity: 1;
 }
 
-.segmented-btn:not(.btn-active) .btn-icon {
+.segmented-btn:not(.btn-active) .btn-icon,
+.segmented-btn:not(.btn-active) svg {
   color: var(--color-primary);
-  opacity: 0.9;
+  stroke: var(--color-primary);
+  opacity: 0.92;
 }
 
 .segmented-btn:not(:last-child)::after {
@@ -695,7 +730,8 @@
   background: rgba(0, 0, 0, 0.08);
 }
 
-.segmented-btn:hover .btn-icon {
+.segmented-btn:hover .btn-icon,
+.segmented-btn:hover svg {
   transform: scale(1.06);
 }
 
@@ -740,12 +776,15 @@
   .segmented-indicator,
   .segmented-btn,
   .segmented-btn .btn-icon,
+  .segmented-btn svg,
   .view-statements-icon {
     transition: none;
   }
 
   .segmented-btn.btn-active .btn-icon,
-  .segmented-btn:hover .btn-icon {
+  .segmented-btn.btn-active svg,
+  .segmented-btn:hover .btn-icon,
+  .segmented-btn:hover svg {
     transform: none;
   }
 }
