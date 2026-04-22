@@ -94,6 +94,7 @@ export default function Navbar() {
                       className="navStripIconButton"
                       aria-label="Notifications"
                       type="button"
+                      onClick={() => navigate("/notifications")}
                     >
                       🔔
                     </button>
