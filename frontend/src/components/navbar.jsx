@@ -1,12 +1,13 @@
 import "./navbar.css";
 import logo from "../assets/logo.png";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import MenuSlideshow from "./MenuSlideshow";
 import {Mail, UserRoundCog } from "lucide-react";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   function toggleMenu() {
     setIsMenuOpen((prev) => !prev);
@@ -94,6 +95,7 @@ export default function Navbar() {
                       className="navStripIconButton"
                       aria-label="Notifications"
                       type="button"
+                      onClick={() => navigate("/notifications")}
                     >
                       <Mail strokeWidth={2.7} />
                     </button>
@@ -101,8 +103,13 @@ export default function Navbar() {
                       className="navStripIconButton"
                       aria-label="Profile"
                       type="button"
+                      onClick={() => navigate("/profile")}
                     >
+<<<<<<< HEAD
                       <UserRoundCog strokeWidth={2.7} />
+=======
+                    👤
+>>>>>>> e41f96d6c509d958261424dfa6e803f65d867dba
                     </button>
                   </div>
                 </div>

@@ -12,6 +12,7 @@ import SelectedAccountCard from "../components/SelectedAccountCard";
 import Skeleton from "../components/Skeleton";
 import SkeletonSummaryCard from "../components/SkeletonSummaryCard";
 import SkeletonTransactionsList from "../components/SkeletonTransactionsList";
+import notificationsData from "../data/notificationsData";
 
 import { getDashboardData } from "../services/dashboardService";
 import { DEFAULT_ACCOUNT_INDEX } from "../constants/dashboard";
@@ -75,6 +76,12 @@ function Home() {
       account: selectedAccount,
     });
   }, [selectedAccount]);
+
+  const recentNotifications = useMemo(() => {
+  return [...notificationsData]
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, 3);
+  }, []);
 
   if (isLoading) {
     return (
@@ -181,7 +188,7 @@ function Home() {
           transactions={selectedAccount.transactions ?? []}
           account={selectedAccount}
         />
-        <NotificationsPanel notifications={dashboardData.notifications ?? []} />
+        <NotificationsPanel notifications={recentNotifications} />
       </section>
     </main>
   );

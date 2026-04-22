@@ -15,6 +15,7 @@ import TransferPage from "./pages/transfer";
 import CreditScore from "./pages/creditScore"
 import RequestPaymentPage from "./pages/requestPayment";
 import Cards from "./pages/cards";
+import Notifications from "./pages/Notifications";
 
 function App() {
   const location = useLocation();
@@ -60,6 +61,7 @@ function App() {
           <Route path="/credit-score" element={<CreditScore />} />
           <Route path="/request-payment" element={<RequestPaymentPage />} />
           <Route path="/cards" element={<Cards />} />
+          <Route path="/notifications" element={<Notifications />} />
           <Route
             path="/register"
             element={<div style={{ padding: "2rem" }}>Register page coming soon.</div>}
