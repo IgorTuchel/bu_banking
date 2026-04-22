@@ -17,6 +17,7 @@ import RequestPaymentPage from "./pages/requestPayment";
 import Cards from "./pages/cards";
 import Notifications from "./pages/Notifications";
 import Statements from "./pages/statements";
+import NotFound from "./pages/NotFound";
 
 function App() {
   const location = useLocation();
@@ -64,6 +65,7 @@ function App() {
           <Route path="/cards" element={<Cards />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/statements" element={<Statements />} />
+          <Route path="*" element={<NotFound />} />
           <Route
             path="/register"
             element={<div style={{ padding: "2rem" }}>Register page coming soon.</div>}
