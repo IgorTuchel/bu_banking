@@ -62,9 +62,9 @@ p {
 
 /* Shared section action button */
 .section-link-button {
-  border: 1px solid var(--color-accent);
+  border: 1px solid var(--color-primary);
   background: transparent;
-  color: var(--color-accent);
+  color: var(--color-primary);
   padding: 0.35rem 0.75rem;
   border-radius: var(--radius-sm);
   font-weight: 600;
@@ -73,8 +73,8 @@ p {
 }
 
 .section-link-button:hover {
-  background: var(--color-accent);
-  color: var(--color-text-heading);
+  background: var(--color-green-gradient);
+  color: white);
 }
 
 /* Shared state cards */
