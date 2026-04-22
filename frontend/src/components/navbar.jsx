@@ -77,7 +77,7 @@ export default function Navbar() {
 
                   <div className="navLinksRow">
                     <NavLink to="/dashboard" onClick={closeMenu}>
-                      Home
+                      Dashboard
                     </NavLink>
                     <NavLink to="/transactions" onClick={closeMenu}>
                       Transactions
@@ -136,7 +136,7 @@ export default function Navbar() {
               <NavLink to="/spending-insights" onClick={closeMenu}>
                 Spending Insights
               </NavLink>
-              <NavLink to="/creditScore" onClick={closeMenu}>
+              <NavLink to="/credit-score" onClick={closeMenu}>
                 Credit Score
               </NavLink>
             </div>
@@ -148,14 +148,8 @@ export default function Navbar() {
               <NavLink to="/rewards" onClick={closeMenu}>
                 Rewards
               </NavLink>
-              <NavLink to="/cards" onClick={closeMenu}>
-                View Cards
-              </NavLink>
               <NavLink to="/card-controls" onClick={closeMenu}>
                 Card Controls
-              </NavLink>
-              <NavLink to="/freeze-card" onClick={closeMenu}>
-                Freeze Card
               </NavLink>
               <NavLink to="/offers" onClick={closeMenu}>
                 Offers
