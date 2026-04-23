@@ -9,6 +9,7 @@ from banking.serializers import (
     CurrentUserSerializer,
     FrontendAccountSerializer,
     FrontendTransactionSerializer,
+    FrontendCardSerializer,
 )
 
 
@@ -155,3 +156,44 @@ class TestTransactionView(APIView):
             "success": True,
             "transaction_id": txn.id
         })
+    
+class AccountCardsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, account_id):
+        account = Account.objects.filter(id=account_id).first()
+
+        if not account:
+            return Response({"detail": "Account not found."}, status=404)
+
+        cards = Card.objects.filter(account=account).order_by("name")
+        serializer = FrontendCardSerializer(cards, many=True)
+        return Response(serializer.data)
+
+
+class CardUpdateView(APIView):
+    permission_classes = [AllowAny]
+
+    def patch(self, request, card_id):
+        card = Card.objects.filter(id=card_id).first()
+
+        if not card:
+            return Response({"detail": "Card not found."}, status=404)
+
+        allowed_fields = {
+            "frozen": "frozen",
+            "contactlessEnabled": "contactless_enabled",
+            "onlinePaymentsEnabled": "online_payments_enabled",
+            "atmWithdrawalsEnabled": "atm_withdrawals_enabled",
+            "spendingLimit": "spending_limit",
+            "spendingLimitPeriod": "spending_limit_period",
+        }
+
+        for frontend_key, model_field in allowed_fields.items():
+            if frontend_key in request.data:
+                setattr(card, model_field, request.data[frontend_key])
+
+        card.save()
+
+        serializer = FrontendCardSerializer(card)
+        return Response(serializer.data)

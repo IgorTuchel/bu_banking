@@ -16,7 +16,9 @@ from banking.views.api_views import (
     AccountListView,
     AccountDetailByKeyView,
     AccountTransactionsView,
-    TestTransactionView
+    AccountCardsView,
+    CardUpdateView,
+    TestTransactionView,
 )
 
 
@@ -32,7 +34,16 @@ urlpatterns = [
     path("accounts/by-key/<slug:display_key>/", AccountDetailByKeyView.as_view(), name="api-account-by-key"),
     path("accounts/<str:account_id>/transactions/", AccountTransactionsView.as_view(), name="api-account-transactions"),
     path("test-transaction/", TestTransactionView.as_view()),
-    
+    path(
+        "accounts/<str:account_id>/cards/",
+        AccountCardsView.as_view(),
+        name="api-account-cards",
+    ),
+    path(
+        "cards/<str:card_id>/",
+        CardUpdateView.as_view(),
+        name="api-card-update",
+    ),
     path('test-view/', TestView.as_view(), name='banking-test-view'),
     path('user-registration/', UserRegistrationView.as_view(), name='user-registration'),
 

@@ -1,30 +1,27 @@
-import { cardsData } from "../data/cardsData";
-
-let cardsStore = [...cardsData];
-
-function cloneCard(card) {
-  return { ...card };
-}
+const API_BASE = "http://127.0.0.1:8000/api";
 
 export async function getCardsForAccount(accountId) {
-  return cardsStore
-    .filter((card) => card.accountId === accountId)
-    .map(cloneCard);
+  const response = await fetch(`${API_BASE}/accounts/${accountId}/cards/`);
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch cards.");
+  }
+
+  return response.json();
 }
 
 export async function updateCard(cardId, updates) {
-  const index = cardsStore.findIndex((card) => card.id === cardId);
+  const response = await fetch(`${API_BASE}/cards/${cardId}/`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(updates),
+  });
 
-  if (index === -1) {
-    throw new Error("Card not found.");
+  if (!response.ok) {
+    throw new Error("Failed to update card.");
   }
 
-  const updatedCard = {
-    ...cardsStore[index],
-    ...updates,
-  };
-
-  cardsStore[index] = updatedCard;
-
-  return cloneCard(updatedCard);
+  return response.json();
 }

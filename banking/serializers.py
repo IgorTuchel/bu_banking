@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from .models import Account, Business, Transaction
+from .models import Account, Business, Transaction, Card
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -322,3 +322,54 @@ class FrontendTransactionSerializer(serializers.ModelSerializer):
 
     def get_cleanDescription(self, obj):
         return self._clean_legacy_description(obj)
+
+
+class FrontendCardSerializer(serializers.ModelSerializer):
+    accountId = serializers.CharField(source="account.id")
+    type = serializers.SerializerMethodField()
+    maskedNumber = serializers.CharField(source="masked_number")
+    cardholderName = serializers.CharField(source="cardholder_name")
+    contactlessEnabled = serializers.BooleanField(source="contactless_enabled")
+    onlinePaymentsEnabled = serializers.BooleanField(
+        source="online_payments_enabled"
+    )
+    atmWithdrawalsEnabled = serializers.BooleanField(
+        source="atm_withdrawals_enabled"
+    )
+    spendingLimit = serializers.DecimalField(
+        source="spending_limit",
+        max_digits=12,
+        decimal_places=2,
+        allow_null=True,
+    )
+    spendingLimitPeriod = serializers.CharField(source="spending_limit_period")
+    lastUsed = serializers.DateTimeField(source="last_used", allow_null=True)
+
+    class Meta:
+        model = Card
+        fields = [
+            "id",
+            "accountId",
+            "type",
+            "name",
+            "scheme",
+            "cardholderName",
+            "maskedNumber",
+            "expiry",
+            "color",
+            "status",
+            "frozen",
+            "contactlessEnabled",
+            "onlinePaymentsEnabled",
+            "atmWithdrawalsEnabled",
+            "spendingLimit",
+            "spendingLimitPeriod",
+            "lastUsed",
+        ]
+
+    def get_type(self, obj):
+        if obj.card_type == "debit":
+            return "Debit Card"
+        if obj.card_type == "credit":
+            return "Credit Card"
+        return obj.card_type.title()
