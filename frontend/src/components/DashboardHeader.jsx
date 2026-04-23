@@ -25,7 +25,7 @@ function DashboardHeader({ firstName, lastLogin }) {
       <p>Here is an overview of your account activity.</p>
 
       <LastLoginInfo
-        timestamp={lastLogin.timestamp}
+        timestamp={lastLogin?.timestamp}
         location={lastLogin.location}
       />
     </section>

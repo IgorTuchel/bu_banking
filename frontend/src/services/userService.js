@@ -7,5 +7,18 @@ export async function getCurrentUser() {
     throw new Error("Failed to fetch current user.");
   }
 
-  return response.json();
+  const user = await response.json();
+
+  return {
+    ...user,
+    lastLogin: user.lastLogin
+      ? {
+          timestamp: user.lastLogin,
+          location: "Secure login",
+        }
+      : {
+          timestamp: null,
+          location: "Secure login",
+        },
+  };
 }

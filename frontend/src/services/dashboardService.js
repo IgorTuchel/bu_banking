@@ -72,7 +72,7 @@ export async function getDashboardData() {
       return {
         ...account,
         currentBalance: normalisedBalance,
-        transactions,
+        transactions: Array.isArray(transactions) ? transactions.slice(0, 5) : [],
       };
     })
   );
