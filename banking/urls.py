@@ -11,6 +11,14 @@ from .views.business_view import BusinessViewSet
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi 
 from rest_framework.permissions import AllowAny 
+from banking.views.api_views import (
+    CurrentUserView,
+    AccountListView,
+    AccountDetailByKeyView,
+    AccountTransactionsView,
+    TestTransactionView
+)
+
 
 router = DefaultRouter()
 
@@ -19,9 +27,16 @@ router.register(r'transactions', TransactionViewSet, basename='transaction')
 router.register(r'businesses', BusinessViewSet)
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path("me/", CurrentUserView.as_view(), name="api-me"),
+    path("accounts/", AccountListView.as_view(), name="api-accounts"),
+    path("accounts/by-key/<slug:display_key>/", AccountDetailByKeyView.as_view(), name="api-account-by-key"),
+    path("accounts/<str:account_id>/transactions/", AccountTransactionsView.as_view(), name="api-account-transactions"),
+    path("test-transaction/", TestTransactionView.as_view()),
+    
     path('test-view/', TestView.as_view(), name='banking-test-view'),
     path('user-registration/', UserRegistrationView.as_view(), name='user-registration'),
+
+    path('', include(router.urls)),
 ]
 
 schema_view = get_schema_view(

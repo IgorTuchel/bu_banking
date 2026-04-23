@@ -1,8 +1,11 @@
-import { usersData } from "../data/usersData";
+const API_BASE = "http://127.0.0.1:8000/api";
 
 export async function getCurrentUser() {
-  // simulate API latency (optional but nice)
-  await new Promise((resolve) => setTimeout(resolve, 100));
+  const response = await fetch(`${API_BASE}/me/`);
 
-  return usersData[0]; // mock logged-in user
+  if (!response.ok) {
+    throw new Error("Failed to fetch current user.");
+  }
+
+  return response.json();
 }

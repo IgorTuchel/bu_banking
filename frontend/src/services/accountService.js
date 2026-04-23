@@ -1,33 +1,21 @@
-import { accountsData } from "../data/accountsData";
-import { accountUsersData } from "../data/accountUsersData";
+const API_BASE = "http://127.0.0.1:8000/api";
 
-export async function getAccountsForUser(userId) {
-  await new Promise((resolve) => setTimeout(resolve, 100));
+export async function getAccountsForUser() {
+  const response = await fetch(`${API_BASE}/accounts/`);
 
-  const accountIds = accountUsersData
-    .filter((link) => link.userId === userId)
-    .map((link) => link.accountId);
+  if (!response.ok) {
+    throw new Error("Failed to fetch accounts.");
+  }
 
-  return accountsData.filter((account) =>
-    accountIds.includes(account.id)
-  );
+  return response.json();
 }
 
-export async function getAccountById(accountId) {
-  await new Promise((resolve) => setTimeout(resolve, 50));
+export async function getAccountByKeyForUser(userId, accountKey) {
+  const response = await fetch(`${API_BASE}/accounts/by-key/${accountKey}/`);
 
-  return accountsData.find((acc) => acc.id === accountId);
-}
+  if (!response.ok) {
+    throw new Error("Failed to fetch account.");
+  }
 
-export async function getAccountByKeyForUser(userId, key) {
-  await new Promise((resolve) => setTimeout(resolve, 50));
-
-  const accountIds = accountUsersData
-    .filter((link) => link.userId === userId)
-    .map((link) => link.accountId);
-
-  return accountsData.find(
-    (account) =>
-      accountIds.includes(account.id) && account.key === key
-  );
+  return response.json();
 }
