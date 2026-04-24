@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./profile.css";
-import profileData from "../data/profileData";
 
 import Skeleton from "../components/Skeleton";
+import { getCurrentUser } from "../services/userService";
+import { logoutUser } from "../services/authService";
 
 function Profile() {
   const navigate = useNavigate();
@@ -11,37 +12,34 @@ function Profile() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("loggedInUser");
+    async function loadProfile() {
+      try {
+        setIsLoading(true);
+        const currentUser = await getCurrentUser();
 
-    if (!savedUser) {
-      navigate("/login");
-      return;
+        setUser({
+          ...currentUser,
+          accountStatus: "Active",
+          securityLevel: "High",
+          memberSince: "2026",
+          location: "Bournemouth, UK",
+          phone: "01202 555 321",
+          address: "Bournemouth, UK",
+        });
+      } catch (error) {
+        console.error("Failed to load profile:", error);
+        logoutUser();
+        navigate("/login");
+      } finally {
+        setIsLoading(false);
+      }
     }
 
-    try {
-      const parsedUser = JSON.parse(savedUser);
-
-      setUser({
-        ...profileData.mockUser,
-        email: parsedUser.email,
-        rememberUser: parsedUser.rememberUser,
-    });
-    } catch (error) {
-      console.error("Failed to parse logged in user:", error);
-      localStorage.removeItem("loggedInUser");
-      navigate("/login");
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 900);
-
-    return () => clearTimeout(timer);
+    loadProfile();
   }, [navigate]);
 
   function handleLogout() {
-    localStorage.removeItem("loggedInUser");
+    logoutUser();
     navigate("/login");
   }
 
@@ -64,14 +62,22 @@ function Profile() {
           </div>
 
           <Skeleton width="220px" height="1.8rem" />
-          <Skeleton width="180px" height="0.95rem" style={{ marginTop: "0.75rem" }} />
+          <Skeleton
+            width="180px"
+            height="0.95rem"
+            style={{ marginTop: "0.75rem" }}
+          />
         </section>
 
         <section className="summary-grid">
           {[...Array(3)].map((_, index) => (
             <article key={index} className="summary-card">
               <Skeleton width="110px" height="0.9rem" />
-              <Skeleton width="90px" height="1.6rem" style={{ marginTop: "0.8rem" }} />
+              <Skeleton
+                width="90px"
+                height="1.6rem"
+                style={{ marginTop: "0.8rem" }}
+              />
             </article>
           ))}
         </section>
@@ -129,9 +135,7 @@ function Profile() {
         <h2 className="selected-account-name">
           {user?.firstName && user?.lastName
             ? `${user.firstName} ${user.lastName}`
-            : user?.firstName
-            ? user.firstName
-            : "Account Holder"}
+            : user?.firstName || "Account Holder"}
         </h2>
 
         <p className="profile-hero-subtext">{user?.email}</p>
@@ -183,16 +187,12 @@ function Profile() {
 
             <div className="profile-detail-row">
               <span className="profile-detail-label">Phone</span>
-              <span className="profile-detail-value">
-                {user?.phone ?? "01202 555 321"}
-              </span>
+              <span className="profile-detail-value">{user?.phone}</span>
             </div>
 
             <div className="profile-detail-row">
               <span className="profile-detail-label">Address</span>
-              <span className="profile-detail-value">
-                {user?.address ?? "Bournemouth, UK"}
-              </span>
+              <span className="profile-detail-value">{user?.address}</span>
             </div>
           </div>
         </div>

@@ -2,15 +2,22 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./login.css";
 import logo from "../assets/logo.png";
-import profileData from "../data/profileData";
+
+import {
+  getRememberedUsername,
+  isLoggedIn,
+  loginUser,
+} from "../services/authService";
 
 function Login() {
   const navigate = useNavigate();
 
+  const rememberedUsername = getRememberedUsername();
+
   const [formData, setFormData] = useState({
-    email: "",
+    username: rememberedUsername,
     password: "",
-    rememberUser: false,
+    rememberUser: Boolean(rememberedUsername),
   });
 
   const [errorMessage, setErrorMessage] = useState("");
@@ -18,9 +25,8 @@ function Login() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const user = localStorage.getItem("loggedInUser");
-    if (user) {
-      navigate("/profile");
+    if (isLoggedIn()) {
+      navigate("/dashboard");
     }
   }, [navigate]);
 
@@ -33,27 +39,34 @@ function Login() {
     }));
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
-    if (!formData.email || !formData.password) {
-      setErrorMessage("Please enter your email and password.");
+    const username = formData.username.trim();
+    const password = formData.password;
+
+    if (!username || !password) {
+      setErrorMessage("Please enter your username and password.");
       return;
     }
 
-    setErrorMessage("");
-    setIsLoading(true);
+    try {
+      setErrorMessage("");
+      setIsLoading(true);
 
-    setTimeout(() => {
-      const mockUser = {
-      ...profileData.mockUser,
-      email: formData.email || profileData.mockUser.email,
-      rememberUser: formData.rememberUser,
-    };
+      await loginUser({
+        username,
+        password,
+        rememberUser: formData.rememberUser,
+      });
 
-      localStorage.setItem("loggedInUser", JSON.stringify(mockUser));
       navigate("/dashboard");
-      }, 800);
+    } catch (error) {
+      console.error(error);
+      setErrorMessage("Invalid login details. Please check and try again.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -92,18 +105,19 @@ function Login() {
 
             <form className="login-form-panel" onSubmit={handleSubmit}>
               <div className="login-field-block">
-                <label htmlFor="email" className="login-label">
-                  Email
+                <label htmlFor="username" className="login-label">
+                  Username
                 </label>
 
                 <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
+                  id="username"
+                  name="username"
+                  type="text"
+                  value={formData.username}
                   onChange={handleChange}
                   className="login-text-input"
-                  placeholder="Enter your email"
+                  placeholder="Enter your username"
+                  autoComplete="username"
                 />
               </div>
 
@@ -121,6 +135,7 @@ function Login() {
                     onChange={handleChange}
                     className="login-text-input"
                     placeholder="Enter your password"
+                    autoComplete="current-password"
                   />
 
                   <button
@@ -140,10 +155,12 @@ function Login() {
                   checked={formData.rememberUser}
                   onChange={handleChange}
                 />
-                <span>Remember my email</span>
+                <span>Remember my username</span>
               </label>
 
-              {errorMessage ? <p className="login-field-error">{errorMessage}</p> : null}
+              {errorMessage ? (
+                <p className="login-field-error">{errorMessage}</p>
+              ) : null}
 
               <div className="login-divider" />
 

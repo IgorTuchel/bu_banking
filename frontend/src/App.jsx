@@ -3,6 +3,8 @@ import { useEffect } from "react";
 
 import Navbar from "./components/navbar";
 import Footer from "./components/Footer";
+import ProtectedRoute from "./components/ProtectedRoute";
+
 import Landing from "./pages/landing";
 import Home from "./pages/home";
 import Transactions from "./pages/transactions";
@@ -26,7 +28,6 @@ function App() {
   const hideMainLayout =
     location.pathname === "/" || location.pathname === "/login";
 
-  /* ✅ SET SCROLLBAR WIDTH AS CSS VARIABLE */
   useEffect(() => {
     function setScrollbarWidth() {
       const scrollBarWidth =
@@ -53,26 +54,131 @@ function App() {
       <div className="app-content">
         <Routes>
           <Route path="/" element={<Landing />} />
-          <Route path="/dashboard" element={<Home />} />
-          <Route path="/transactions" element={<Transactions />} />
-          <Route path="/scheduled-payments" element={<ScheduledPayments />} />
-          <Route path="/rewards" element={<Rewards />} />
-          <Route path="/support" element={<Support />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/transfer" element={<TransferPage />} />
-          <Route path="/credit-score" element={<CreditScore />} />
-          <Route path="/request-payment" element={<RequestPaymentPage />} />
-          <Route path="/cards" element={<Cards />} />
-          <Route path="/notifications" element={<Notifications />} />
-          <Route path="/statements" element={<Statements />} />
-          <Route path="*" element={<NotFound />} />
-          <Route path="/spending-insights" element={<SpendingInsights />} />
-          <Route path="/credit-score" element={<CreditScore />} />
+
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Home />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/transactions"
+            element={
+              <ProtectedRoute>
+                <Transactions />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/scheduled-payments"
+            element={
+              <ProtectedRoute>
+                <ScheduledPayments />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/rewards"
+            element={
+              <ProtectedRoute>
+                <Rewards />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/support"
+            element={
+              <ProtectedRoute>
+                <Support />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/transfer"
+            element={
+              <ProtectedRoute>
+                <TransferPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/credit-score"
+            element={
+              <ProtectedRoute>
+                <CreditScore />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/request-payment"
+            element={
+              <ProtectedRoute>
+                <RequestPaymentPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/cards"
+            element={
+              <ProtectedRoute>
+                <Cards />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <Notifications />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/statements"
+            element={
+              <ProtectedRoute>
+                <Statements />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/spending-insights"
+            element={
+              <ProtectedRoute>
+                <SpendingInsights />
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             path="/register"
             element={<div style={{ padding: "2rem" }}>Register page coming soon.</div>}
           />
+
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
 

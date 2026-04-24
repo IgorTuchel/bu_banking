@@ -4,6 +4,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import MenuSlideshow from "./MenuSlideshow";
 import { Mail, UserRoundCog } from "lucide-react";
+import { logoutUser } from "../services/authService";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -15,6 +16,12 @@ export default function Navbar() {
 
   function closeMenu() {
     setIsMenuOpen(false);
+  }
+
+  function handleLogout() {
+    logoutUser();     
+    closeMenu();         
+    navigate("/login");  
   }
 
   useEffect(() => {
@@ -176,9 +183,12 @@ export default function Navbar() {
               <NavLink to="/support" onClick={closeMenu}>
                 Help &amp; Support
               </NavLink>
-              <NavLink to="/login" onClick={closeMenu}>
+              <button
+                className="navMenuLogoutButton"
+                onClick={handleLogout}
+              >
                 Sign Out
-              </NavLink>
+              </button>
             </div>
           </div>
 
