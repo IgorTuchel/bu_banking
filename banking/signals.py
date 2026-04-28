@@ -1,32 +1,51 @@
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-from django.contrib.auth.models import User
-from .models import Account
+import uuid
 from decimal import Decimal
 
-# @receiver(post_save, sender=User)
-# def create_default_accounts(sender, instance, created, **kwargs):
-#     """
-#     Signal to create default Current and Savings accounts when a new user is created.
-#     Only runs when a new user is created (not on updates).
-#     """
-#     if created:
-#         # Check if the user already has accounts (to prevent duplicates)
-#         if not Account.objects.filter(user=instance).exists():
-#             # Create Current Account
-#             Account.objects.create(
-#                 name=f"{instance.first_name or instance.username}'s Current Account",
-#                 starting_balance=Decimal('1000.00'),
-#                 round_up_enabled=False,
-#                 user=instance,
-#                 account_type='current'
-#             )
-            
-#             # Create Savings Account
-#             Account.objects.create(
-#                 name=f"{instance.first_name or instance.username}'s Savings Account",
-#                 starting_balance=Decimal('0.00'),
-#                 round_up_enabled=True,  # Enable round-up for savings by default
-#                 user=instance,
-#                 account_type='savings'
-#             )
+from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+from .models import Account
+
+
+def _make_account_number():
+    return str(uuid.uuid4().int)[:8]
+
+
+def _make_display_key(account_type):
+    return f"{account_type}-{uuid.uuid4().hex}"
+
+
+@receiver(post_save, sender=User)
+def create_default_accounts(sender, instance, created, **kwargs):
+    if not created:
+        return
+
+    if Account.objects.filter(user=instance).exists():
+        return
+
+    display_name = instance.first_name or instance.username
+
+    Account.objects.create(
+        name=f"{display_name}'s Current Account",
+        account_number=_make_account_number(),
+        display_key=_make_display_key("current"),
+        sort_code="20-00-00",
+        starting_balance=Decimal("1000.00"),
+        current_balance=Decimal("1000.00"),
+        round_up_enabled=False,
+        user=instance,
+        account_type="current",
+    )
+
+    Account.objects.create(
+        name=f"{display_name}'s Savings Account",
+        account_number=_make_account_number(),
+        display_key=_make_display_key("savings"),
+        sort_code="20-00-00",
+        starting_balance=Decimal("0.00"),
+        current_balance=Decimal("0.00"),
+        round_up_enabled=True,
+        user=instance,
+        account_type="savings",
+    )

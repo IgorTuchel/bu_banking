@@ -1,11 +1,12 @@
+from decimal import Decimal
+
+from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from django.contrib.auth.models import User
-from banking.models import Account
-from decimal import Decimal
 
+from banking.models import Account
 
 ## RECIEVER IS CONFLINCTING WITH USERREGISTERATIONVIEW, SO I COMMENTED OUT THE SIGNALS FOR NOW.
 
@@ -40,58 +41,57 @@ from decimal import Decimal
 #         self.assertFalse(current_account.round_up_enabled)
 #         self.assertTrue(savings_account.round_up_enabled)
 
+
 class UserRegistrationAPITestCase(APITestCase):
     def test_user_registration_with_accounts(self):
         """Test the user registration API endpoint"""
-        url = reverse('user-registration')
+        url = reverse("user-registration")
+        print(url)
         data = {
-            'username': 'newuser',
-            'password': 'newpassword123',
-            'email': 'new@example.com',
-            'first_name': 'New',
-            'last_name': 'User'
+            "username": "newuser",
+            "password": "newpassword123",
+            "email": "new@example.com",
+            "first_name": "New",
+            "last_name": "User",
         }
 
         # Register a new user
-        response = self.client.post(url, data, format='json')
+        response = self.client.post(url, data, format="json")
 
         # Check response
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertIn('accounts', response.data)
-        self.assertEqual(len(response.data['accounts']), 2)
+        self.assertIn("accounts", response.data)
+        self.assertEqual(len(response.data["accounts"]), 2)
 
         # Verify the user was created
-        self.assertTrue(User.objects.filter(username='newuser').exists())
+        self.assertTrue(User.objects.filter(username="newuser").exists())
 
         # Verify accounts were created
-        user = User.objects.get(username='newuser')
+        user = User.objects.get(username="newuser")
         accounts = Account.objects.filter(user=user)
         self.assertEqual(accounts.count(), 2)
 
         # Verify account details in response
-        account_types = [acc['type'] for acc in response.data['accounts']]
-        self.assertIn('Current', account_types)
-        self.assertIn('Savings', account_types)
+        account_types = [acc["type"] for acc in response.data["accounts"]]
+        self.assertIn("Current", account_types)
+        self.assertIn("Savings", account_types)
 
         # Check database account types
-        self.assertTrue(accounts.filter(account_type='current').exists())
-        self.assertTrue(accounts.filter(account_type='savings').exists())
+        self.assertTrue(accounts.filter(account_type="current").exists())
+        self.assertTrue(accounts.filter(account_type="savings").exists())
 
     def test_registration_with_duplicate_username(self):
         """Test registration with an existing username"""
         # Create a user
-        User.objects.create_user(username='existinguser', password='password123')
+        User.objects.create_user(username="existinguser", password="password123")
 
         # Try to register with the same username
-        url = reverse('user-registration')
-        data = {
-            'username': 'existinguser',
-            'password': 'newpassword'
-        }
+        url = reverse("user-registration")
+        data = {"username": "existinguser", "password": "newpassword"}
 
-        response = self.client.post(url, data, format='json')
+        response = self.client.post(url, data, format="json")
 
         # Should fail with 400 Bad Request
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('error', response.data)
-        self.assertIn('exists', response.data['error'])
+        self.assertIn("error", response.data)
+        self.assertIn("exists", response.data["error"])

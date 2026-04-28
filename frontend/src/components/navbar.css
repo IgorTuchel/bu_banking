@@ -1,0 +1,1320 @@
+/* FRAME */
+.navbarFrame {
+  --nav-brand-min-height: clamp(6rem, 5.4rem + 0.6vw, 6.3rem);
+  --nav-brand-radius: clamp(1.75rem, 1.1rem + 1.1vw, 2.75rem);
+  --nav-strip-height: clamp(5rem, 4.7rem + 0.45vw, 5.5rem);
+  --nav-strip-overhang: clamp(0.625rem, 0.1rem + 1.2vw, 1.25rem);
+  --nav-strip-side-padding: clamp(0.625rem, 0.2rem + 0.9vw, 0.875rem);
+  --nav-fullscreen-offset: clamp(3.875rem, 2.95rem + 1.9vw, 4.375rem);
+
+  position: relative;
+  width: 100%;
+  padding-top: var(--space-xs);
+  background: transparent;
+  z-index: 10000;
+}
+
+/* LAYOUT */
+.navbarLayout {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+}
+
+/* LEFT BRAND BLOCK */
+.navbarBrandBlock {
+  position: relative;
+  min-height: var(--nav-brand-min-height);
+  padding: clamp(0.75rem, 0.55rem + 0.45vw, 1rem) clamp(1rem, 0.65rem + 0.75vw, 1.25rem);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  background: var(--color-green-gradient);
+  border-radius: 0 0 var(--nav-brand-radius) 0;
+  border-bottom: clamp(0.125rem, 0.06rem + 0.15vw, 0.25rem) solid var(--color-accent);
+  border-right: clamp(0.125rem, 0.06rem + 0.15vw, 0.25rem) solid var(--color-accent);
+  box-shadow:
+    var(--shadow-lg),
+    0 4px 10px rgba(0, 0, 0, 0.4);
+  margin: calc(-1 * var(--space-xs)) 0 0 0;
+  overflow: visible;
+  z-index: 4;
+}
+
+/* CONTENT */
+.navBrand {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.navLogoWrapper {
+  width: clamp(5.5rem, 4.4rem + 2.1vw, 6.875rem);
+  height: clamp(2.625rem, 2.15rem + 0.8vw, 3rem);
+  display: flex;
+  align-items: center;
+}
+
+.navLogo {
+  max-height: clamp(5.75rem, 6.7rem + 2vw, 7.225rem);
+  transform: scale(clamp(1.7, 1.56 + 0.5vw, 1.85));
+}
+
+.navBrandTextGroup {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1;
+}
+
+.navBrandText {
+  font-family: "Cinzel", serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  white-space: nowrap;
+  text-shadow: 0 0 6px rgba(212, 175, 55, 0.25);
+}
+
+.navBrandTagline {
+  margin-top: 0.2rem;
+  font-size: 0.71rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.82);
+  white-space: nowrap;
+}
+
+/* CENTER */
+.navbarCenterZone {
+  display: block;
+  width: 100.5%;
+  transform:
+    translateX(-0.5rem)
+    translateY(clamp(-0.5rem, -0.1rem - 0.45vw, -0.25rem));
+  z-index: 1;
+  overflow: hidden;
+}
+
+.navCapsuleGroup {
+  display: flex;
+  width: 100%;
+  overflow: hidden;
+}
+
+.navbarFrame.menu-open .navbarCenterZone,
+.navbarFrame.menu-open .navCapsuleGroup {
+  overflow: visible;
+}
+
+.navStrip {
+  width: calc(100% + (var(--nav-strip-overhang) * 2));
+  min-height: var(--nav-strip-height);
+  background: linear-gradient(
+    to bottom,
+    var(--color-surface) 0%,
+    #f7f6f2 55%,
+    #efeee8 100%
+  );
+  position: relative;
+  z-index: 1;
+  margin-left: calc(var(--nav-strip-overhang) * -1);
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.1),
+    0 3px 8px rgba(0, 0, 0, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+/* Seamless gutter fill (overlap by 1px to hide join line) */
+.navbarFrame.menu-open .navStrip::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: calc(-1 * var(--scrollbar-width, 0px) - 1px);
+  width: calc(var(--scrollbar-width, 0px) + 1px);
+  background: linear-gradient(
+    to bottom,
+    var(--color-surface) 0%,
+    #f7f6f2 55%,
+    #efeee8 100%
+  );
+  /* remove lateral shadow that can create a vertical seam */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  pointer-events: none;
+}
+
+.navbarFrame.menu-open .navStrip::after {
+  right: calc(-1 * var(--scrollbar-width, 0px) - 1px);
+}
+
+/* merged baseline */
+.navStrip::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: clamp(0.125rem, 0.06rem + 0.15vw, 0.25rem);
+  background: rgba(23, 71, 45, 0.16);
+  z-index: 0;
+}
+
+.navStripInner {
+  min-height: var(--nav-strip-height);
+  display: flex;
+  align-items: stretch;
+  padding-left: var(--nav-strip-side-padding);
+  padding-right: var(--nav-strip-side-padding);
+}
+
+/* MENU BUTTON */
+.navStripMenuButton {
+  position: relative;
+  min-width: clamp(3.25rem, 2.7rem + 0.75vw, 3.625rem);
+  padding: 0 var(--space-md);
+  transform: translateX(0.5rem);
+  border: none;
+  background: transparent;
+  color: #183b26;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.navStripMenuButton::after {
+  content: "";
+  position: absolute;
+  left: clamp(0.5rem, 0.25rem + 0.45vw, 0.625rem);
+  bottom: 0;
+  width: calc(100% - clamp(1rem, 0.5rem + 0.9vw, 1.25rem));
+  height: clamp(0.125rem, 0.06rem + 0.15vw, 0.25rem);
+  background: transparent;
+  z-index: 1;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition:
+    transform 0.25s ease,
+    background var(--transition-fast);
+}
+
+.navStripMenuButton:hover {
+  background: transparent;
+  color: #12311f;
+}
+
+.navStripMenuButton:hover::after {
+  background: var(--color-accent);
+  transform: scaleX(1);
+}
+
+.navStripMenuButton:active {
+  background: transparent;
+  color: #12311f;
+}
+
+.navStripMenuButton:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
+.navStripMenuButton[aria-expanded="true"] {
+  color: #b91c1c;
+}
+
+.navStripMenuButton[aria-expanded="true"]::after {
+  background: var(--color-primary);
+  transform: scaleX(1);
+}
+
+/* NAV LINKS */
+.navLinksRow {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-evenly;
+  transform: translateX(clamp(-0.75rem, -0.25rem - 0.6vw, -0.35rem));
+  transition: transform 0.2s ease;
+}
+
+.navLinksRow a {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: #183b26;
+  font-size: 0.95rem;
+  font-weight: 600;
+  white-space: nowrap;
+  position: relative;
+  transition: color var(--transition-fast);
+}
+
+.navLinksRow a::after {
+  content: "";
+  position: absolute;
+  left: clamp(0.5rem, 0.25rem + 0.45vw, 0.625rem);
+  bottom: 0;
+  width: calc(100% - clamp(1rem, 0.5rem + 0.9vw, 1.25rem));
+  height: clamp(0.125rem, 0.06rem + 0.15vw, 0.25rem);
+  background: transparent;
+  z-index: 1;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition:
+    transform 0.25s ease,
+    background var(--transition-fast);
+}
+
+.navLinksRow a:hover {
+  background: transparent;
+  color: #12311f;
+}
+
+.navLinksRow a:hover::after {
+  background: var(--color-accent);
+  transform: scaleX(1);
+}
+
+.navLinksRow a.active {
+  background: transparent;
+  color: #12311f;
+  font-weight: 700;
+}
+
+.navLinksRow a.active::after {
+  background: var(--color-primary);
+  transform: scaleX(1);
+}
+
+/* ICONS ON STRIP */
+.navStripIcons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding-left: var(--space-md);
+  padding-right: 0;
+  transform: translateX(clamp(-1rem, -0.55rem - 0.5vw, -0.5rem));
+}
+
+.navStripIconButton {
+  width: clamp(2.25rem, 1.7rem + 0.75vw, 2.625rem);
+  height: clamp(2.25rem, 1.7rem + 0.75vw, 2.625rem);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: #183b26;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    transform var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.navStripIconButton svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  display: block;
+  flex-shrink: 0;
+  stroke: currentColor;
+  transition:
+    transform var(--transition-fast),
+    stroke-width var(--transition-fast);
+}
+
+
+
+.navStripIconButton:hover {
+  background: transparent;
+  color: #12311f;
+  transform: translateY(-1px) scale(1.06);
+}
+
+.navStripIconButton:hover svg {
+  transform: scale(1.08);
+  stroke-width: 2.5;
+}
+
+.navStripIconButton:active {
+  transform: translateY(0) scale(1.02);
+}
+
+.navStripIconButton:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* 9-DOT MENU ICON -> X MORPH */
+.navGridMenuButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navGridIcon {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  display: block;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.navGridIcon::before,
+.navGridIcon::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 5px;
+  background: currentColor;
+  border-radius: 999px;
+  opacity: 0;
+  transform-origin: center;
+  transition:
+    width 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.2s ease,
+    background var(--transition-fast);
+}
+
+.navGridIcon::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.navGridIcon::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+@keyframes menu-icon-pulse {
+  0% {
+    transform: rotate(180deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.18);
+  }
+  100% {
+    transform: rotate(180deg) scale(1);
+  }
+}
+
+.navStripMenuButton[aria-expanded="true"]:hover .navGridIcon {
+  animation: menu-icon-pulse 1.8s ease-in-out infinite;
+  transform: rotate(180deg);
+}
+
+.navGridDot {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  display: block;
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  transition:
+    left 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    top 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.2s ease,
+    width 0.25s ease,
+    height 0.25s ease,
+    border-radius 0.25s ease,
+    background var(--transition-fast);
+}
+
+/* initial 3x3 grid positions */
+.navGridDot:nth-child(1) {
+  left: 2px;
+  top: 2px;
+}
+.navGridDot:nth-child(2) {
+  left: 10px;
+  top: 2px;
+}
+.navGridDot:nth-child(3) {
+  left: 18px;
+  top: 2px;
+}
+.navGridDot:nth-child(4) {
+  left: 2px;
+  top: 10px;
+}
+.navGridDot:nth-child(5) {
+  left: 10px;
+  top: 10px;
+}
+.navGridDot:nth-child(6) {
+  left: 18px;
+  top: 10px;
+}
+.navGridDot:nth-child(7) {
+  left: 2px;
+  top: 18px;
+}
+.navGridDot:nth-child(8) {
+  left: 10px;
+  top: 18px;
+}
+.navGridDot:nth-child(9) {
+  left: 18px;
+  top: 18px;
+}
+
+.navStripMenuButton:hover .navGridDot {
+  transform: translate(-50%, -50%) scale(1.08);
+}
+
+/* open state */
+.navStripMenuButton[aria-expanded="true"] .navGridDot {
+  border-radius: 999px;
+}
+
+.navStripMenuButton[aria-expanded="true"] .navGridDot:nth-child(2),
+.navStripMenuButton[aria-expanded="true"] .navGridDot:nth-child(4),
+.navStripMenuButton[aria-expanded="true"] .navGridDot:nth-child(5),
+.navStripMenuButton[aria-expanded="true"] .navGridDot:nth-child(6),
+.navStripMenuButton[aria-expanded="true"] .navGridDot:nth-child(8) {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.1);
+}
+
+/* corner dots move slightly inward to support the X feel */
+.navStripMenuButton[aria-expanded="true"] .navGridDot:nth-child(1),
+.navStripMenuButton[aria-expanded="true"] .navGridDot:nth-child(3),
+.navStripMenuButton[aria-expanded="true"] .navGridDot:nth-child(7),
+.navStripMenuButton[aria-expanded="true"] .navGridDot:nth-child(9) {
+  opacity: 1;
+  width: 5px;
+  height: 5px;
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.navStripMenuButton[aria-expanded="true"] .navGridDot:nth-child(1) {
+  left: 4px;
+  top: 4px;
+}
+
+.navStripMenuButton[aria-expanded="true"] .navGridDot:nth-child(3) {
+  left: 16px;
+  top: 4px;
+}
+
+.navStripMenuButton[aria-expanded="true"] .navGridDot:nth-child(7) {
+  left: 4px;
+  top: 16px;
+}
+
+.navStripMenuButton[aria-expanded="true"] .navGridDot:nth-child(9) {
+  left: 16px;
+  top: 16px;
+}
+
+/* X strokes appear */
+.navStripMenuButton[aria-expanded="true"] .navGridIcon::before,
+.navStripMenuButton[aria-expanded="true"] .navGridIcon::after {
+  width: 18px;
+  opacity: 0.92;
+}
+
+/* FULLSCREEN MENU BELOW NAVBAR ONLY */
+.navFullscreenMenu {
+  position: fixed;
+  top: var(--nav-fullscreen-offset);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9990;
+  background: rgba(10, 20, 14, 0.42);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.3s ease,
+    visibility 0.3s ease;
+}
+
+.navFullscreenMenu::before {
+  content: "";
+  position: absolute;
+  top: -40px;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(
+    to bottom,
+    rgba(10, 20, 14, 0.25),
+    rgba(10, 20, 14, 0)
+  );
+  pointer-events: none;
+}
+
+.navFullscreenMenu.open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.navFullscreenLayout {
+  width: min(86.25rem, calc(100% - clamp(1.5rem, 0.7rem + 2.2vw, 4rem)));
+  height: 100%;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1.15fr;
+  grid-template-rows: auto 1fr auto;
+  gap: clamp(1.25rem, 0.35rem + 1.8vw, 2rem)
+    clamp(1rem, 0.1rem + 1.9vw, 2.5rem);
+  padding: clamp(1.5rem, 0.35rem + 2.6vw, 3rem)
+    clamp(0.75rem, 0.45rem + 0.85vw, 1rem)
+    clamp(1.25rem, 0.6rem + 1.6vw, 2.25rem);
+  align-items: start;
+}
+
+.navMenuColumn {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.25rem, 0.35rem + 1.8vw, 2rem);
+}
+
+.navMenuColumn:nth-child(1) {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.navMenuColumn:nth-child(2) {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.navMenuColumn:nth-child(3) {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.navMenuSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.navMenuHeading {
+  margin: 0 0 0.5rem 0;
+  padding-left: 0.75rem;
+  font-size: 0.92rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  opacity: 0.95;
+
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.55),
+    0 0 6px rgba(0, 0, 0, 0.25);
+
+  -webkit-text-stroke: 0.3px rgba(0, 0, 0, 0.4);
+}
+
+.navMenuLogoutButton {
+  width: fit-content;
+  background: transparent;
+  border: none;
+  appearance: none;
+  text-decoration: none;
+  font-size: 1.07rem;
+  font-weight: 800;
+  line-height: 1.35;
+  color: rgb(144, 22, 22);
+  position: relative;
+  padding: 0 0 0 0.75rem;
+  margin: 0;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.navMenuLogoutButton::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 2px;
+  height: 70%;
+  background: var(--color-accent);
+  transform: translateY(-50%) scaleY(0);
+  transform-origin: center;
+  transition:
+    transform 0.22s ease,
+    background 0.2s ease;
+}
+
+.navMenuLogoutButton:hover {
+  color: var(--color-accent);
+  transform: translateX(3px);
+}
+
+.navMenuLogoutButton:hover::before {
+  transform: translateY(-50%) scaleY(1);
+  background: darkred;
+}
+
+.navMenuLogoutButton:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 4px;
+  border-radius: 0.2rem;
+}
+
+.navMenuSection a {
+  width: fit-content;
+  text-decoration: none;
+  font-size: 1.02rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.95);
+  position: relative;
+  padding-left: 0.75rem;
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.navMenuSection a::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 2px;
+  height: 70%;
+  background: var(--color-accent);
+  transform: translateY(-50%) scaleY(0);
+  transform-origin: center;
+  transition:
+    transform 0.22s ease,
+    background 0.2s ease;
+}
+
+.navMenuSection a:hover {
+  color: white;
+  transform: translateX(3px);
+}
+
+.navMenuSection a:hover::before {
+  transform: translateY(-50%) scaleY(1);
+  background: var(--color-accent);
+}
+
+.navMenuSection a.active {
+  color: white;
+  font-weight: 600;
+}
+
+.navMenuSection a.active::before {
+  transform: translateY(-50%) scaleY(1);
+  background: var(--color-primary);
+}
+
+.navMenuSection a:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 4px;
+  border-radius: 0.2rem;
+}
+
+/* RIGHT STATIC CARD */
+.navMenuStaticCard {
+  grid-column: 4;
+  grid-row: 1 / span 3;
+  display: flex;
+  align-items: stretch;
+  min-height: 100%;
+}
+
+.navMenuStaticCardPanel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  width: 100%;
+  min-height: 100%;
+  padding: 0;
+  border-radius: clamp(0.9rem, 0.55rem + 0.8vw, 1.25rem);
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04)),
+    linear-gradient(135deg, rgba(46, 139, 87, 0.26), rgba(16, 43, 29, 0.4));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 14px 30px rgba(0, 0, 0, 0.16);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.navMenuStaticCardPanel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(
+    circle at 70% 30%,
+    rgba(212, 175, 55, 0.52),
+    rgba(212, 175, 55, 0.34) 45%,
+    transparent 65%
+  );
+  opacity: 0.45;
+  animation: gold-pulse 6.5s ease-in-out infinite;
+}
+
+.navMenuStaticCardPanel:hover::after {
+  animation: gold-pulse 3.2s ease-in-out infinite;
+  opacity: 0.6;
+}
+
+.navMenuStaticCardPanel > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes gold-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.25;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 0.45;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.25;
+  }
+}
+
+.navMenuStaticLogo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 70%;
+  overflow: hidden;
+}
+
+.navMenuStaticLogo img {
+  width: 100%;
+  height: 90%;
+  object-fit: cover;
+  object-position: center 30%;
+  display: block;
+}
+
+.navMenuStaticContent {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 40%;
+  padding: 1.4rem 1.6rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background: linear-gradient(
+    to top,
+    rgba(10, 20, 14, 0.78) 0%,
+    rgba(10, 20, 14, 0.42) 55%,
+    transparent 100%
+  );
+}
+
+/* BRAND LINE */
+.navMenuBrand {
+  margin: 0 0 0.7rem 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.05;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.navMenuBrandPrimary {
+  color: var(--color-accent);
+  position: relative;
+
+  background: linear-gradient(
+    120deg,
+    #d4af37 0%,
+    #f3e7a1 20%,
+    #d4af37 40%,
+    #b8962e 60%,
+    #d4af37 80%
+  );
+
+  background-size: 200% auto;
+
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  animation: gold-text-shimmer 5.5s linear infinite;
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.35);
+}
+
+@keyframes gold-text-shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.navMenuBrandSecondary {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* HEADER (gold) */
+.navMenuTitle {
+  margin: 0 0 0.6rem 0;
+  font-size: 1.55rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--color-accent);
+}
+
+/* DESCRIPTION (white) */
+.navMenuDescription {
+  margin: 0;
+  max-width: 26ch;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.navMenuEyebrow {
+  margin: 0 0 0.8rem 0;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(212, 175, 55, 0.9);
+}
+
+.navMenuStaticCardPanel h2 {
+  margin: 0 0 0.85rem 0;
+  font-size: 1.7rem;
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+
+  /* 🔥 gradient gold */
+  background: linear-gradient(
+    120deg,
+    #d4af37 0%,
+    #f3e7a1 20%,
+    #d4af37 40%,
+    #b8962e 60%,
+    #d4af37 80%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gold-text-shimmer 5.5s linear infinite;
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.35);
+}
+
+.navMenuStaticCardPanel p {
+  margin: 0;
+  max-width: 26ch;
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+/* SLIDESHOW AT BOTTOM */
+.navMenuSlideshow {
+  grid-column: 1 / 5;
+  grid-row: 3;
+  min-height: clamp(11rem, 8.5rem + 5.1vw, 13.75rem);
+  align-self: end;
+  border-radius: clamp(0.9rem, 0.55rem + 0.8vw, 1.25rem);
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02)),
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.08),
+      rgba(255, 255, 255, 0.02)
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 14px 30px rgba(0, 0, 0, 0.14);
+}
+
+.navMenuSlideshowTrack {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.navMenuSlide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.45s ease;
+  background-size: cover;
+  background-position: center;
+}
+
+.navMenuSlide.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.navMenuSlideOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(9, 20, 14, 0.72) 0%,
+    rgba(9, 20, 14, 0.34) 42%,
+    rgba(9, 20, 14, 0.16) 100%
+  );
+}
+
+.navMenuSlideContent {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  max-width: min(34rem, 92%);
+  padding: clamp(1rem, 0.35rem + 1.5vw, 1.8rem)
+    clamp(1rem, 0.35rem + 1.5vw, 1.8rem)
+    clamp(0.9rem, 0.2rem + 1.5vw, 1.6rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  color: white;
+}
+
+.navMenuSlideKicker {
+  margin: 0 0 0.7rem 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(212, 175, 55, 0.92);
+}
+
+.navMenuSlideTitle {
+  margin: 0 0 0.65rem 0;
+  font-size: 1.55rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.navMenuSlideText {
+  margin: 0;
+  font-size: 0.96rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.84);
+  max-width: 34ch;
+}
+
+.navMenuSlideDots {
+  position: absolute;
+  right: clamp(0.8rem, 0.4rem + 0.8vw, 1.2rem);
+  bottom: clamp(0.7rem, 0.3rem + 0.8vw, 1.1rem);
+  z-index: 2;
+  display: flex;
+  gap: 0.45rem;
+}
+
+.navMenuSlideDot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.navMenuSlideDot.active {
+  background: var(--color-accent);
+  transform: scale(1.15);
+}
+
+.navMenuSlideDot:hover {
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.navMenuSlideDot:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1200px) {
+  .navLinksRow a {
+    font-size: clamp(0.84rem, 0.5rem + 0.45vw, 0.95rem);
+  }
+
+  .navMenuSection a {
+    font-size: clamp(0.94rem, 0.62rem + 0.45vw, 1.02rem);
+  }
+}
+
+@media (max-width: 900px) {
+  .navBrandText {
+    font-size: 1.05rem;
+  }
+
+  .navBrandTagline {
+    font-size: 0.64rem;
+  }
+
+  .navLinksRow a {
+    font-size: 0.88rem;
+  }
+
+  .navFullscreenLayout {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto auto;
+    gap: clamp(1.25rem, 0.85rem + 1.6vw, 2rem);
+    padding-top: clamp(1.5rem, 0.9rem + 1.5vw, 2.5rem);
+  }
+
+  .navMenuColumn:nth-child(1) {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .navMenuColumn:nth-child(2) {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .navMenuColumn:nth-child(3) {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .navMenuStaticCard {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
+
+  .navMenuSlideshow {
+    grid-column: 1 / -1;
+    grid-row: 4;
+    min-height: 220px;
+  }
+
+  .navMenuStaticCardPanel {
+    min-height: 320px;
+  }
+}
+
+@media (max-width: 700px) {
+  .navbarLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .navbarBrandBlock {
+    border-radius: 0 0 clamp(1rem, 0.45rem + 2vw, 1.75rem)
+      clamp(1rem, 0.45rem + 2vw, 1.75rem);
+    border-right: none;
+    justify-content: center;
+  }
+
+  .navbarCenterZone {
+    transform: none;
+  }
+
+  .navStrip {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .navStripInner {
+    padding-left: 0.625rem;
+    padding-right: 0.625rem;
+  }
+
+  .navLinksRow {
+    display: none;
+  }
+
+  .navStrip {
+    justify-content: space-between;
+  }
+
+  .navFullscreenMenu {
+    top: calc(var(--nav-brand-min-height) + var(--nav-strip-height));
+  }
+
+  .navFullscreenLayout {
+    width: min(760px, calc(100% - 1.5rem));
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    gap: 1.5rem;
+    padding: 1.5rem 0.25rem 1.25rem;
+  }
+
+  .navMenuColumn:nth-child(1),
+  .navMenuColumn:nth-child(2),
+  .navMenuColumn:nth-child(3),
+  .navMenuStaticCard,
+  .navMenuSlideshow {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .navMenuStaticCard {
+    order: 4;
+  }
+
+  .navMenuSlideshow {
+    order: 5;
+    min-height: 200px;
+  }
+
+  .navMenuSection a {
+    font-size: 1rem;
+  }
+
+  .navMenuStaticCardPanel {
+    min-height: 300px;
+  }
+}
+
+@media (max-width: 520px) {
+  .navLogoWrapper {
+    width: 88px;
+    height: 42px;
+  }
+
+  .navLogo {
+    max-height: 72px;
+    transform: scale(1.2);
+  }
+
+  .navBrandText {
+    font-size: 0.95rem;
+  }
+
+  .navBrandTagline {
+    font-size: 0.58rem;
+    letter-spacing: 0.14em;
+  }
+
+  .navStripIcons {
+    gap: 0.4rem;
+    padding-left: 0.5rem;
+  }
+
+  .navStripIconButton {
+    width: 38px;
+    height: 38px;
+  }
+
+  .navStripMenuButton {
+    min-width: 50px;
+    padding: 0 0.75rem;
+  }
+
+  .navFullscreenLayout {
+    width: calc(100% - 1.25rem);
+    padding: 1rem 0.2rem 1rem;
+    gap: 1.1rem;
+  }
+
+  .navMenuHeading {
+    font-size: 0.68rem;
+  }
+
+  .navMenuSection a {
+    font-size: 0.96rem;
+  }
+
+  .navMenuSlideContent {
+    padding: 1.2rem 1.2rem 1.1rem;
+  }
+
+  .navMenuSlideTitle {
+    font-size: 1.2rem;
+  }
+
+  .navMenuSlideText {
+    font-size: 0.9rem;
+  }
+
+  .navMenuSlideshow {
+    min-height: 180px;
+  }
+
+  .navMenuStaticCardPanel {
+    min-height: 260px;
+  }
+
+  .navMenuStaticContent {
+    padding: 1rem 1rem 1.1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navStripMenuButton,
+  .navStripMenuButton::after,
+  .navStripIconButton,
+  .navLinksRow a,
+  .navLinksRow a::after,
+  .navGridDot,
+  .navGridIcon,
+  .navGridIcon::before,
+  .navGridIcon::after,
+  .navFullscreenMenu,
+  .navMenuSection a,
+  .navMenuSection a::before,
+  .navMenuSlide,
+  .navMenuSlideDot,
+  .navMenuStaticCardPanel::after {
+    transition: none;
+    animation: none;
+  }
+
+  .navStripIconButton:hover,
+  .navMenuSection a:hover {
+    transform: none;
+  }
+
+  .navStripMenuButton:hover .navGridDot,
+  .navStripMenuButton[aria-expanded="true"] .navGridDot {
+    transform: translate(-50%, -50%) scale(1);
+  }
+}

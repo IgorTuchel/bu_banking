@@ -1,0 +1,252 @@
+.navMenuSlideshow {
+  grid-column: 1 / 4;
+  grid-row: 3;
+  height: calc(100vh - 500px);
+  min-height: 420px;
+  max-height: 600px;
+  align-self: end;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02)),
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.08),
+      rgba(255, 255, 255, 0.02)
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 14px 30px rgba(0, 0, 0, 0.14);
+}
+
+.navMenuSlideshowTrack {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.navMenuSlide {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.45s ease;
+}
+
+.navMenuSlide.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* TOP MESSAGE BAND */
+.navMenuSlideMessage {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  padding: 1.2rem 1.5rem 1.1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* IMAGE AREA */
+.navMenuSlideImageWrap {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.navMenuSlideImage {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center 60%;
+  background-repeat: no-repeat;
+}
+
+.navMenuSlideImageWrap::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    to bottom,
+    rgba(12, 22, 18, 0.22),
+    rgba(12, 22, 18, 0.08),
+    transparent 40%
+  );
+  pointer-events: none;
+}
+
+/* TEXT */
+.navMenuSlideKicker {
+  margin: 0 0 0.35rem 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.navMenuSlideTitle {
+  margin: 0 0 0.45rem 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.navMenuSlideText {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  max-width: 62ch;
+}
+
+/* DOTS */
+.navMenuSlideDots {
+  position: absolute;
+  right: 1.2rem;
+  bottom: 1rem;
+  z-index: 3;
+  display: flex;
+  gap: 0.45rem;
+}
+
+.navMenuSlideDot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.navMenuSlideDot.active {
+  background: var(--color-accent);
+  transform: scale(1.15);
+}
+
+.navMenuSlideDot:hover {
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.navMenuSlideDot:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+/* CONTRAST MODES FOR MESSAGE BAND */
+.navMenuSlideMessage-dark {
+  background: rgba(12, 22, 18, 0.34);
+  color: white;
+}
+
+.navMenuSlideMessage-dark .navMenuSlideKicker {
+  color: rgba(212, 175, 55, 0.95);
+}
+
+.navMenuSlideMessage-dark .navMenuSlideTitle {
+  color: white;
+}
+
+.navMenuSlideMessage-dark .navMenuSlideText {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.navMenuSlideMessage-light {
+  background: rgba(255, 255, 255, 0.5);
+  color: #10291c;
+}
+
+.navMenuSlideMessage-light .navMenuSlideKicker {
+  color: #8a6808;
+  font-weight: 700;
+}
+
+.navMenuSlideMessage-light .navMenuSlideTitle {
+  color: var(--color-primary-dark);
+  font-weight: 800;
+}
+
+.navMenuSlideMessage-light .navMenuSlideText {
+  color: #1c1c1c;
+  font-weight: 500;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .navMenuSlideshow {
+    grid-column: 1 / -1;
+    grid-row: 4;
+    height: 50vh;
+    min-height: 420px;
+    max-height: 560px;
+  }
+
+  .navMenuSlideTitle {
+    font-size: 1.18rem;
+  }
+}
+
+@media (max-width: 700px) {
+  .navMenuSlideshow {
+    grid-column: 1;
+    grid-row: auto;
+    order: 5;
+    height: 45vh;
+    min-height: 360px;
+    max-height: 460px;
+  }
+
+  .navMenuSlideMessage {
+    padding: 1rem 1.1rem 0.95rem;
+  }
+
+  .navMenuSlideTitle {
+    font-size: 1.05rem;
+  }
+
+  .navMenuSlideText {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .navMenuSlideshow {
+    height: 40vh;
+    min-height: 300px;
+    max-height: 380px;
+  }
+
+  .navMenuSlideMessage {
+    padding: 0.9rem 1rem 0.85rem;
+  }
+
+  .navMenuSlideKicker {
+    font-size: 0.66rem;
+  }
+
+  .navMenuSlideTitle {
+    font-size: 0.98rem;
+  }
+
+  .navMenuSlideText {
+    font-size: 0.84rem;
+    line-height: 1.4;
+  }
+
+  .navMenuSlideDots {
+    right: 0.9rem;
+    bottom: 0.8rem;
+  }
+}

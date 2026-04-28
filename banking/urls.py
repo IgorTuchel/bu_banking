@@ -1,40 +1,80 @@
-"""
-URLs for the banking app with additional diagnostic endpoints.
-"""
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .tests.test_view import TestView
-from .views.user_registration_view import UserRegistrationView 
-from .views.account_view import AccountViewSet
-from .views.transaction_view import TransactionViewSet
-from .views.business_view import BusinessViewSet
+from django.urls import include, path
+from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
-from drf_yasg import openapi 
-from rest_framework.permissions import AllowAny 
+from rest_framework.permissions import AllowAny
+from rest_framework.routers import DefaultRouter
+
+from banking.views.account_view import AccountViewSet
+from banking.views.network_view import (
+    NetworkBanksView,
+    NetworkStatusView,
+    NetworkTransferView,
+)
+from banking.views.transfer_view import TransferView
+
+from .tests.test_view import TestView
+from .views.api_views import (
+    AccountCardsView,
+    AccountDetailByKeyView,
+    AccountListView,
+    AccountTransactionsView,
+    CardUpdateView,
+    CurrentUserView,
+    TestTransactionView,
+)
+from .views.auth_views import LoginView, UserAccountsView
+from .views.business_view import BusinessViewSet
+from .views.transaction_view import TransactionViewSet
+from .views.user_registration_view import UserRegistrationView
 
 router = DefaultRouter()
-
-router.register(r'accounts', AccountViewSet, basename='account')
-router.register(r'transactions', TransactionViewSet, basename='transaction')
-router.register(r'businesses', BusinessViewSet)
-
-urlpatterns = [
-    path('', include(router.urls)),
-    path('test-view/', TestView.as_view(), name='banking-test-view'),
-    path('user-registration/', UserRegistrationView.as_view(), name='user-registration'),
-]
+router.register(r"accounts", AccountViewSet, basename="account")
+router.register(r"transactions", TransactionViewSet, basename="transaction")
+router.register(r"businesses", BusinessViewSet, basename="business")
 
 schema_view = get_schema_view(
-   openapi.Info(
-      title="Banking API",
-      default_version='v1',
-      description="API documentation for Extra Credit Union",
-   ),
-   public=True,
-   permission_classes=(AllowAny,),
+    openapi.Info(
+        title="Banking API",
+        default_version="v1",
+        description="API documentation for Extra Credit Union",
+    ),
+    public=True,
+    permission_classes=(AllowAny,),
 )
 
-urlpatterns += [
-    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+urlpatterns = [
+    path("auth/login/", LoginView.as_view(), name="auth-login"),
+    path("auth/register/", UserRegistrationView.as_view(), name="auth-register"),
+    path("auth/user/", UserAccountsView.as_view(), name="auth-user"),
+    path("me/", CurrentUserView.as_view(), name="api-me"),
+    path("accounts/", AccountListView.as_view(), name="api-accounts"),
+    path(
+        "accounts/by-key/<slug:display_key>/",
+        AccountDetailByKeyView.as_view(),
+        name="api-account-by-key",
+    ),
+    path(
+        "accounts/<str:account_id>/transactions/",
+        AccountTransactionsView.as_view(),
+        name="api-account-transactions",
+    ),
+    path(
+        "accounts/<str:account_id>/cards/",
+        AccountCardsView.as_view(),
+        name="api-account-cards",
+    ),
+    path("network/banks/", NetworkBanksView.as_view()),
+    path("network/status/", NetworkStatusView.as_view()),
+    path("network/transfer/", NetworkTransferView.as_view()),
+    path("transfers/", TransferView.as_view(), name="api-transfers"),
+    path("cards/<str:card_id>/", CardUpdateView.as_view(), name="api-card-update"),
+    path("test-transaction/", TestTransactionView.as_view(), name="test-transaction"),
+    path("test-view/", TestView.as_view(), name="banking-test-view"),
+    path("", include(router.urls)),
+    path(
+        "swagger/",
+        schema_view.with_ui("swagger", cache_timeout=0),
+        name="schema-swagger-ui",
+    ),
+    path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
 ]

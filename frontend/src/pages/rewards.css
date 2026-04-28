@@ -1,0 +1,228 @@
+.rewards-hero-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.rewards-hero-text {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 0.98rem;
+}
+
+.rewards-offers-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-md);
+  width: 100%;
+}
+
+.reward-offer-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.reward-offer-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.reward-offer-image-wrap,
+.reward-card-image {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
+  background: transparent;
+}
+
+.reward-offer-image-wrap > * {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.reward-offer-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.reward-offer-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: 1.1rem;
+}
+
+.reward-offer-top {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.reward-offer-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: var(--color-accent);
+  color: var(--color-text-heading);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.reward-offer-card h3 {
+  margin: 0;
+  color: var(--color-text-heading);
+  font-size: 1.1rem;
+}
+
+.reward-offer-card p {
+  margin: 0;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  min-height: 3.5rem;
+}
+
+.reward-offer-button {
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.9rem 1rem;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-dark),
+    var(--color-primary)
+  );
+  color: white;
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+}
+
+.reward-offer-button:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.reward-offer-button-active {
+  background: var(--color-success);
+  color: white;
+}
+
+.reward-offer-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.reward-offer-cashback {
+  font-weight: 700;
+  color: var(--color-success);
+}
+
+.reward-offer-expiry {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.reward-offer-card-loading {
+  pointer-events: none;
+}
+
+.reward-offer-card-loading .reward-offer-content {
+  gap: 0.75rem;
+}
+
+@media (max-width: 992px) {
+  .rewards-offers-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .rewards-offers-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reward-offer-image-wrap {
+    height: 140px;
+  }
+}
+
+/* CARD ACTIVATE ANIMATION */
+
+.reward-offer-card-animating {
+  animation: rewardPulse 0.5s ease;
+}
+
+@keyframes rewardPulse {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.03);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ACTIVE CARD STYLE */
+
+.reward-offer-card-active {
+  box-shadow:
+    var(--shadow-md),
+    0 0 0 2px var(--color-success);
+}
+
+/* BUTTON POP EFFECT */
+
+.reward-offer-button:active {
+  transform: scale(0.96);
+}
+
+.reward-card-image {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+
+}
+
+.reward-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.reward-card-image-badge {
+  position: absolute;
+  top: 0.8rem;
+  left: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background: #d4af37;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  box-shadow: var(--shadow-sm);
+}
