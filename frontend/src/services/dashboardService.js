@@ -1,86 +1,105 @@
-import {
-  ArrowUpDown,
-  ArrowDownLeft,
-  CreditCard,
-  CalendarClock,
-} from "lucide-react";
-import { getCurrentUser } from "./userService";
-import { getAccountsForUser } from "./accountService";
-import { getTransactionsForAccount } from "./transactionService";
+import { authenticatedFetch } from "./authService";
+// src/services/dashboardService.js
+import { ArrowLeftRight, HandCoins, FileText, PieChart } from "lucide-react";
 
-function buildQuickActions() {
-  return [
-    {
-      id: "transfer",
-      label: "Transfer",
-      description: "Send money instantly",
-      icon: ArrowUpDown,
-      path: "/transfer",
-    },
-    {
-      id: "request",
-      label: "Request",
-      description: "Ask for a payment",
-      icon: ArrowDownLeft,
-      path: "/request-payment",
-    },
-    {
-      id: "cards",
-      label: "Cards",
-      description: "View, freeze & manage",
-      icon: CreditCard,
-      path: "/cards",
-    },
-    {
-      id: "scheduled-payments",
-      label: "Scheduled",
-      description: "Direct debits & standing orders",
-      icon: CalendarClock,
-      path: "/scheduled-payments",
-    },
-  ];
-}
+const API = "http://127.0.0.1:8000/api";
 
-function buildNotifications(user) {
-  return [
-    {
-      id: "notif-001",
-      title: `Welcome back, ${user.firstName}`,
-      message: "Your latest account activity is ready to review.",
-      time: "Just now",
-    },
-    {
-      id: "notif-002",
-      title: "Security reminder",
-      message: "Never share your one-time passcode with anyone.",
-      time: "Today",
-    },
-  ];
+async function fetchJSON(url) {
+  const res = await authenticatedFetch(url);
+
+  if (!res.ok) {
+    throw new Error(`${res.status} — ${url}`);
+  }
+
+  return res.json();
 }
 
 export async function getDashboardData() {
-  const user = await getCurrentUser();
-  const accounts = await getAccountsForUser(user.id);
+  const [user, accounts] = await Promise.all([
+    fetchJSON(`${API}/me/`),
+    fetchJSON(`${API}/accounts/`),
+  ]);
 
   const accountsWithTransactions = await Promise.all(
     accounts.map(async (account) => {
-      const transactions = await getTransactionsForAccount(account.id);
-
-      const normalisedBalance =
-        account.currentBalance ?? account.availableCredit ?? 0;
+      const transactions = await fetchJSON(
+        `${API}/accounts/${account.id}/transactions/`,
+      );
 
       return {
         ...account,
-        currentBalance: normalisedBalance,
-        transactions: Array.isArray(transactions) ? transactions.slice(0, 5) : [],
+        transactions,
       };
-    })
+    }),
   );
-
+  console.log(user.lastLogin);
+  console.log(user);
   return {
-    user,
+    user: {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      lastLogin: user.lastLogin,
+    },
     accounts: accountsWithTransactions,
-    quickActions: buildQuickActions(),
-    notifications: buildNotifications(user),
+    notifications: [],
+    quickActions: [
+      {
+        id: "transfer",
+        label: "Transfer",
+        description: "Move money between accounts",
+        path: "/transfer",
+        icon: ArrowLeftRight,
+      },
+      {
+        id: "request",
+        label: "Request Payment",
+        description: "Ask someone to pay you",
+        path: "/request-payment",
+        icon: HandCoins,
+      },
+      {
+        id: "statements",
+        label: "Statements",
+        description: "View and download statements",
+        path: "/statements",
+        icon: FileText,
+      },
+      {
+        id: "spending-insights",
+        label: "Spending Insights",
+        description: "Analyse your spending habits",
+        path: "/spending-insights",
+        icon: PieChart,
+      },
+    ],
   };
+}
+
+export async function getAccountTransactions(accountId) {
+  return fetchJSON(`${API}/accounts/${accountId}/transactions/`);
+}
+
+export async function getAccountCards(accountId) {
+  return fetchJSON(`${API}/accounts/${accountId}/cards/`);
+}
+
+export async function getAccountByKey(displayKey) {
+  return fetchJSON(`${API}/accounts/by-key/${displayKey}/`);
+}
+
+export async function updateCard(cardId, fields) {
+  const res = await authenticatedFetch(`${API}/cards/${cardId}/`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(fields),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to update card ${cardId}`);
+  }
+
+  return res.json();
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import "./Support.css";
+import "./support.css";
 
 import FaqItem from "../components/FaqItem";
 import Skeleton from "../components/Skeleton";
@@ -21,7 +21,9 @@ function HelpSupport() {
       <main className="home-page help-support-page">
         <header className="dashboard-header">
           <h1>Help & Support</h1>
-          <p>Get answers quickly, explore common questions, or chat with support.</p>
+          <p>
+            Get answers quickly, explore common questions, or chat with support.
+          </p>
         </header>
 
         <section
@@ -37,14 +39,22 @@ function HelpSupport() {
           <Skeleton width="260px" height="1.8rem" />
           <Skeleton width="90%" height="0.95rem" />
           <Skeleton width="75%" height="0.95rem" />
-          <Skeleton width="140px" height="2.8rem" style={{ marginTop: "0.5rem" }} />
+          <Skeleton
+            width="140px"
+            height="2.8rem"
+            style={{ marginTop: "0.5rem" }}
+          />
         </section>
 
         <section className="summary-grid">
           {[...Array(3)].map((_, index) => (
             <article key={index} className="summary-card">
               <Skeleton width="110px" height="0.9rem" />
-              <Skeleton width="90px" height="1.6rem" style={{ marginTop: "0.8rem" }} />
+              <Skeleton
+                width="90px"
+                height="1.6rem"
+                style={{ marginTop: "0.8rem" }}
+              />
             </article>
           ))}
         </section>
@@ -76,8 +86,16 @@ function HelpSupport() {
               {[...Array(3)].map((_, index) => (
                 <article key={index} className="notification-card">
                   <Skeleton width="140px" height="1rem" />
-                  <Skeleton width="100%" height="0.9rem" style={{ marginTop: "0.75rem" }} />
-                  <Skeleton width="85%" height="0.9rem" style={{ marginTop: "0.5rem" }} />
+                  <Skeleton
+                    width="100%"
+                    height="0.9rem"
+                    style={{ marginTop: "0.75rem" }}
+                  />
+                  <Skeleton
+                    width="85%"
+                    height="0.9rem"
+                    style={{ marginTop: "0.5rem" }}
+                  />
                 </article>
               ))}
             </div>
@@ -91,7 +109,9 @@ function HelpSupport() {
     <main className="home-page help-support-page">
       <header className="dashboard-header">
         <h1>Help & Support</h1>
-        <p>Get answers quickly, explore common questions, or chat with support.</p>
+        <p>
+          Get answers quickly, explore common questions, or chat with support.
+        </p>
       </header>
 
       <section className="selected-account-card support-hero-card">

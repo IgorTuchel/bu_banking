@@ -1,25 +1,18 @@
 import { authenticatedFetch } from "./authService";
 
-const API_BASE = "http://127.0.0.1:8000/api";
+const API = "http://127.0.0.1:8000/api";
 
-export async function getAccountsForUser() {
-  const response = await authenticatedFetch(`${API_BASE}/accounts/`);
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch accounts.");
-  }
-
-  return response.json();
+async function fetchJSON(url) {
+  const res = await authenticatedFetch(url);
+  if (!res.ok) throw new Error(`${res.status} — ${url}`);
+  return res.json();
 }
 
-export async function getAccountByKeyForUser(userId, accountKey) {
-  const response = await authenticatedFetch(
-    `${API_BASE}/accounts/by-key/${accountKey}/`
-  );
+export async function getAccountsForUser(_userId) {
+  return fetchJSON(`${API}/accounts/`);
+}
 
-  if (!response.ok) {
-    throw new Error("Failed to fetch account.");
-  }
-
-  return response.json();
+export async function getAccountByKeyForUser(displayKey) {
+  console.log(displayKey);
+  return fetchJSON(`${API}/accounts/by-key/${displayKey}/`);
 }

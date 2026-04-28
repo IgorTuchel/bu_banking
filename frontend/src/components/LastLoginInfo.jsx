@@ -6,7 +6,11 @@ function formatLastLogin(timestamp) {
     };
   }
 
-  const loginDate = new Date(timestamp);
+  const normalized = timestamp.replace(
+    /(\.\d{3})\d+(Z|[+-]\d{2}:\d{2})$/,
+    "$1$2",
+  );
+  const loginDate = new Date(normalized);
 
   if (Number.isNaN(loginDate.getTime())) {
     return {
@@ -35,7 +39,8 @@ function formatLastLogin(timestamp) {
 
 function LastLoginInfo({ timestamp, location }) {
   const { formattedDate, formattedTime } = formatLastLogin(timestamp);
-
+  console.log(timestamp);
+  console.log(timestamp, location, formattedDate, formattedTime);
   return (
     <div className="last-login-info">
       <span className="last-login-label">Last login:</span>

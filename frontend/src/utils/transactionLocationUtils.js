@@ -1,120 +1,52 @@
-import {
-  COUNTRY_NAME_BY_CODE,
-  LOCATION_TEXT_BLOCKLIST,
-} from "../constants/transactionMap";
-
+/**
+ * Returns the first non-null, non-empty value from the provided arguments.
+ */
 export function firstDefined(...values) {
-  return values.find(
-    (value) => value !== undefined && value !== null && value !== ""
-  );
+  return values.find((v) => v !== null && v !== undefined && v !== "") ?? null;
 }
 
-export function normalizeLocationValue(value) {
-  return String(value ?? "").trim();
+/**
+ * Returns true if we have enough location info to attempt geocoding.
+ */
+export function shouldRenderTransactionMap(transaction) {
+  if (!transaction) return false;
+  return Boolean(getGeocodeQuery(transaction));
 }
 
-export function shouldUseLocationText(value) {
-  const normalized = normalizeLocationValue(value).toLowerCase();
+/**
+ * Builds a geocode search string from the most specific location data available.
+ */
+export function getGeocodeQuery(transaction) {
+  if (!transaction) return null;
 
-  if (!normalized) {
-    return false;
-  }
-
-  return !LOCATION_TEXT_BLOCKLIST.some((term) => normalized.includes(term));
-}
-
-export function getCountryName(value) {
-  const normalized = String(value ?? "").trim().toUpperCase();
-  return COUNTRY_NAME_BY_CODE[normalized] ?? value;
-}
-
-export function getLocationLabel(transaction) {
-  const merchant = transaction.merchant ?? {};
-
-  const city = firstDefined(
-    transaction.city,
-    transaction.cityName,
-    transaction.town,
-    transaction.locationCity,
-    merchant.city,
-    merchant.cityName,
-    merchant.town
-  );
-
+  const city = firstDefined(transaction.city, transaction.merchant?.city);
   const country = firstDefined(
     transaction.country,
-    transaction.countryName,
-    merchant.country,
-    merchant.countryName
+    transaction.merchant?.country,
   );
 
-  const readableCountry = getCountryName(country);
+  if (city && country) return `${city}, ${country}`;
+  if (city) return city;
+  if (country) return country;
 
-  return firstDefined(
-    merchant.location,
-    transaction.location,
-    city && readableCountry ? `${city}, ${readableCountry}` : null,
-    city
-  );
+  return null;
 }
 
-export function getGeocodeQuery(transaction) {
-  const merchant = transaction.merchant ?? {};
+/**
+ * Returns a short human-readable location label for display in the UI.
+ */
+export function getLocationLabel(transaction) {
+  if (!transaction) return null;
 
-  const city = firstDefined(
-    transaction.city,
-    transaction.cityName,
-    transaction.town,
-    transaction.locationCity,
-    merchant.city,
-    merchant.cityName,
-    merchant.town
+  const city = firstDefined(transaction.city, transaction.merchant?.city);
+  const country = firstDefined(
+    transaction.country,
+    transaction.merchant?.country,
   );
 
-  if (city) {
-    return normalizeLocationValue(city);
-  }
+  if (city && country) return `${city}, ${country}`;
+  if (city) return city;
+  if (country) return country;
 
-  const fallbackLocation = firstDefined(
-    typeof transaction.location === "string" ? transaction.location : null,
-    transaction.locationName,
-    transaction.place,
-    typeof merchant.location === "string" ? merchant.location : null
-  );
-
-  return shouldUseLocationText(fallbackLocation)
-    ? normalizeLocationValue(fallbackLocation)
-    : null;
-}
-
-
-const MAP_EXCLUDED_KEYWORDS = [
-  "transfer",
-  "bank transfer",
-  "online",
-  "subscription",
-  "recurring",
-  "recurrent",
-  "direct debit",
-  "standing order",
-  "faster payment",
-  "banking app",
-];
-
-export function shouldRenderTransactionMap(transaction) {
-  const merchant = transaction?.merchant ?? {};
-  const category = String(firstDefined(transaction?.category, merchant?.category) ?? "").toLowerCase();
-  const paymentType = String(firstDefined(transaction?.paymentType, merchant?.type) ?? "").toLowerCase();
-  const location = String(firstDefined(transaction?.location, merchant?.location) ?? "").toLowerCase();
-
-  const searchableValue = `${category} ${paymentType} ${location}`;
-  const isExcludedType = MAP_EXCLUDED_KEYWORDS.some((keyword) =>
-    searchableValue.includes(keyword)
-  );
-
-  if (isExcludedType) {
-    return false;
-  }
-
-  return Boolean(getGeocodeQuery(transaction));
+  return null;
 }

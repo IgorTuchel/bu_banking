@@ -1,79 +1,47 @@
 from django.db.models import Q
-from rest_framework.permissions import AllowAny
+from django.utils import timezone
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.utils import timezone
 
-from banking.models import Account, Transaction, Card
+from banking.models import Account, Card, Transaction
 from banking.serializers import (
     CurrentUserSerializer,
     FrontendAccountSerializer,
-    FrontendTransactionSerializer,
     FrontendCardSerializer,
+    FrontendTransactionSerializer,
 )
 
 
-
-
 class CurrentUserView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        user = request.user
-
-        if not user.is_authenticated:
-            fallback_account = (
-                Account.objects.select_related("user")
-                .exclude(user=None)
-                .first()
-            )
-            user = fallback_account.user if fallback_account else None
-
-        if user is None:
-            return Response({"detail": "No user found."}, status=404)
-
-        serializer = CurrentUserSerializer(user)
+        serializer = CurrentUserSerializer(request.user)
+        print(serializer.data)
         return Response(serializer.data)
 
 
 class AccountListView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        user = request.user
-
-        if user.is_authenticated:
-            accounts = (
-                Account.objects.filter(user=user)
-                .select_related("savings_details", "credit_details")
-                .order_by("name")
-            )
-        else:
-            fallback_account = (
-                Account.objects.select_related("user")
-                .exclude(user=None)
-                .first()
-            )
-            if not fallback_account:
-                return Response([], status=200)
-
-            accounts = (
-                Account.objects.filter(user=fallback_account.user)
-                .select_related("savings_details", "credit_details")
-                .order_by("name")
-            )
-
+        accounts = (
+            Account.objects.filter(user=request.user)
+            .select_related("savings_details", "credit_details")
+            .order_by("name")
+        )
         serializer = FrontendAccountSerializer(accounts, many=True)
         return Response(serializer.data)
 
 
 class AccountDetailByKeyView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, display_key):
         account = (
             Account.objects.select_related("savings_details", "credit_details")
-            .filter(display_key=display_key)
+            .filter(display_key=display_key, user=request.user)
             .first()
         )
 
@@ -85,17 +53,15 @@ class AccountDetailByKeyView(APIView):
 
 
 class AccountTransactionsView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, account_id):
-        account = Account.objects.filter(id=account_id).first()
+        account = Account.objects.filter(id=account_id, user=request.user).first()
 
         if not account:
             return Response({"detail": "Account not found."}, status=404)
 
         if account.account_type == "current":
-            # Match old UI behaviour: current account should not show
-            # internal movements to savings / credit accounts.
             transactions = (
                 Transaction.objects.filter(
                     Q(from_account=account, direction="outgoing")
@@ -112,7 +78,6 @@ class AccountTransactionsView(APIView):
                 .order_by("-timestamp", "-id")
             )
         else:
-            # Savings / credit views should show their own internal movements.
             transactions = (
                 Transaction.objects.filter(
                     Q(from_account=account) | Q(to_account=account)
@@ -127,41 +92,13 @@ class AccountTransactionsView(APIView):
             context={"account": account},
         )
         return Response(serializer.data)
-    
-class TestTransactionView(APIView):
-    def post(self, request):
-        card_number = request.data.get("card_number")
-        amount = request.data.get("amount", 10.00)
 
-        card = Card.objects.filter(network_card_number=card_number).first()
 
-        if not card:
-            return Response({"error": "Card not found"}, status=400)
-
-        txn = Transaction.objects.create(
-            transaction_type="card_payment",
-            status="completed",
-            direction="outgoing",
-            amount=amount,
-            timestamp=timezone.now(),
-            from_account=card.account,
-            to_account=None,
-            business=None,
-            card=card,
-            description="TEST TRANSACTION FROM BASH",
-            payment_reference="TEST",
-        )
-
-        return Response({
-            "success": True,
-            "transaction_id": txn.id
-        })
-    
 class AccountCardsView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, account_id):
-        account = Account.objects.filter(id=account_id).first()
+        account = Account.objects.filter(id=account_id, user=request.user).first()
 
         if not account:
             return Response({"detail": "Account not found."}, status=404)
@@ -172,10 +109,11 @@ class AccountCardsView(APIView):
 
 
 class CardUpdateView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def patch(self, request, card_id):
-        card = Card.objects.filter(id=card_id).first()
+        # Ensure the card belongs to the requesting user
+        card = Card.objects.filter(id=card_id, account__user=request.user).first()
 
         if not card:
             return Response({"detail": "Card not found."}, status=404)
@@ -197,3 +135,41 @@ class CardUpdateView(APIView):
 
         serializer = FrontendCardSerializer(card)
         return Response(serializer.data)
+
+
+class TestTransactionView(APIView):
+    """
+    Dev-only endpoint — simulate a card payment without going through
+    the full payment network flow.
+    Remove or restrict to IsAdminUser before production.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        card_number = request.data.get("card_number")
+        amount = request.data.get("amount", 10.00)
+
+        card = Card.objects.filter(
+            network_card_number=card_number,
+            account__user=request.user,
+        ).first()
+
+        if not card:
+            return Response({"error": "Card not found"}, status=400)
+
+        txn = Transaction.objects.create(
+            transaction_type="card_payment",
+            status="completed",
+            direction="outgoing",
+            amount=amount,
+            timestamp=timezone.now(),
+            from_account=card.account,
+            to_account=None,
+            business=None,
+            card=card,
+            description="TEST TRANSACTION FROM BASH",
+            payment_reference="TEST",
+        )
+
+        return Response({"success": True, "transaction_id": txn.id})

@@ -1,245 +1,156 @@
+/**
+ * Parse a formatted amount string like "+£10.50" or "-£5.99" into a number.
+ */
 export function getAmountValue(amount) {
-  return Number((amount ?? "0").replace(/[^\d.-]/g, ""));
+  if (typeof amount === "number") return amount;
+  const str = String(amount).replace(/[^0-9.\-+]/g, "");
+  return parseFloat(str) || 0;
 }
 
+/**
+ * Format a timestamp into a readable date string.
+ */
 export function formatTransactionDate(timestamp) {
-  return new Date(timestamp ?? new Date().toISOString()).toLocaleDateString(
-    "en-GB",
-    {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }
-  );
+  if (!timestamp) return "";
+  const date = new Date(timestamp);
+  return date.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
-export function isPendingStatus(status) {
-  return (status ?? "").toLowerCase() === "pending";
+/**
+ * Return the label for a date range key.
+ */
+export function getDateRangeLabel(dateRange) {
+  const labels = {
+    today: "Today",
+    thisWeek: "This Week",
+    thisMonth: "This Month",
+    last3Months: "Last 3 Months",
+    last6Months: "Last 6 Months",
+    thisYear: "This Year",
+    all: "All Time",
+  };
+  return labels[dateRange] ?? "This Month";
 }
 
-export function getStartOfDay(date) {
-  const copy = new Date(date);
-  copy.setHours(0, 0, 0, 0);
-  return copy;
-}
-
-export function getDaysDifference(fromDate, toDate) {
-  const msPerDay = 1000 * 60 * 60 * 24;
-  return Math.floor(
-    (getStartOfDay(fromDate) - getStartOfDay(toDate)) / msPerDay
-  );
-}
-
-export function getStartOfWeek(date) {
-  const copy = new Date(date);
-  const day = copy.getDay();
-  const diff = day === 0 ? 6 : day - 1;
-  copy.setDate(copy.getDate() - diff);
-  copy.setHours(0, 0, 0, 0);
-  return copy;
-}
-
-export function getStartOfMonth(date) {
-  const copy = new Date(date);
-  copy.setDate(1);
-  copy.setHours(0, 0, 0, 0);
-  return copy;
-}
-
-export function getGroupingLabel(timestamp, status) {
-  if (isPendingStatus(status)) {
-    return "Pending";
-  }
+/**
+ * Filter transactions by a named date range.
+ */
+export function filterTransactionsByDateRange(transactions, dateRange) {
+  if (!transactions) return [];
+  if (dateRange === "all") return transactions;
 
   const now = new Date();
-  const transactionDate = new Date(timestamp);
-  const dayDifference = getDaysDifference(now, transactionDate);
+  const startOf = (unit) => {
+    const d = new Date(now);
+    if (unit === "day") {
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
+    if (unit === "week") {
+      d.setDate(d.getDate() - d.getDay());
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
+    if (unit === "month") {
+      d.setDate(1);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
+    if (unit === "year") {
+      d.setMonth(0, 1);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
+    return d;
+  };
 
-  if (dayDifference === 0) {
-    return "Today";
+  const cutoff = {
+    today: startOf("day"),
+    thisWeek: startOf("week"),
+    thisMonth: startOf("month"),
+    last3Months: new Date(now.getFullYear(), now.getMonth() - 3, 1),
+    last6Months: new Date(now.getFullYear(), now.getMonth() - 6, 1),
+    thisYear: startOf("year"),
+  }[dateRange];
+
+  if (!cutoff) return transactions;
+
+  return transactions.filter((t) => {
+    const ts = t.timestamp ? new Date(t.timestamp) : null;
+    return ts && ts >= cutoff;
+  });
+}
+
+/**
+ * Group transactions by a human-readable date heading.
+ */
+export function groupTransactions(transactions) {
+  const groups = new Map();
+
+  for (const transaction of transactions) {
+    const label = getGroupLabel(transaction.timestamp);
+
+    if (!groups.has(label)) {
+      groups.set(label, []);
+    }
+
+    groups.get(label).push(transaction);
   }
 
-  if (dayDifference === 1) {
-    return "Yesterday";
-  }
+  return Array.from(groups.entries()).map(([label, items]) => ({
+    label,
+    items,
+  }));
+}
 
-  const currentWeekStart = getStartOfWeek(now);
-  const lastWeekStart = new Date(currentWeekStart);
-  lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+function getGroupLabel(timestamp) {
+  if (!timestamp) return "Unknown Date";
 
-  const transactionDay = getStartOfDay(transactionDate);
+  const date = new Date(timestamp);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
 
-  if (transactionDay >= currentWeekStart) {
-    return "This Week";
-  }
+  const txDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
-  if (transactionDay >= lastWeekStart && transactionDay < currentWeekStart) {
-    return "Last Week";
-  }
+  if (txDay.getTime() === today.getTime()) return "Today";
+  if (txDay.getTime() === yesterday.getTime()) return "Yesterday";
 
-  return transactionDate.toLocaleDateString("en-GB", {
+  return date.toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
     month: "long",
     year: "numeric",
   });
 }
 
-/* ============================= */
-/* 🔹 TRANSACTIONS PAGE SORT     */
-/* ============================= */
-export function sortTransactions(transactions) {
-  return [...transactions].sort((a, b) => {
-    const aPending = isPendingStatus(a.status);
-    const bPending = isPendingStatus(b.status);
+/**
+ * Append a running balance to each transaction, working backwards from the
+ * current available balance.
+ */
+export function addRunningBalance(transactions, availableBalance) {
+  let balance = Number(availableBalance) || 0;
 
-    if (aPending && !bPending) {
-      return -1;
-    }
-
-    if (!aPending && bPending) {
-      return 1;
-    }
-
-    return new Date(b.timestamp) - new Date(a.timestamp);
+  return transactions.map((transaction) => {
+    const runningBalance = balance;
+    balance -= getAmountValue(transaction.amount ?? "0");
+    return { ...transaction, runningBalance };
   });
 }
 
-/* ============================= */
-/* 🔹 HOME PAGE SORT             */
-/* ============================= */
-export function sortTransactionsByNewest(transactions) {
-  return [...transactions].sort(
-    (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
-  );
-}
-
+/**
+ * Returns the most recent N transactions sorted by timestamp descending.
+ * Used by the home dashboard panel.
+ */
 export function getHomeRecentTransactions(transactions, limit = 15) {
-  const newestFirst = sortTransactionsByNewest(transactions);
-  const limited = newestFirst.slice(0, limit);
+  if (!transactions || transactions.length === 0) return [];
 
-  return [...limited].sort((a, b) => {
-    const aPending = isPendingStatus(a.status);
-    const bPending = isPendingStatus(b.status);
-
-    if (aPending && !bPending) {
-      return -1;
-    }
-
-    if (!aPending && bPending) {
-      return 1;
-    }
-
-    return new Date(b.timestamp) - new Date(a.timestamp);
-  });
-}
-
-/* ============================= */
-/* 🔹 GROUPING                   */
-/* ============================= */
-export function groupTransactions(transactions) {
-  const sortedTransactions = sortTransactions(transactions);
-  const groups = [];
-
-  sortedTransactions.forEach((transaction) => {
-    const label = getGroupingLabel(transaction.timestamp, transaction.status);
-    const existingGroup = groups.find((group) => group.label === label);
-
-    if (existingGroup) {
-      existingGroup.items.push(transaction);
-    } else {
-      groups.push({
-        label,
-        items: [transaction],
-      });
-    }
-  });
-
-  return groups;
-}
-
-/* ============================= */
-/* 🔹 FILTERING                  */
-/* ============================= */
-export function filterTransactionsByDateRange(transactions, selectedDateRange) {
-  if (!Array.isArray(transactions)) {
-    return [];
-  }
-
-  const now = new Date();
-  const today = getStartOfDay(now);
-
-  return transactions.filter((transaction) => {
-    const timestamp = transaction.timestamp;
-    if (!timestamp) {
-      return false;
-    }
-
-    const transactionDate = new Date(timestamp);
-    const transactionDay = getStartOfDay(transactionDate);
-
-    if (selectedDateRange === "allTime") {
-      return true;
-    }
-
-    if (selectedDateRange === "thisMonth") {
-      return transactionDay >= getStartOfMonth(now);
-    }
-
-    if (selectedDateRange === "last30Days") {
-      const startDate = new Date(today);
-      startDate.setDate(startDate.getDate() - 30);
-      return transactionDay >= startDate;
-    }
-
-    if (selectedDateRange === "last90Days") {
-      const startDate = new Date(today);
-      startDate.setDate(startDate.getDate() - 90);
-      return transactionDay >= startDate;
-    }
-
-    return true;
-  });
-}
-
-export function getDateRangeLabel(selectedDateRange) {
-  if (selectedDateRange === "thisMonth") {
-    return "This month";
-  }
-
-  if (selectedDateRange === "last30Days") {
-    return "Last 30 days";
-  }
-
-  if (selectedDateRange === "last90Days") {
-    return "Last 90 days";
-  }
-
-  if (selectedDateRange === "allTime") {
-    return "All time";
-  }
-
-  return "Selected period";
-}
-
-/* ============================= */
-/* 🔹 RUNNING BALANCE            */
-/* ============================= */
-export function addRunningBalance(transactions, currentBalance = 0) {
-  if (!Array.isArray(transactions) || transactions.length === 0) {
-    return [];
-  }
-
-  const sorted = sortTransactions(transactions);
-  let runningBalance = Number(currentBalance) || 0;
-
-  return sorted.map((transaction) => {
-    const result = {
-      ...transaction,
-      runningBalance,
-    };
-
-    const amount = getAmountValue(transaction.amount ?? "0");
-    runningBalance -= amount;
-
-    return result;
-  });
+  return [...transactions]
+    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+    .slice(0, limit);
 }

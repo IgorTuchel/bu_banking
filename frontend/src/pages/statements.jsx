@@ -1,10 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./statements.css";
 import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
-import { accountsData } from "../data/accountsData";
-import { transactionsData } from "../data/transactionsData";
 import logo from "../assets/logo.png";
+import { getStatementsData } from "../services/statementsService";
+import Skeleton from "../components/Skeleton";
 
 function formatCurrency(value) {
   return new Intl.NumberFormat("en-GB", {
@@ -24,21 +24,21 @@ function formatStatementFileDate(year, monthIndex) {
   const month = String(monthIndex + 1).padStart(2, "0");
   return `${year}-${month}`;
 }
-
 function parseAmount(amountString) {
   if (!amountString) return 0;
-
-  const cleaned = amountString.replace(/[£,\s]/g, "");
-  const parsed = Number(cleaned);
-
-  return Number.isNaN(parsed) ? 0 : parsed;
+  const str = String(amountString);
+  const isNeg = str.includes("-");
+  const cleaned = str.replace(/[^0-9.]/g, ""); // strip £, +, -, spaces
+  const parsed = parseFloat(cleaned);
+  if (isNaN(parsed)) return 0;
+  return isNeg ? -parsed : parsed;
 }
 
 function getMonthOptions() {
   return Array.from({ length: 12 }, (_, index) => ({
     value: String(index),
     label: new Intl.DateTimeFormat("en-GB", { month: "long" }).format(
-      new Date(2026, index, 1)
+      new Date(2026, index, 1),
     ),
   }));
 }
@@ -48,7 +48,6 @@ function buildStatements(accounts, transactions) {
 
   transactions.forEach((transaction) => {
     const transactionDate = new Date(transaction.timestamp);
-
     if (Number.isNaN(transactionDate.getTime())) return;
 
     const year = transactionDate.getFullYear();
@@ -70,25 +69,19 @@ function buildStatements(accounts, transactions) {
 
   return Array.from(grouped.values())
     .map((statement) => {
-      const account = accounts.find(
-        (item) => item.id === statement.accountId
-      );
+      const account = accounts.find((item) => item.id === statement.accountId);
 
       const completedTransactions = statement.transactions.filter(
-        (transaction) => transaction.status === "Completed"
+        (t) => t.status === "Completed",
       );
 
       const totalIn = completedTransactions
-        .filter((transaction) => parseAmount(transaction.amount) > 0)
-        .reduce((sum, transaction) => {
-          return sum + parseAmount(transaction.amount);
-        }, 0);
+        .filter((t) => parseAmount(t.amount) > 0)
+        .reduce((sum, t) => sum + parseAmount(t.amount), 0);
 
       const totalOut = completedTransactions
-        .filter((transaction) => parseAmount(transaction.amount) < 0)
-        .reduce((sum, transaction) => {
-          return sum + Math.abs(parseAmount(transaction.amount));
-        }, 0);
+        .filter((t) => parseAmount(t.amount) < 0)
+        .reduce((sum, t) => sum + Math.abs(parseAmount(t.amount)), 0);
 
       return {
         ...statement,
@@ -104,11 +97,7 @@ function buildStatements(accounts, transactions) {
     .sort((a, b) => {
       const dateA = new Date(a.year, a.month, 1).getTime();
       const dateB = new Date(b.year, b.month, 1).getTime();
-
-      if (dateA !== dateB) {
-        return dateB - dateA;
-      }
-
+      if (dateA !== dateB) return dateB - dateA;
       return a.account?.name?.localeCompare(b.account?.name ?? "") ?? 0;
     });
 }
@@ -122,42 +111,11 @@ function loadImage(src) {
   });
 }
 
-function getStatusColours(status) {
-  const normalised = String(status ?? "").toLowerCase();
-
-  if (normalised === "completed") {
-    return {
-      fill: [34, 197, 94, 0.12],
-      text: [34, 197, 94],
-    };
-  }
-
-  if (normalised === "pending") {
-    return {
-      fill: [245, 158, 11, 0.14],
-      text: [183, 121, 31],
-    };
-  }
-
-  if (normalised === "declined") {
-    return {
-      fill: [220, 38, 38, 0.12],
-      text: [220, 38, 38],
-    };
-  }
-
-  return {
-    fill: [240, 240, 240],
-    text: [60, 60, 60],
-  };
-}
-
 async function downloadStatement(statement) {
   try {
     const doc = new jsPDF("p", "mm", "a4");
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-
     const spacing = 14;
     const contentWidth = pageWidth - spacing * 2;
 
@@ -179,25 +137,17 @@ async function downloadStatement(statement) {
       error: [220, 38, 38],
     };
 
-        // ===== HEADER =====
+    // Header
     doc.setFillColor(...colours.green);
     doc.rect(0, 0, pageWidth, 32, "F");
 
-    // ===== LOGO (fit inside header properly) =====
-const headerHeight = 32;
+    const logoImg = await loadImage(logo);
+    const logoRatio = logoImg.width / logoImg.height;
+    const logoHeight = 20;
+    const logoWidth = logoHeight * logoRatio;
+    doc.addImage(logo, "PNG", spacing, 6, logoWidth, logoHeight);
 
-const logoImg = await loadImage(logo);
-const logoRatio = logoImg.width / logoImg.height;
-
-// make logo fit INSIDE header height with padding
-const logoHeight = headerHeight - 12; // padding top/bottom
-const logoWidth = logoHeight * logoRatio;
-
-doc.addImage(logo, "PNG", spacing, 6, logoWidth, logoHeight);
-
-    // ===== BRAND TEXT (right side) =====
     const rightX = pageWidth - spacing;
-
     doc.setTextColor(...colours.gold);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
@@ -207,83 +157,59 @@ doc.addImage(logo, "PNG", spacing, 6, logoWidth, logoHeight);
     doc.setFontSize(9);
     doc.setTextColor(255, 255, 255);
     doc.text("Private Banking", rightX, 18.5, { align: "right" });
-
-    // ===== Statement label under it =====
     doc.setFontSize(9.5);
-    doc.setTextColor(255, 255, 255);
     doc.text(statement.statementLabel, rightX, 24, { align: "right" });
 
-
-    // ===== Main statement card =====
+    // Account card
     let y = 40;
-
     doc.setFillColor(...colours.surface);
     doc.setDrawColor(...colours.gold);
     doc.setLineWidth(0.35);
     doc.roundedRect(spacing, y, contentWidth, 40, 4, 4, "FD");
-
-    // subtle green top strip like the transactions cards feel
-    doc.setFillColor(...colours.surface);
-    doc.roundedRect(spacing, y, contentWidth, 40, 4, 4, "F");
-    doc.setDrawColor(...colours.gold);
-    doc.roundedRect(spacing, y, contentWidth, 40, 4, 4, "S");
     doc.setFillColor(...colours.green);
     doc.rect(spacing, y, contentWidth, 4, "F");
 
-    // Account heading
     doc.setTextColor(...colours.heading);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
     doc.text(statement.account?.name ?? "Unknown account", spacing + 5, y + 12);
 
-    // Type pill
     const typeText = statement.account?.type ?? "Account";
     const pillX = pageWidth - spacing - 34;
-    const pillY = y + 7;
-    const pillW = 29;
-    const pillH = 8;
-
     doc.setFillColor(232, 247, 238);
-    doc.roundedRect(pillX, pillY, pillW, pillH, 4, 4, "F");
+    doc.roundedRect(pillX, y + 7, 29, 8, 4, 4, "F");
     doc.setTextColor(...colours.greenDark);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8.5);
-    doc.text(typeText, pillX + pillW / 2, pillY + 5.3, { align: "center" });
+    doc.text(typeText, pillX + 14.5, y + 12.3, { align: "center" });
 
-    // Divider
     doc.setDrawColor(...colours.borderLight);
     doc.setLineWidth(0.2);
     doc.line(spacing + 5, y + 16, pageWidth - spacing - 5, y + 16);
 
-    // IMPORTANT: dark text on white background
     doc.setTextColor(...colours.black);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-
     doc.text("Account number:", spacing + 5, y + 23);
     doc.text(
       statement.account?.maskedAccountNumber ?? "N/A",
       spacing + 38,
-      y + 23
+      y + 23,
     );
-
     doc.text("Sort code:", spacing + 5, y + 30);
     doc.text(statement.account?.sortCode ?? "N/A", spacing + 38, y + 30);
-
     doc.text("Statement period:", pageWidth / 2 + 4, y + 23);
     doc.text(statement.statementLabel, pageWidth / 2 + 35, y + 23);
-
     doc.text("Transactions:", pageWidth / 2 + 4, y + 30);
     doc.text(String(statement.transactionCount), pageWidth / 2 + 35, y + 30);
 
-    // ===== Summary cards =====
+    // Summary cards
     y += 48;
-
     const gap = 4;
     const cardWidth = (contentWidth - gap * 2) / 3;
     const cardHeight = 22;
 
-    const summaryItems = [
+    [
       {
         title: "Completed",
         value: String(statement.completedCount),
@@ -299,55 +225,44 @@ doc.addImage(logo, "PNG", spacing, 6, logoWidth, logoHeight);
         value: formatCurrency(statement.totalOut),
         accent: colours.error,
       },
-    ];
-
-    summaryItems.forEach((item, index) => {
+    ].forEach((item, index) => {
       const x = spacing + index * (cardWidth + gap);
-
       doc.setFillColor(...colours.surface);
       doc.setDrawColor(...colours.border);
       doc.roundedRect(x, y, cardWidth, cardHeight, 3, 3, "FD");
-
       doc.setFillColor(...item.accent);
       doc.rect(x, y, 2.4, cardHeight, "F");
-
-      // black/dark text on white
       doc.setTextColor(...colours.muted);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(8.5);
       doc.text(item.title, x + 5, y + 7);
-
       doc.setTextColor(...colours.black);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(12);
       doc.text(item.value, x + 5, y + 15);
     });
 
-    // ===== Transactions section title =====
+    // Table
     y += 31;
-
     doc.setTextColor(...colours.heading);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.text("Transactions", spacing, y);
-
-    // underline inspired by transactions page
     doc.setDrawColor(...colours.gold);
     doc.setLineWidth(0.8);
     doc.line(spacing, y + 2.5, pageWidth - spacing, y + 2.5);
 
-    // ===== Table =====
     autoTable(doc, {
       startY: y + 7,
       margin: { left: spacing, right: spacing },
       head: [["Date", "Name", "Category", "Amount", "Status", "Type"]],
-      body: statement.transactions.map((transaction) => [
-        new Date(transaction.timestamp).toLocaleDateString("en-GB"),
-        transaction.name ?? "",
-        transaction.category ?? "",
-        transaction.amount ?? "",
-        transaction.status ?? "",
-        transaction.paymentType ?? "",
+      body: statement.transactions.map((t) => [
+        new Date(t.timestamp).toLocaleDateString("en-GB"),
+        t.name ?? "",
+        t.category ?? "",
+        t.amount ?? "",
+        t.status ?? "",
+        t.paymentType ?? "",
       ]),
       theme: "grid",
       styles: {
@@ -366,9 +281,7 @@ doc.addImage(logo, "PNG", spacing, 6, logoWidth, logoHeight);
         fontStyle: "bold",
         lineColor: colours.green,
       },
-      alternateRowStyles: {
-        fillColor: colours.surfaceAlt,
-      },
+      alternateRowStyles: { fillColor: colours.surfaceAlt },
       columnStyles: {
         0: { cellWidth: 22 },
         1: { cellWidth: 42 },
@@ -377,15 +290,12 @@ doc.addImage(logo, "PNG", spacing, 6, logoWidth, logoHeight);
         4: { cellWidth: 24, halign: "center" },
         5: { cellWidth: 22 },
       },
-      didParseCell: function (data) {
-        // Keep body text dark on white/light rows
+      didParseCell(data) {
         if (data.section === "body") {
           data.cell.styles.textColor = colours.black;
         }
-
         if (data.section === "body" && data.column.index === 3) {
           const amount = parseAmount(String(data.cell.raw ?? ""));
-
           if (amount > 0) {
             data.cell.styles.textColor = colours.success;
             data.cell.styles.fontStyle = "bold";
@@ -394,28 +304,29 @@ doc.addImage(logo, "PNG", spacing, 6, logoWidth, logoHeight);
             data.cell.styles.fontStyle = "bold";
           }
         }
-
         if (data.section === "body" && data.column.index === 4) {
-          const status = String(data.cell.raw ?? "").toLowerCase();
-
-          if (status === "completed") {
+          const s = String(data.cell.raw ?? "").toLowerCase();
+          if (s === "completed") {
             data.cell.styles.textColor = colours.success;
             data.cell.styles.fontStyle = "bold";
-          } else if (status === "pending") {
+          } else if (s === "pending") {
             data.cell.styles.textColor = colours.warning;
             data.cell.styles.fontStyle = "bold";
-          } else if (status === "declined") {
+          } else if (s === "declined") {
             data.cell.styles.textColor = colours.error;
             data.cell.styles.fontStyle = "bold";
           }
         }
       },
-      didDrawPage: function () {
-        // footer
+      didDrawPage() {
         doc.setDrawColor(...colours.borderLight);
         doc.setLineWidth(0.2);
-        doc.line(spacing, pageHeight - 14, pageWidth - spacing, pageHeight - 14);
-
+        doc.line(
+          spacing,
+          pageHeight - 14,
+          pageWidth - spacing,
+          pageHeight - 14,
+        );
         doc.setTextColor(...colours.muted);
         doc.setFont("helvetica", "normal");
         doc.setFontSize(8);
@@ -424,13 +335,13 @@ doc.addImage(logo, "PNG", spacing, 6, logoWidth, logoHeight);
           `Generated ${new Date().toLocaleDateString("en-GB")}`,
           pageWidth - spacing,
           pageHeight - 9,
-          { align: "right" }
+          { align: "right" },
         );
       },
     });
 
     doc.save(
-      `${statement.account?.key ?? "account"}-statement-${statement.fileDate}.pdf`
+      `${statement.account?.key ?? "account"}-statement-${statement.fileDate}.pdf`,
     );
   } catch (error) {
     console.error("PDF download failed:", error);
@@ -439,57 +350,98 @@ doc.addImage(logo, "PNG", spacing, 6, logoWidth, logoHeight);
 }
 
 function Statements() {
+  const [accounts, setAccounts] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
   const [selectedYear, setSelectedYear] = useState("all");
   const [selectedMonth, setSelectedMonth] = useState("all");
   const [selectedAccountId, setSelectedAccountId] = useState("all");
 
-  const statements = useMemo(() => {
-    return buildStatements(accountsData, transactionsData);
+  useEffect(() => {
+    async function load() {
+      try {
+        setIsLoading(true);
+        const { accounts: accs, transactions: txns } =
+          await getStatementsData();
+        setAccounts(accs);
+        setTransactions(txns);
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load statements data.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    load();
   }, []);
 
-  const availableYears = useMemo(() => {
-    const uniqueYears = [
-      ...new Set(statements.map((statement) => statement.year)),
-    ];
+  const statements = useMemo(
+    () => buildStatements(accounts, transactions),
+    [accounts, transactions],
+  );
 
+  const availableYears = useMemo(() => {
+    const uniqueYears = [...new Set(statements.map((s) => s.year))];
     return uniqueYears.sort((a, b) => b - a);
   }, [statements]);
 
   const monthOptions = useMemo(() => getMonthOptions(), []);
 
   const filteredStatements = useMemo(() => {
-    return statements.filter((statement) => {
+    return statements.filter((s) => {
       const matchesYear =
-        selectedYear === "all" || statement.year === Number(selectedYear);
-
+        selectedYear === "all" || s.year === Number(selectedYear);
       const matchesMonth =
-        selectedMonth === "all" || statement.month === Number(selectedMonth);
-
+        selectedMonth === "all" || s.month === Number(selectedMonth);
       const matchesAccount =
-        selectedAccountId === "all" ||
-        statement.accountId === selectedAccountId;
-
+        selectedAccountId === "all" || s.accountId === selectedAccountId;
       return matchesYear && matchesMonth && matchesAccount;
     });
   }, [statements, selectedYear, selectedMonth, selectedAccountId]);
 
   const summary = useMemo(() => {
     return filteredStatements.reduce(
-      (accumulator, statement) => {
-        accumulator.statementCount += 1;
-        accumulator.totalTransactions += statement.transactionCount;
-        accumulator.totalIn += statement.totalIn;
-        accumulator.totalOut += statement.totalOut;
-        return accumulator;
+      (acc, s) => {
+        acc.statementCount += 1;
+        acc.totalTransactions += s.transactionCount;
+        acc.totalIn += s.totalIn;
+        acc.totalOut += s.totalOut;
+        return acc;
       },
-      {
-        statementCount: 0,
-        totalTransactions: 0,
-        totalIn: 0,
-        totalOut: 0,
-      }
+      { statementCount: 0, totalTransactions: 0, totalIn: 0, totalOut: 0 },
     );
   }, [filteredStatements]);
+
+  if (isLoading) {
+    return (
+      <main className="statements-page">
+        <header className="dashboard-header">
+          <h1>Statements</h1>
+          <p>View and download your monthly account statements.</p>
+        </header>
+        <Skeleton width="100%" height="5rem" />
+        <section className="summary-grid" style={{ marginTop: "1rem" }}>
+          {[...Array(3)].map((_, i) => (
+            <Skeleton key={i} width="100%" height="5rem" />
+          ))}
+        </section>
+        <Skeleton width="100%" height="20rem" style={{ marginTop: "1rem" }} />
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="statements-page">
+        <section className="status-card error-card">
+          <h2>Something went wrong</h2>
+          <p>{error}</p>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="statements-page">
@@ -501,17 +453,20 @@ function Statements() {
       <section className="statements-filters-card">
         <div className="statements-filters-grid">
           <div className="account-selector-section">
-            <label className="account-selector-label" htmlFor="statement-account">
+            <label
+              className="account-selector-label"
+              htmlFor="statement-account"
+            >
               Account
             </label>
             <select
               id="statement-account"
               className="account-selector"
               value={selectedAccountId}
-              onChange={(event) => setSelectedAccountId(event.target.value)}
+              onChange={(e) => setSelectedAccountId(e.target.value)}
             >
               <option value="all">All accounts</option>
-              {accountsData.map((account) => (
+              {accounts.map((account) => (
                 <option key={account.id} value={account.id}>
                   {account.name} • {account.type}
                 </option>
@@ -527,7 +482,7 @@ function Statements() {
               id="statement-year"
               className="account-selector"
               value={selectedYear}
-              onChange={(event) => setSelectedYear(event.target.value)}
+              onChange={(e) => setSelectedYear(e.target.value)}
             >
               <option value="all">All years</option>
               {availableYears.map((year) => (
@@ -546,7 +501,7 @@ function Statements() {
               id="statement-month"
               className="account-selector"
               value={selectedMonth}
-              onChange={(event) => setSelectedMonth(event.target.value)}
+              onChange={(e) => setSelectedMonth(e.target.value)}
             >
               <option value="all">All months</option>
               {monthOptions.map((month) => (
@@ -564,12 +519,10 @@ function Statements() {
           <h3>Statements found</h3>
           <p>{summary.statementCount}</p>
         </article>
-
         <article className="summary-card summary-incoming">
           <h3>Total money in</h3>
           <p>{formatCurrency(summary.totalIn)}</p>
         </article>
-
         <article className="summary-card summary-outgoing">
           <h3>Total money out</h3>
           <p>{formatCurrency(summary.totalOut)}</p>
@@ -596,7 +549,9 @@ function Statements() {
               <article key={statement.id} className="statement-card">
                 <div className="statement-card-main">
                   <div className="statement-card-left">
-                    <p className="statement-period">{statement.statementLabel}</p>
+                    <p className="statement-period">
+                      {statement.statementLabel}
+                    </p>
                     <p className="statement-account-name">
                       {statement.account?.name ?? "Unknown account"}
                     </p>
@@ -614,7 +569,6 @@ function Statements() {
                         {formatCurrency(statement.totalIn)}
                       </span>
                     </div>
-
                     <div className="statement-stat">
                       <span className="statement-stat-label">Money out</span>
                       <span className="statement-stat-value statement-negative">

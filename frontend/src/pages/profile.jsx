@@ -1,49 +1,30 @@
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./profile.css";
 
 import Skeleton from "../components/Skeleton";
-import { getCurrentUser } from "../services/userService";
-import { logoutUser } from "../services/authService";
+import { useAuth } from "../context/AuthContext";
 
 function Profile() {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    async function loadProfile() {
-      try {
-        setIsLoading(true);
-        const currentUser = await getCurrentUser();
-
-        setUser({
-          ...currentUser,
-          accountStatus: "Active",
-          securityLevel: "High",
-          memberSince: "2026",
-          location: "Bournemouth, UK",
-          phone: "01202 555 321",
-          address: "Bournemouth, UK",
-        });
-      } catch (error) {
-        console.error("Failed to load profile:", error);
-        logoutUser();
-        navigate("/login");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    loadProfile();
-  }, [navigate]);
+  const { user, authReady, logout } = useAuth();
 
   function handleLogout() {
-    logoutUser();
+    logout();
     navigate("/login");
   }
 
-  if (isLoading) {
+  const profileExtras = {
+    accountStatus: "Active",
+    securityLevel: "High",
+    memberSince: "2026",
+    location: "Bournemouth, UK",
+    phone: "01202 555 321",
+    address: "Bournemouth, UK",
+  };
+
+  const profile = user ? { ...user, ...profileExtras } : null;
+
+  if (!authReady || !profile) {
     return (
       <main className="home-page profile-page">
         <header className="dashboard-header">
@@ -60,7 +41,6 @@ function Profile() {
             <Skeleton width="120px" height="0.9rem" />
             <Skeleton width="100px" height="1.8rem" />
           </div>
-
           <Skeleton width="220px" height="1.8rem" />
           <Skeleton
             width="180px"
@@ -87,7 +67,6 @@ function Profile() {
             <div className="section-header">
               <h2>Personal Information</h2>
             </div>
-
             <div className="profile-details-list">
               {[...Array(6)].map((_, index) => (
                 <div key={index} className="profile-detail-row">
@@ -102,7 +81,6 @@ function Profile() {
             <div className="section-header">
               <h2>Account Actions</h2>
             </div>
-
             <div className="profile-actions-list">
               {[...Array(4)].map((_, index) => (
                 <Skeleton
@@ -133,28 +111,26 @@ function Profile() {
         </div>
 
         <h2 className="selected-account-name">
-          {user?.firstName && user?.lastName
-            ? `${user.firstName} ${user.lastName}`
-            : user?.firstName || "Account Holder"}
+          {profile.firstName && profile.lastName
+            ? `${profile.firstName} ${profile.lastName}`
+            : profile.firstName || "Account Holder"}
         </h2>
 
-        <p className="profile-hero-subtext">{user?.email}</p>
+        <p className="profile-hero-subtext">{profile.email}</p>
       </section>
 
       <section className="summary-grid">
         <article className="summary-card">
           <h3>Account Status</h3>
-          <p>{user?.accountStatus}</p>
+          <p>{profile.accountStatus}</p>
         </article>
-
         <article className="summary-card">
           <h3>Security Level</h3>
-          <p>{user?.securityLevel}</p>
+          <p>{profile.securityLevel}</p>
         </article>
-
         <article className="summary-card">
           <h3>Member Since</h3>
-          <p>{user?.memberSince}</p>
+          <p>{profile.memberSince}</p>
         </article>
       </section>
 
@@ -165,35 +141,19 @@ function Profile() {
           </div>
 
           <div className="profile-details-list">
-            <div className="profile-detail-row">
-              <span className="profile-detail-label">First Name</span>
-              <span className="profile-detail-value">{user?.firstName}</span>
-            </div>
-
-            <div className="profile-detail-row">
-              <span className="profile-detail-label">Last Name</span>
-              <span className="profile-detail-value">{user?.lastName}</span>
-            </div>
-
-            <div className="profile-detail-row">
-              <span className="profile-detail-label">Email</span>
-              <span className="profile-detail-value">{user?.email}</span>
-            </div>
-
-            <div className="profile-detail-row">
-              <span className="profile-detail-label">Location</span>
-              <span className="profile-detail-value">{user?.location}</span>
-            </div>
-
-            <div className="profile-detail-row">
-              <span className="profile-detail-label">Phone</span>
-              <span className="profile-detail-value">{user?.phone}</span>
-            </div>
-
-            <div className="profile-detail-row">
-              <span className="profile-detail-label">Address</span>
-              <span className="profile-detail-value">{user?.address}</span>
-            </div>
+            {[
+              ["First Name", profile.firstName],
+              ["Last Name", profile.lastName],
+              ["Email", profile.email],
+              ["Location", profile.location],
+              ["Phone", profile.phone],
+              ["Address", profile.address],
+            ].map(([label, value]) => (
+              <div key={label} className="profile-detail-row">
+                <span className="profile-detail-label">{label}</span>
+                <span className="profile-detail-value">{value ?? "—"}</span>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -203,18 +163,24 @@ function Profile() {
           </div>
 
           <div className="profile-actions-list">
-            <button type="button" className="quick-action-button profile-action-button">
+            <button
+              type="button"
+              className="quick-action-button profile-action-button"
+            >
               Edit Profile
             </button>
-
-            <button type="button" className="quick-action-button profile-action-button">
+            <button
+              type="button"
+              className="quick-action-button profile-action-button"
+            >
               Change Password
             </button>
-
-            <button type="button" className="quick-action-button profile-action-button">
+            <button
+              type="button"
+              className="quick-action-button profile-action-button"
+            >
               Manage Security
             </button>
-
             <button
               type="button"
               className="quick-action-button profile-action-button"

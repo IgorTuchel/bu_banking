@@ -1,13 +1,13 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from .models import Account, Business, Transaction, Card
+from .models import Account, Business, Card, Transaction
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "username", "email", "first_name", "last_name"]
+        fields = ["id", "username", "email", "first_name", "last_name", "lastLogin"]
         read_only_fields = ["id"]
 
 
@@ -59,7 +59,7 @@ class CurrentUserSerializer(serializers.Serializer):
     firstName = serializers.CharField(source="first_name")
     lastName = serializers.CharField(source="last_name")
     email = serializers.EmailField()
-    lastLogin = serializers.DateTimeField(source="last_login", allow_null=True)
+    lastLogin = serializers.DateTimeField(allow_null=True)
 
 
 class FrontendAccountSerializer(serializers.ModelSerializer):
@@ -274,9 +274,8 @@ class FrontendTransactionSerializer(serializers.ModelSerializer):
         viewed_account = self._viewed_account()
 
         if obj.transaction_type == "card_payment":
-            if (
-                (obj.card and obj.card.card_type == "credit")
-                or (viewed_account and viewed_account.account_type == "credit")
+            if (obj.card and obj.card.card_type == "credit") or (
+                viewed_account and viewed_account.account_type == "credit"
             ):
                 return "Credit Card"
             if obj.card and obj.card.card_type == "debit":
@@ -330,12 +329,8 @@ class FrontendCardSerializer(serializers.ModelSerializer):
     maskedNumber = serializers.CharField(source="masked_number")
     cardholderName = serializers.CharField(source="cardholder_name")
     contactlessEnabled = serializers.BooleanField(source="contactless_enabled")
-    onlinePaymentsEnabled = serializers.BooleanField(
-        source="online_payments_enabled"
-    )
-    atmWithdrawalsEnabled = serializers.BooleanField(
-        source="atm_withdrawals_enabled"
-    )
+    onlinePaymentsEnabled = serializers.BooleanField(source="online_payments_enabled")
+    atmWithdrawalsEnabled = serializers.BooleanField(source="atm_withdrawals_enabled")
     spendingLimit = serializers.DecimalField(
         source="spending_limit",
         max_digits=12,

@@ -10,6 +10,15 @@ def generate_hex_uuid():
     return uuid.uuid4().hex
 
 
+def generate_account_number():
+    """Generate a unique 8-digit account number."""
+    return str(uuid.uuid4().int)[:8]
+
+
+def generate_sort_code():
+    return "20-00-00"
+
+
 class Account(models.Model):
     ACCOUNT_TYPE_CHOICES = [
         ("current", "Current"),
@@ -49,8 +58,15 @@ class Account(models.Model):
         default="active",
     )
 
-    account_number = models.CharField(max_length=8, unique=True)
-    sort_code = models.CharField(max_length=8)
+    account_number = models.CharField(
+        max_length=8,
+        unique=True,
+        default=generate_account_number,  # ← add this
+    )
+    sort_code = models.CharField(
+        max_length=8,
+        default=generate_sort_code,  # ← add this so it's never blank
+    )
 
     starting_balance = models.DecimalField(
         max_digits=12,
@@ -298,14 +314,12 @@ class Card(models.Model):
         db_table = "banking_card"
         ordering = ["account", "name"]
 
-    
     def generate_network_card_number(self):
         """
         Generate a 16-character card number for the payment network.
         Uses last 4 chars of UUID for simplicity.
         """
         return f"000000000000{self.id[-4:]}"
-
 
     def save(self, *args, **kwargs):
         if not self.network_card_number:
@@ -367,6 +381,8 @@ class Transaction(models.Model):
         Account,
         on_delete=models.CASCADE,
         related_name="outgoing_transactions",
+        null=True,
+        blank=True,
     )
     to_account = models.ForeignKey(
         Account,

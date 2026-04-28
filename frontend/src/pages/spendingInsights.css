@@ -1,200 +1,204 @@
 .spending-insights-page {
-  width: 100%;
-  box-sizing: border-box;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .insights-highlight-section,
 .insights-page-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
 }
-
+.insights-selectors {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
 .insight-highlight-card {
-  padding: 1rem 1.1rem;
-  border-radius: var(--radius-md);
-  background: linear-gradient(
-    135deg,
-    var(--color-primary-dark),
-    var(--color-primary)
-  );
-  color: white;
-  box-shadow: var(--shadow-sm);
+    padding: 1rem 1.1rem;
+    border-radius: var(--radius-md);
+    background: linear-gradient(
+        135deg,
+        var(--color-primary-dark),
+        var(--color-primary)
+    );
+    color: white;
+    box-shadow: var(--shadow-sm);
 }
 
 .insight-highlight-card p {
-  margin: 0;
-  line-height: 1.6;
-  font-weight: 500;
+    margin: 0;
+    line-height: 1.6;
+    font-weight: 500;
 }
 
 .insights-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
 }
 
 .insight-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--color-border);
 }
 
 .insight-row-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-md);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-md);
 }
 
 .insight-bar-track {
-  width: 100%;
-  height: 10px;
-  border-radius: 999px;
-  background: var(--color-surface-alt);
-  overflow: hidden;
+    width: 100%;
+    height: 10px;
+    border-radius: 999px;
+    background: var(--color-surface-alt);
+    overflow: hidden;
 }
 
 .insight-bar-fill {
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(
-    90deg,
-    var(--color-primary-dark),
-    var(--color-accent)
-  );
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(
+        90deg,
+        var(--color-primary-dark),
+        var(--color-accent)
+    );
 }
 
 .insights-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-md);
-  width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-md);
+    width: 100%;
 }
 
 .mini-insight-card {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
 }
 
 .mini-insight-label {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-  font-weight: 600;
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    font-weight: 600;
 }
 
 .mini-insight-value {
-  margin: 0;
-  font-size: 1.5rem;
-  color: var(--color-text-heading);
-  font-weight: 700;
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--color-text-heading);
+    font-weight: 700;
 }
 
 .mini-insight-subtext {
-  margin: 0;
-  color: var(--color-text-muted);
-  line-height: 1.5;
+    margin: 0;
+    color: var(--color-text-muted);
+    line-height: 1.5;
 }
 
 @media (max-width: 992px) {
-  .insights-grid {
-    grid-template-columns: 1fr;
-  }
+    .insights-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (max-width: 600px) {
-  .insight-row-top {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+    .insight-row-top {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 }
 
 .transactions-filters {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.3rem;
-  border-radius: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem;
+    border-radius: 0.9rem;
 
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
 
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.7),
-    0 4px 12px rgba(0, 0, 0, 0.05);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.7),
+        0 4px 12px rgba(0, 0, 0, 0.05);
 
-  width: fit-content;
-  flex-wrap: wrap;
+    width: fit-content;
+    flex-wrap: wrap;
 }
 
 /* base button */
 .transactions-filter-button {
-  appearance: none;
-  border: none;
-  background: transparent;
+    appearance: none;
+    border: none;
+    background: transparent;
 
-  color: var(--color-primary);
-  font: inherit;
-  font-weight: 700;
-  font-size: 0.95rem;
+    color: var(--color-primary);
+    font: inherit;
+    font-weight: 700;
+    font-size: 0.95rem;
 
-  padding: 0.85rem 1.2rem;
-  min-width: 150px;
+    padding: 0.85rem 1.2rem;
+    min-width: 150px;
 
-  border-radius: 0.7rem;
-  cursor: pointer;
+    border-radius: 0.7rem;
+    cursor: pointer;
 
-  transition:
-    transform 0.18s ease,
-    background 0.18s ease,
-    color 0.18s ease;
+    transition:
+        transform 0.18s ease,
+        background 0.18s ease,
+        color 0.18s ease;
 }
 
 /* hover */
 .transactions-filter-button:hover {
-  background: rgba(26, 79, 50, 0.08); /* subtle dark green tint */
-  color: var(--color-primary-dark);
-  transform: translateY(-1px);
+    background: rgba(26, 79, 50, 0.08); /* subtle dark green tint */
+    color: var(--color-primary-dark);
+    transform: translateY(-1px);
 }
 
 /* active */
 .transactions-filter-button-active {
-  background: var(--color-primary);
-  color: white;
+    background: var(--color-primary);
+    color: white;
 
-  box-shadow:
-    0 6px 14px rgba(26, 79, 50, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    box-shadow:
+        0 6px 14px rgba(26, 79, 50, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
 
-  transform: translateY(-1px);
+    transform: translateY(-1px);
 }
 
 .transactions-filter-button-active:hover {
-  background: var(--color-primary);
-  color: white;
+    background: var(--color-primary);
+    color: white;
 }
 
 /* focus */
 .transactions-filter-button:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
 }
 
 /* mobile */
 @media (max-width: 600px) {
-  .transactions-filters {
-    width: 100%;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-  }
+    .transactions-filters {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
 
-  .transactions-filter-button {
-    min-width: 0;
-    width: 100%;
-    text-align: center;
-  }
+    .transactions-filter-button {
+        min-width: 0;
+        width: 100%;
+        text-align: center;
+    }
 }

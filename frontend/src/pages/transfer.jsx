@@ -7,8 +7,13 @@ import SummaryCard from "../components/SummaryCard";
 import Skeleton from "../components/Skeleton";
 import SkeletonSummaryCard from "../components/SkeletonSummaryCard";
 
-import { getCurrentUser } from "../services/userService";
+import { useAuth } from "../context/AuthContext";
 import { getAccountsForUser } from "../services/accountService";
+import { submitTransfer } from "../services/transferService";
+import {
+  getNetworkBanks,
+  submitNetworkTransfer,
+} from "../services/networkService";
 
 function formatMoney(value, currency = "GBP") {
   return new Intl.NumberFormat("en-GB", {
@@ -18,9 +23,12 @@ function formatMoney(value, currency = "GBP") {
 }
 
 function TransferPage() {
-  const [user, setUser] = useState(null);
+  const { user } = useAuth();
+
   const [accounts, setAccounts] = useState([]);
+  const [networkBanks, setNetworkBanks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -37,16 +45,20 @@ function TransferPage() {
     transferDate: "",
   });
 
+  // Network-only fields (kept separate — not part of core formData)
+  const [cardNumber, setCardNumber] = useState("");
+  const [acquiringBankId, setAcquiringBankId] = useState("");
+
+  // ── Load accounts ─────────────────────────────────────────────────────────
   useEffect(() => {
+    if (!user) return;
+
     async function init() {
       try {
         setIsLoading(true);
         setErrorMessage("");
 
-        const currentUser = await getCurrentUser();
-        const userAccounts = await getAccountsForUser(currentUser.id);
-
-        setUser(currentUser);
+        const userAccounts = await getAccountsForUser();
         setAccounts(userAccounts);
 
         if (userAccounts.length > 0) {
@@ -65,29 +77,49 @@ function TransferPage() {
     }
 
     init();
+  }, [user]);
+
+  // ── Load network banks ────────────────────────────────────────────────────
+  useEffect(() => {
+    async function loadBanks() {
+      try {
+        const raw = await getNetworkBanks();
+        const banks = Array.isArray(raw) ? raw : (raw.banks ?? []);
+        setNetworkBanks(banks);
+      } catch {
+        // Non-fatal — network tab just shows no banks
+      }
+    }
+    loadBanks();
   }, []);
 
-  const accountOptions = useMemo(() => {
-    return accounts.map((account) => ({
-      value: account.key,
-      label: `${account.name} • ${account.type}`,
-    }));
-  }, [accounts]);
+  // ── Derived ───────────────────────────────────────────────────────────────
+  const accountOptions = useMemo(
+    () =>
+      accounts.map((account) => ({
+        value: account.key,
+        label: `${account.name} • ${account.type}`,
+      })),
+    [accounts],
+  );
 
-  const fromAccount = useMemo(() => {
-    return accounts.find((account) => account.key === formData.fromAccountKey) ?? null;
-  }, [accounts, formData.fromAccountKey]);
+  const fromAccount = useMemo(
+    () =>
+      accounts.find((account) => account.key === formData.fromAccountKey) ??
+      null,
+    [accounts, formData.fromAccountKey],
+  );
 
-  const toAccountOptions = useMemo(() => {
-    return accountOptions.filter(
-      (account) => account.value !== formData.fromAccountKey
-    );
-  }, [accountOptions, formData.fromAccountKey]);
+  const toAccountOptions = useMemo(
+    () =>
+      accountOptions.filter(
+        (option) => option.value !== formData.fromAccountKey,
+      ),
+    [accountOptions, formData.fromAccountKey],
+  );
 
   const transferSummaryCards = useMemo(() => {
-    if (!fromAccount) {
-      return [];
-    }
+    if (!fromAccount) return [];
 
     const availableValue =
       fromAccount.type === "credit"
@@ -96,12 +128,16 @@ function TransferPage() {
 
     const transferAmount = Number(formData.amount || 0);
     const remainingBalance =
-      Number(availableValue ?? 0) - (Number.isFinite(transferAmount) ? transferAmount : 0);
+      Number(availableValue ?? 0) -
+      (Number.isFinite(transferAmount) ? transferAmount : 0);
 
     return [
       {
         id: "from-balance",
-        title: fromAccount.type === "credit" ? "Available Credit" : "Available Balance",
+        title:
+          fromAccount.type === "credit"
+            ? "Available Credit"
+            : "Available Balance",
         value: formatMoney(availableValue, fromAccount.currency),
         note: fromAccount.name,
       },
@@ -120,14 +156,10 @@ function TransferPage() {
     ];
   }, [fromAccount, formData.amount]);
 
+  // ── Handlers ──────────────────────────────────────────────────────────────
   function handleChange(event) {
     const { name, value } = event.target;
-
-    setFormData((current) => ({
-      ...current,
-      [name]: value,
-    }));
-
+    setFormData((current) => ({ ...current, [name]: value }));
     setSuccessMessage("");
     setErrorMessage("");
   }
@@ -136,12 +168,14 @@ function TransferPage() {
     setTransferType(type);
     setSuccessMessage("");
     setErrorMessage("");
+    setCardNumber("");
+    setAcquiringBankId("");
 
     setFormData((current) => ({
       ...current,
       toAccountKey:
         type === "internal"
-          ? accounts.find((account) => account.key !== current.fromAccountKey)?.key ?? ""
+          ? (accounts.find((a) => a.key !== current.fromAccountKey)?.key ?? "")
           : "",
       recipientName: "",
       sortCode: "",
@@ -151,40 +185,31 @@ function TransferPage() {
   }
 
   function validateForm() {
-    if (!formData.fromAccountKey) {
+    if (!formData.fromAccountKey)
       return "Please choose an account to send from.";
-    }
-
-    if (!formData.amount || Number(formData.amount) <= 0) {
+    if (!formData.amount || Number(formData.amount) <= 0)
       return "Please enter a valid transfer amount.";
-    }
-
-    if (!formData.reference.trim()) {
-      return "Please enter a payment reference.";
-    }
+    if (!formData.reference.trim()) return "Please enter a payment reference.";
 
     if (transferType === "internal") {
-      if (!formData.toAccountKey) {
+      if (!formData.toAccountKey)
         return "Please choose an account to transfer to.";
-      }
-
-      if (formData.toAccountKey === formData.fromAccountKey) {
+      if (formData.toAccountKey === formData.fromAccountKey)
         return "You cannot transfer to the same account.";
-      }
     }
 
     if (transferType === "external") {
-      if (!formData.recipientName.trim()) {
+      if (!formData.recipientName.trim())
         return "Please enter the recipient name.";
-      }
-
-      if (!formData.sortCode.trim()) {
-        return "Please enter a sort code.";
-      }
-
-      if (!formData.accountNumber.trim()) {
+      if (!formData.sortCode.trim()) return "Please enter a sort code.";
+      if (!formData.accountNumber.trim())
         return "Please enter an account number.";
-      }
+    }
+
+    if (transferType === "network") {
+      if (!cardNumber.trim() || cardNumber.length !== 16)
+        return "Please enter a valid 16-digit card number.";
+      if (!acquiringBankId) return "Please select a destination bank.";
     }
 
     return "";
@@ -194,7 +219,6 @@ function TransferPage() {
     event.preventDefault();
 
     const validationError = validateForm();
-
     if (validationError) {
       setErrorMessage(validationError);
       setSuccessMessage("");
@@ -202,19 +226,39 @@ function TransferPage() {
     }
 
     try {
+      setIsSubmitting(true);
       setErrorMessage("");
 
-      console.log("Create transfer:", {
-        transferType,
-        ...formData,
-      });
+      if (transferType === "network") {
+        await submitNetworkTransfer({
+          fromAccountKey: formData.fromAccountKey,
+          cardNumber,
+          acquiringBankId,
+          merchantId: "Aurix",
+          amount: formData.amount,
+          reference: formData.reference,
+        });
+        setSuccessMessage("Network transfer submitted successfully.");
+      } else {
+        await submitTransfer({
+          transferType,
+          fromAccountKey: formData.fromAccountKey,
+          toAccountKey: formData.toAccountKey,
+          recipientName: formData.recipientName,
+          sortCode: formData.sortCode,
+          accountNumber: formData.accountNumber,
+          amount: formData.amount,
+          reference: formData.reference,
+          transferDate: formData.transferDate,
+        });
+        setSuccessMessage(
+          transferType === "internal"
+            ? "Transfer completed successfully."
+            : "Bank transfer submitted successfully.",
+        );
+      }
 
-      setSuccessMessage(
-        transferType === "internal"
-          ? "Transfer submitted successfully."
-          : "Bank transfer submitted successfully."
-      );
-
+      // Reset form fields
       setFormData((current) => ({
         ...current,
         amount: "",
@@ -224,13 +268,22 @@ function TransferPage() {
         accountNumber: "",
         transferDate: "",
       }));
+      setCardNumber("");
+      setAcquiringBankId("");
+
+      // Refresh balances
+      const updated = await getAccountsForUser();
+      setAccounts(updated);
     } catch (error) {
       console.error(error);
-      setErrorMessage("Unable to submit transfer.");
+      setErrorMessage(error.message ?? "Unable to submit transfer.");
       setSuccessMessage("");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
+  // ── Loading ───────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
       <main className="transfer-page">
@@ -250,19 +303,31 @@ function TransferPage() {
         <section className="transfer-grid">
           <section className="transfer-panel">
             <Skeleton width="180px" height="1.4rem" />
-            <Skeleton width="100%" height="3rem" style={{ marginTop: "1rem" }} />
-            <Skeleton width="100%" height="18rem" style={{ marginTop: "1rem" }} />
+            <Skeleton
+              width="100%"
+              height="3rem"
+              style={{ marginTop: "1rem" }}
+            />
+            <Skeleton
+              width="100%"
+              height="18rem"
+              style={{ marginTop: "1rem" }}
+            />
           </section>
-
           <aside className="transfer-side-panel">
             <Skeleton width="140px" height="1.4rem" />
-            <Skeleton width="100%" height="10rem" style={{ marginTop: "1rem" }} />
+            <Skeleton
+              width="100%"
+              height="10rem"
+              style={{ marginTop: "1rem" }}
+            />
           </aside>
         </section>
       </main>
     );
   }
 
+  // ── Fatal error ───────────────────────────────────────────────────────────
   if (errorMessage && !accounts.length) {
     return (
       <main className="transfer-page">
@@ -274,6 +339,7 @@ function TransferPage() {
     );
   }
 
+  // ── Main ──────────────────────────────────────────────────────────────────
   return (
     <main className="transfer-page">
       <header className="dashboard-header">
@@ -290,7 +356,7 @@ function TransferPage() {
             fromAccountKey: value,
             toAccountKey:
               transferType === "internal"
-                ? accounts.find((account) => account.key !== value)?.key ?? ""
+                ? (accounts.find((a) => a.key !== value)?.key ?? "")
                 : current.toAccountKey,
           }))
         }
@@ -333,6 +399,7 @@ function TransferPage() {
             </div>
           </div>
 
+          {/* ── Transfer type toggle ── */}
           <div className="transfer-type-toggle">
             <Button
               variant="pill"
@@ -348,9 +415,17 @@ function TransferPage() {
             >
               Bank Transfer
             </Button>
+            <Button
+              variant="pill"
+              active={transferType === "network"}
+              onClick={() => handleTransferTypeChange("network")}
+            >
+              Network Transfer
+            </Button>
           </div>
 
           <form className="transfer-form" onSubmit={handleSubmit}>
+            {/* ── Internal ── */}
             {transferType === "internal" ? (
               <div className="transfer-form-group">
                 <label htmlFor="toAccountKey">Transfer to</label>
@@ -361,14 +436,17 @@ function TransferPage() {
                   onChange={handleChange}
                 >
                   <option value="">Select destination account</option>
-                  {toAccountOptions.map((account) => (
-                    <option key={account.value} value={account.value}>
-                      {account.label}
+                  {toAccountOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
                     </option>
                   ))}
                 </select>
               </div>
-            ) : (
+            ) : null}
+
+            {/* ── External ── */}
+            {transferType === "external" ? (
               <>
                 <div className="transfer-form-group">
                   <label htmlFor="recipientName">Recipient name</label>
@@ -394,7 +472,6 @@ function TransferPage() {
                       placeholder="12-34-56"
                     />
                   </div>
-
                   <div className="transfer-form-group">
                     <label htmlFor="accountNumber">Account number</label>
                     <input
@@ -408,8 +485,63 @@ function TransferPage() {
                   </div>
                 </div>
               </>
-            )}
+            ) : null}
 
+            {/* ── Network ── */}
+            {transferType === "network" ? (
+              <>
+                <div className="transfer-form-group">
+                  <label htmlFor="cardNumber">Recipient card number</label>
+                  <input
+                    id="cardNumber"
+                    name="cardNumber"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={16}
+                    value={cardNumber}
+                    onChange={(e) => {
+                      setCardNumber(e.target.value.replace(/\D/g, ""));
+                      setSuccessMessage("");
+                      setErrorMessage("");
+                    }}
+                    placeholder="16-digit card number"
+                  />
+                </div>
+
+                <div className="transfer-form-group">
+                  <label htmlFor="acquiringBankId">Destination bank</label>
+                  <select
+                    id="acquiringBankId"
+                    value={acquiringBankId}
+                    onChange={(e) => {
+                      setAcquiringBankId(e.target.value);
+                      setSuccessMessage("");
+                      setErrorMessage("");
+                    }}
+                  >
+                    <option value="">Select a bank</option>
+                    {networkBanks.map((bank) => (
+                      <option
+                        key={bank.id ?? bank.bank_id}
+                        value={bank.id ?? bank.bank_id}
+                      >
+                        {bank.name ?? bank.bank_name}
+                      </option>
+                    ))}
+                  </select>
+                  {networkBanks.length === 0 ? (
+                    <p
+                      className="transfer-subtext"
+                      style={{ marginTop: "0.4rem" }}
+                    >
+                      No banks available — check network connectivity.
+                    </p>
+                  ) : null}
+                </div>
+              </>
+            ) : null}
+
+            {/* ── Shared: amount + date ── */}
             <div className="transfer-form-row">
               <div className="transfer-form-group">
                 <label htmlFor="amount">Amount</label>
@@ -425,18 +557,21 @@ function TransferPage() {
                 />
               </div>
 
-              <div className="transfer-form-group">
-                <label htmlFor="transferDate">Date</label>
-                <input
-                  id="transferDate"
-                  name="transferDate"
-                  type="date"
-                  value={formData.transferDate}
-                  onChange={handleChange}
-                />
-              </div>
+              {transferType !== "network" ? (
+                <div className="transfer-form-group">
+                  <label htmlFor="transferDate">Date</label>
+                  <input
+                    id="transferDate"
+                    name="transferDate"
+                    type="date"
+                    value={formData.transferDate}
+                    onChange={handleChange}
+                  />
+                </div>
+              ) : null}
             </div>
 
+            {/* ── Shared: reference ── */}
             <div className="transfer-form-group">
               <label htmlFor="reference">Reference</label>
               <input
@@ -450,13 +585,19 @@ function TransferPage() {
             </div>
 
             <div className="transfer-form-actions">
-              <Button variant="pill" icon="→">
-                Continue
+              <Button
+                variant="pill"
+                icon="→"
+                type="submit"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Sending…" : "Send Transfer"}
               </Button>
             </div>
           </form>
         </section>
 
+        {/* ── Side panel ── */}
         <aside className="transfer-side-panel">
           <div className="section-header">
             <h2>Transfer Help</h2>
@@ -472,14 +613,28 @@ function TransferPage() {
             </ul>
           </div>
 
-          <div className="transfer-help-card">
-            <h3>From account</h3>
-            <p>
-              {fromAccount
-                ? `${fromAccount.name} is selected for this transfer.`
-                : "Select an account to begin."}
-            </p>
-          </div>
+          {transferType === "network" ? (
+            <div className="transfer-help-card">
+              <h3>Network transfers</h3>
+              <ul className="transfer-help-list">
+                <li>Enter the full 16-digit card number of the recipient.</li>
+                <li>Select the bank that issued the recipient's card.</li>
+                <li>
+                  Network transfers are processed via the payment network.
+                </li>
+                <li>The recipient's bank will authorise the payment.</li>
+              </ul>
+            </div>
+          ) : (
+            <div className="transfer-help-card">
+              <h3>From account</h3>
+              <p>
+                {fromAccount
+                  ? `${fromAccount.name} is selected for this transfer.`
+                  : "Select an account to begin."}
+              </p>
+            </div>
+          )}
         </aside>
       </section>
     </main>

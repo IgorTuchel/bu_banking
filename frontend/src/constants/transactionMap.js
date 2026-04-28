@@ -1,52 +1,32 @@
-export const COUNTRY_NAME_BY_CODE = {
-  GB: "United Kingdom",
-  UK: "United Kingdom",
-  US: "United States",
-  USA: "United States",
-  NL: "Netherlands",
-  FR: "France",
-  DE: "Germany",
-  ES: "Spain",
-  IT: "Italy",
-  IE: "Ireland",
-  PT: "Portugal",
-  BE: "Belgium",
-  CH: "Switzerland",
-  AT: "Austria",
-  SE: "Sweden",
-  NO: "Norway",
-  DK: "Denmark",
-  FI: "Finland",
-  PL: "Poland",
-  CZ: "Czech Republic",
-};
-
-export const LOCATION_TEXT_BLOCKLIST = [
-  "card terminal",
-  "online",
-  "online banking",
-  "not provided",
-];
-
 export const MAP_TILE_LAYER = {
   url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-  attribution: "&copy; OpenStreetMap contributors",
+  attribution:
+    '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
 };
 
 export const TRANSACTION_MAP_CIRCLE_STYLE = {
-  radius: 4000,
+  radius: 400,
   pathOptions: {
-    color: "#2E8B57",
-    fillColor: "#2E8B57",
-    fillOpacity: 0.15,
-    weight: 2,
+    color: "#01696f",
+    fillColor: "#01696f",
+    fillOpacity: 0.12,
+    weight: 1.5,
   },
 };
 
 export const CUSTOM_MARKER_ICON_OPTIONS = {
-  className: "custom-green-marker",
-  html: '<div class="custom-green-marker-pin"></div>',
-  iconSize: [38, 54],
-  iconAnchor: [19, 54],
-  popupAnchor: [0, -46],
+  className: "transaction-map-marker",
+  html: `
+    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">
+      <path
+        d="M14 0C6.27 0 0 6.27 0 14c0 9.33 14 22 14 22S28 23.33 28 14C28 6.27 21.73 0 14 0z"
+        fill="#01696f"
+        stroke="#fff"
+        stroke-width="1.5"
+      />
+      <circle cx="14" cy="14" r="5" fill="#fff" />
+    </svg>`,
+  iconSize: [28, 36],
+  iconAnchor: [14, 36],
+  popupAnchor: [0, -36],
 };

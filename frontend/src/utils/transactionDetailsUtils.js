@@ -1,131 +1,63 @@
-import { firstDefined, getLocationLabel } from "./transactionLocationUtils";
+import { formatTransactionDate } from "./transactionUtils";
 
-export function getCurrencyCode(transaction, accountCurrency) {
-  return firstDefined(
-    transaction.currency,
-    transaction.transactionCurrency,
-    transaction.originalCurrency,
-    accountCurrency
+/**
+ * Build a list of detail rows for a transaction's expanded view.
+ */
+export function getTransactionDetails(
+  transaction,
+  accountType,
+  currency = "GBP",
+) {
+  const rows = [];
+
+  const push = (label, value) => {
+    if (value !== null && value !== undefined && value !== "") {
+      rows.push({ label, value });
+    }
+  };
+
+  push("Payment Type", transaction.paymentType);
+  push("Direction", transaction.transferDirection);
+  push(
+    "Date & Time",
+    transaction.timestamp
+      ? new Date(transaction.timestamp).toLocaleString("en-GB", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : null,
   );
-}
+  push("Status", transaction.status);
+  push("Reference", transaction.paymentReference);
 
-export function getTransferCounterparty(transaction) {
-  return firstDefined(
-    transaction.payerName,
-    transaction.payeeName,
-    transaction.counterpartyName,
-    transaction.beneficiaryName
-  );
-}
-
-export function getTransactionDetails(transaction, accountType, accountCurrency) {
-  const merchant = transaction.merchant ?? {};
-  const paymentType = firstDefined(transaction.paymentType, merchant.type);
-  const normalizedType = String(paymentType).toLowerCase();
-
-  const isTransfer =
-    String(transaction.category ?? "").toLowerCase() === "transfer" ||
-    normalizedType.includes("transfer");
-
-  const shouldHideLocation = [
-    "recurrent card",
-    "recurring card",
-    "direct debit",
-    "standing order",
-    "standing order payment",
-  ].some((keyword) => normalizedType.includes(keyword));
-
-  const baseDetails = [
-    {
-      label: "Transaction ID",
-      value: transaction.id,
-    },
-    {
-      label: "Category",
-      value: firstDefined(transaction.category, merchant.category),
-    },
-    {
-      label: "Type",
-      value: paymentType,
-    },
-    {
-      label: "Payment reference",
-      value: firstDefined(
-        transaction.paymentReference,
-        transaction.reference,
-        transaction.transferReference
-      ),
-    },
-    {
-      label: "Currency",
-      value: getCurrencyCode(transaction, accountCurrency),
-    },
-    {
-      label: "Exchange rate",
-      value: firstDefined(
-        transaction.exchangeRate,
-        transaction.fxRate,
-        transaction.forexRate
-      ),
-    },
-  ];
-
-  if (!isTransfer) {
-    baseDetails.splice(1, 0, {
-      label: "Merchant",
-      value: firstDefined(merchant.name, transaction.merchantName, transaction.name),
-    });
+  // Bank transfer details
+  if (transaction.paymentType === "Bank Transfer") {
+    push("Payer", transaction.payerName);
+    push("Payee", transaction.payeeName);
+    push("Bank", transaction.bankName);
+    push("Sort Code", transaction.sortCodeMasked);
+    push("Account Number", transaction.accountNumberMasked);
   }
 
-  if (!isTransfer && !shouldHideLocation) {
-    baseDetails.splice(4, 0, {
-      label: "Location",
-      value: getLocationLabel(transaction),
-    });
+  // Merchant details
+  if (transaction.merchant) {
+    const m = transaction.merchant;
+    push("Merchant", m.name);
+    push("Category", m.category);
+    push("City", transaction.city || m.city);
+    push("Country", transaction.country || m.country);
+    push("Terminal ID", transaction.terminalId);
+    push("Online", m.online ? "Yes" : "No");
+  } else {
+    push("City", transaction.city);
+    push("Country", transaction.country);
   }
 
-  if (isTransfer) {
-    baseDetails.push(
-      {
-        label: "Payer / Payee",
-        value: getTransferCounterparty(transaction),
-      },
-      {
-        label: "Transfer reference",
-        value: firstDefined(
-          transaction.transferReference,
-          transaction.reference,
-          transaction.paymentReference
-        ),
-      }
-    );
-  }
+  // Description
+  push("Description", transaction.cleanDescription || transaction.description);
 
-  if (accountType === "savings") {
-    baseDetails.push(
-      {
-        label: "Transfer method",
-        value: transaction.transferMethod ?? transaction.transferType,
-      },
-      {
-        label: "Counterparty",
-        value: transaction.counterpartyName ?? transaction.beneficiaryName,
-      }
-    );
-  }
-
-  if (accountType === "credit") {
-    baseDetails.push(
-      {
-        label: "Card last 4",
-        value: transaction.cardLast4 ?? transaction.cardEnding,
-      },
-      {
-        label: "Authorisation code",
-        value: transaction.authCode ?? transaction.authorisationCode,
-      }
-    );
-  }
-
-  return baseDetails.filter((detail) => Boolean(detail.value));
+  return rows;
 }

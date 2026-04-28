@@ -30,7 +30,7 @@ export function logoutUser() {
 }
 
 export async function loginUser({ username, password, rememberUser }) {
-  const response = await fetch(`${API_BASE}/token/`, {
+  const response = await fetch(`${API_BASE}/auth/login/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

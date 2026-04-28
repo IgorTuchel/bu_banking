@@ -14,12 +14,130 @@ import SkeletonSummaryCard from "../components/SkeletonSummaryCard";
 import SkeletonTransactionsList from "../components/SkeletonTransactionsList";
 
 import { getDashboardData } from "../services/dashboardService";
-import { DEFAULT_ACCOUNT_INDEX } from "../constants/dashboard";
-import { getSelectedAccount } from "../utils/dashboardUtils";
-import { getHomeAccountSummaryCards } from "../utils/accountSummaryUtils";
+function getHomeAccountSummaryCards({ account }) {
+  if (!account) return [];
+
+  const balanceCard = {
+    id: "balance",
+    title: "Current Balance",
+    value: formatCurrency(account.currentBalance, account.currency),
+    note: account.status === "frozen" ? "Account frozen" : null,
+  };
+
+  if (account.type === "savings") {
+    return [
+      balanceCard,
+      {
+        id: "interest-rate",
+        title: "Interest Rate",
+        value:
+          account.interestRate != null ? `${account.interestRate}% AER` : "—",
+        note: null,
+      },
+      {
+        id: "interest-earned",
+        title: "Interest Earned (YTD)",
+        value:
+          account.interestEarnedYtd != null
+            ? formatCurrency(account.interestEarnedYtd, account.currency)
+            : "—",
+        note: null,
+      },
+    ];
+  }
+
+  if (account.type === "credit") {
+    return [
+      balanceCard,
+      {
+        id: "credit-limit",
+        title: "Credit Limit",
+        value:
+          account.creditLimit != null
+            ? formatCurrency(account.creditLimit, account.currency)
+            : "—",
+        note: null,
+      },
+      {
+        id: "available-credit",
+        title: "Available Credit",
+        value:
+          account.availableCredit != null
+            ? formatCurrency(account.availableCredit, account.currency)
+            : "—",
+        note:
+          account.minimumPaymentDue > 0
+            ? `Min. payment: ${formatCurrency(
+                account.minimumPaymentDue,
+                account.currency,
+              )}`
+            : null,
+      },
+    ];
+  }
+
+  const transactions = account.transactions ?? [];
+
+  const totalIn = transactions
+    .filter((transaction) => transaction.amount?.startsWith("+"))
+    .reduce(
+      (sum, transaction) =>
+        sum + parseFloat(transaction.amount.replace(/[^0-9.]/g, "")),
+      0,
+    );
+
+  const totalOut = transactions
+    .filter((transaction) => transaction.amount?.startsWith("-"))
+    .reduce(
+      (sum, transaction) =>
+        sum + parseFloat(transaction.amount.replace(/[^0-9.]/g, "")),
+      0,
+    );
+
+  return [
+    balanceCard,
+    {
+      id: "money-in",
+      title: "Money In",
+      value: formatCurrency(totalIn, account.currency),
+      note: `${
+        transactions.filter((transaction) =>
+          transaction.amount?.startsWith("+"),
+        ).length
+      } transactions`,
+    },
+    {
+      id: "money-out",
+      title: "Money Out",
+      value: formatCurrency(totalOut, account.currency),
+      note: `${
+        transactions.filter((transaction) =>
+          transaction.amount?.startsWith("-"),
+        ).length
+      } transactions`,
+    },
+  ];
+}
+
+function formatCurrency(amount, currency = "GBP") {
+  const numericAmount = parseFloat(amount) || 0;
+
+  if (currency === "GBP") {
+    return `£${numericAmount.toFixed(2)}`;
+  }
+
+  return `${numericAmount.toFixed(2)} ${currency}`;
+}
+function getSelectedAccount(accounts, selectedKey, defaultIndex = 0) {
+  if (!accounts || accounts.length === 0) return null;
+
+  const found = accounts.find((account) => account.key === selectedKey);
+  return found ?? accounts[defaultIndex] ?? accounts[0];
+}
 
 function Home() {
   const [dashboardData, setDashboardData] = useState(null);
+  const [lastLogin, setLastLogin] = useState(null);
   const [selectedAccountKey, setSelectedAccountKey] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -29,14 +147,13 @@ function Home() {
       try {
         setIsLoading(true);
         setErrorMessage("");
-
         const data = await getDashboardData();
+        setLastLogin(data.user.lastLogin);
+        console.log("XD", data);
         setDashboardData(data);
 
         if (data.accounts && data.accounts.length > 0) {
-          setSelectedAccountKey(
-            data.accounts[DEFAULT_ACCOUNT_INDEX]?.key ?? data.accounts[0].key
-          );
+          setSelectedAccountKey(data.accounts[0]?.key ?? data.accounts[0].key);
         }
       } catch (error) {
         console.error(error);
@@ -48,15 +165,10 @@ function Home() {
 
     loadDashboardData();
   }, []);
-
   const selectedAccount = useMemo(() => {
     if (!dashboardData || !dashboardData.accounts) return null;
 
-    return getSelectedAccount(
-      dashboardData.accounts,
-      selectedAccountKey,
-      DEFAULT_ACCOUNT_INDEX
-    );
+    return getSelectedAccount(dashboardData.accounts, selectedAccountKey, 0);
   }, [dashboardData, selectedAccountKey]);
 
   const accountOptions = useMemo(() => {
@@ -77,8 +189,8 @@ function Home() {
   }, [selectedAccount]);
 
   const recentNotifications = useMemo(() => {
-      return (dashboardData?.notifications ?? []).slice(0, 3);
-    }, [dashboardData]);
+    return (dashboardData?.notifications ?? []).slice(0, 3);
+  }, [dashboardData]);
 
   if (isLoading) {
     return (
@@ -121,8 +233,16 @@ function Home() {
 
           <div className="notifications-section">
             <Skeleton width="110px" height="1.2rem" />
-            <Skeleton width="100%" height="5rem" style={{ marginTop: "1rem" }} />
-            <Skeleton width="100%" height="5rem" style={{ marginTop: "1rem" }} />
+            <Skeleton
+              width="100%"
+              height="5rem"
+              style={{ marginTop: "1rem" }}
+            />
+            <Skeleton
+              width="100%"
+              height="5rem"
+              style={{ marginTop: "1rem" }}
+            />
           </div>
         </section>
       </main>
@@ -154,8 +274,8 @@ function Home() {
   return (
     <main className="home-page">
       <DashboardHeader
-        firstName={dashboardData.user.firstName}
-        lastLogin={dashboardData.user.lastLogin}
+        firstName={dashboardData?.user?.firstName}
+        lastLogin={lastLogin}
       />
 
       <AccountDropdown

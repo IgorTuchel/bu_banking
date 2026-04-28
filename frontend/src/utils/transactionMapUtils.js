@@ -1,48 +1,38 @@
+/**
+ * Module-level cache so geocode results persist across re-renders
+ * without hitting the API repeatedly for the same location.
+ */
 export const GEOCODE_CACHE = new Map();
 
-export async function geocodeFromOpenMeteo(query, signal) {
-  const params = new URLSearchParams({
-    count: "1",
-    name: query,
-    language: "en",
-    format: "json",
+/**
+ * Geocode a location string using the Nominatim OpenStreetMap API.
+ * Returns [lat, lng] or null if not found.
+ */
+export async function geocodeLocationQuery(query, signal) {
+  if (!query) return null;
+
+  const url =
+    `https://nominatim.openstreetmap.org/search` +
+    `?format=json&limit=1&q=${encodeURIComponent(query)}`;
+
+  const response = await fetch(url, {
+    signal,
+    headers: {
+      // Nominatim requires a User-Agent identifying your app
+      "User-Agent": "AurixBankingApp/1.0",
+    },
   });
 
-  const url = `https://geocoding-api.open-meteo.com/v1/search?${params.toString()}`;
-  const response = await fetch(url, { signal });
-
   if (!response.ok) {
-    const text = await response.text();
-    throw new Error(
-      `Open-Meteo geocoding failed: ${response.status} ${response.statusText} | ${text}`
-    );
+    throw new Error(`Nominatim error: ${response.status}`);
   }
 
-  const data = await response.json();
-  const match = data?.results?.[0];
-  const latitude = Number(match?.latitude);
-  const longitude = Number(match?.longitude);
+  const results = await response.json();
 
-  if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
-    return [latitude, longitude];
-  }
-
-  return null;
-}
-
-export async function geocodeLocationQuery(query, signal) {
-  if (!query) {
+  if (!results || results.length === 0) {
     return null;
   }
 
-  try {
-    return await geocodeFromOpenMeteo(query, signal);
-  } catch (error) {
-    if (error?.name === "AbortError") {
-      throw error;
-    }
-
-    console.error("Open-Meteo failed:", query, error?.message ?? error);
-    return null;
-  }
+  const { lat, lon } = results[0];
+  return [parseFloat(lat), parseFloat(lon)];
 }

@@ -1,90 +1,119 @@
-import { getAmountValue } from "./transactionUtils";
-import { scheduledPaymentsData } from "../data/scheduledPaymentsData";
+export function getHomeAccountSummaryCards({ account }) {
+  if (!account) return [];
 
-function formatMoney(value, currency = "GBP") {
-  return new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency,
-  }).format(Number(value ?? 0));
-}
-
-function getRecentSpending(transactions = [], days = 7) {
-  const now = new Date();
-  const start = new Date(now);
-  start.setDate(start.getDate() - days);
-
-  return transactions
-    .filter((transaction) => {
-      const timestamp = transaction?.timestamp;
-      if (!timestamp) {
-        return false;
-      }
-
-      const transactionDate = new Date(timestamp);
-      const amount = getAmountValue(transaction?.amount ?? "0");
-
-      return transactionDate >= start && amount < 0;
-    })
-    .reduce((sum, transaction) => {
-      return sum + Math.abs(getAmountValue(transaction.amount ?? "0"));
-    }, 0);
-}
-
-function getUpcomingPayments(accountId, days = 7) {
-  const now = new Date();
-  const end = new Date(now);
-  end.setDate(end.getDate() + days);
-
-  const payments = scheduledPaymentsData.filter((payment) => {
-    if (payment.accountId !== accountId || payment.status !== "active") {
-      return false;
-    }
-
-    const paymentDate = new Date(payment.nextPaymentDate);
-    return paymentDate >= now && paymentDate <= end;
-  });
-
-  const total = payments.reduce((sum, payment) => {
-    return sum + Math.abs(getAmountValue(payment.amount ?? "0"));
-  }, 0);
-
-  return {
-    total,
-    count: payments.length,
+  const balanceCard = {
+    id: "balance",
+    title: "Current Balance",
+    value: formatCurrency(account.currentBalance, account.currency),
+    note: account.status === "frozen" ? "Account frozen" : null,
   };
+
+  if (account.type === "savings") {
+    return [
+      balanceCard,
+      {
+        id: "interest-rate",
+        title: "Interest Rate",
+        value:
+          account.interestRate != null ? `${account.interestRate}% AER` : "—",
+        note: null,
+      },
+      {
+        id: "interest-earned",
+        title: "Interest Earned (YTD)",
+        value:
+          account.interestEarnedYtd != null
+            ? formatCurrency(account.interestEarnedYtd, account.currency)
+            : "—",
+        note: null,
+      },
+    ];
+  }
+
+  if (account.type === "credit") {
+    return [
+      balanceCard,
+      {
+        id: "credit-limit",
+        title: "Credit Limit",
+        value:
+          account.creditLimit != null
+            ? formatCurrency(account.creditLimit, account.currency)
+            : "—",
+        note: null,
+      },
+      {
+        id: "available-credit",
+        title: "Available Credit",
+        value:
+          account.availableCredit != null
+            ? formatCurrency(account.availableCredit, account.currency)
+            : "—",
+        note:
+          account.minimumPaymentDue > 0
+            ? `Min. payment: ${formatCurrency(account.minimumPaymentDue, account.currency)}`
+            : null,
+      },
+    ];
+  }
+
+  const transactions = account.transactions ?? [];
+  const totalIn = sumTransactions(transactions, "+");
+  const totalOut = sumTransactions(transactions, "-");
+
+  return [
+    balanceCard,
+    {
+      id: "money-in",
+      title: "Money In",
+      value: formatCurrency(totalIn, account.currency),
+      note: `${transactions.filter((t) => t.amount?.startsWith("+")).length} transactions`,
+    },
+    {
+      id: "money-out",
+      title: "Money Out",
+      value: formatCurrency(totalOut, account.currency),
+      note: `${transactions.filter((t) => t.amount?.startsWith("-")).length} transactions`,
+    },
+  ];
 }
+
+// ── Transactions page cards ──────────────────────────────────────────────────
 
 export function getAccountSummaryCards({
   account,
-  incoming = 0,
-  outgoing = 0,
-  dateRangeLabel = "",
+  incoming,
+  outgoing,
+  dateRangeLabel,
 }) {
-  if (!account) {
-    return [];
-  }
+  if (!account) return [];
 
   const currency = account.currency ?? "GBP";
+  const periodNote = dateRangeLabel ?? "This period";
 
   if (account.type === "savings") {
     return [
       {
         id: "savings-balance",
         title: "Savings Balance",
-        value: formatMoney(account.currentBalance, currency),
-        note: "Available balance",
-      },
-      {
-        id: "interest-earned",
-        title: "Interest Earned",
-        value: formatMoney(account.interestEarnedYtd, currency),
-        note: "Year to date",
+        value: formatCurrency(account.currentBalance, currency),
+        note: account.status === "frozen" ? "Account frozen" : null,
       },
       {
         id: "interest-rate",
         title: "Interest Rate",
-        value: `${Number(account.interestRate ?? 0).toFixed(2)}%`,
-        note: "AER variable",
+        value:
+          account.interestRate != null ? `${account.interestRate}% AER` : "—",
+        note: null,
+      },
+      {
+        id: "interest-earned",
+        title: "Interest Earned (YTD)",
+        value:
+          account.interestEarnedYtd != null
+            ? formatCurrency(account.interestEarnedYtd, currency)
+            : "—",
+        note: null,
       },
     ];
   }
@@ -94,84 +123,71 @@ export function getAccountSummaryCards({
       {
         id: "available-credit",
         title: "Available Credit",
-        value: formatMoney(account.availableCredit, currency),
-        note: "Available to spend",
+        value:
+          account.availableCredit != null
+            ? formatCurrency(account.availableCredit, currency)
+            : "—",
+        note:
+          account.creditLimit != null
+            ? `Limit: ${formatCurrency(account.creditLimit, currency)}`
+            : null,
       },
       {
-        id: "credit-limit",
-        title: "Credit Limit",
-        value: formatMoney(account.creditLimit, currency),
-        note: "Total credit limit",
+        id: "statement-balance",
+        title: "Statement Balance",
+        value:
+          account.statementBalance != null
+            ? formatCurrency(account.statementBalance, currency)
+            : "—",
+        note: null,
       },
       {
         id: "minimum-payment",
         title: "Minimum Payment",
-        value: formatMoney(account.minimumPaymentDue, currency),
-        note: "Due next statement",
+        value:
+          account.minimumPaymentDue != null
+            ? formatCurrency(account.minimumPaymentDue, currency)
+            : "—",
+        note: account.paymentDueDate
+          ? `Due: ${new Date(account.paymentDueDate).toLocaleDateString("en-GB")}`
+          : null,
       },
     ];
   }
 
+  // Current account
   return [
     {
       id: "current-balance",
       title: "Current Balance",
-      value: formatMoney(account.currentBalance, currency),
-      note: "Includes pending transactions",
+      value: formatCurrency(account.currentBalance, currency),
+      note: account.status === "frozen" ? "Account frozen" : null,
     },
     {
       id: "incoming",
-      title: "Incoming",
-      value: formatMoney(incoming, currency),
-      note: dateRangeLabel,
+      title: "Money In",
+      value: formatCurrency(incoming ?? 0, currency),
+      note: periodNote,
     },
     {
       id: "outgoing",
-      title: "Outgoing",
-      value: formatMoney(outgoing, currency),
-      note: dateRangeLabel,
+      title: "Money Out",
+      value: formatCurrency(outgoing ?? 0, currency),
+      note: periodNote,
     },
   ];
 }
 
-export function getHomeAccountSummaryCards({ account }) {
-  if (!account) {
-    return [];
-  }
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
-  const currency = account.currency ?? "GBP";
-  const transactions = Array.isArray(account.transactions)
-    ? account.transactions
-    : [];
+function formatCurrency(amount, currency = "GBP") {
+  const num = parseFloat(amount) || 0;
+  if (currency === "GBP") return `£${num.toFixed(2)}`;
+  return `${num.toFixed(2)} ${currency}`;
+}
 
-  if (account.type === "current") {
-    const spending = getRecentSpending(transactions, 7);
-    const upcoming = getUpcomingPayments(account.id, 7);
-
-    return [
-      {
-        id: "available-balance",
-        title: "Available Balance",
-        value: formatMoney(account.currentBalance, currency),
-        note: "Updated just now",
-      },
-      {
-        id: "upcoming-payments",
-        title: "Upcoming Payments",
-        value: formatMoney(upcoming.total, currency),
-        note:
-          upcoming.count > 0
-            ? `${upcoming.count} due in next 7 days`
-            : "No upcoming payments",
-      },
-      {
-        id: "recent-spending",
-        title: "Recent Spending",
-        value: formatMoney(spending, currency),
-        note: "Last 7 days",
-      },
-    ];
-  }
-
-  return getAccountSummaryCards({ account });
+function sumTransactions(transactions, sign) {
+  return transactions
+    .filter((t) => t.amount?.startsWith(sign))
+    .reduce((sum, t) => sum + parseFloat(t.amount.replace(/[^0-9.]/g, "")), 0);
 }

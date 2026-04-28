@@ -1,14 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
-import {
-  FileText,
-  ArrowDown,
-  ArrowUp,
-  ClockFading,
-} from "lucide-react";
+import { FileText, ArrowDown, ArrowUp, ClockFading } from "lucide-react";
 import "./home.css";
 import "./transactions.css";
-
 import AccountDropdown from "../components/AccountDropdown";
 import SearchInput from "../components/SearchInput";
 import Button from "../components/Button";
@@ -17,8 +11,7 @@ import SkeletonSummaryCard from "../components/SkeletonSummaryCard";
 import SkeletonTransactionsList from "../components/SkeletonTransactionsList";
 import TransactionLocationMap from "../components/TransactionLocationMap";
 import SelectedAccountCard from "../components/SelectedAccountCard";
-
-import { getCurrentUser } from "../services/userService";
+import { useAuth } from "../context/AuthContext";
 import {
   getAccountsForUser,
   getAccountByKeyForUser,
@@ -40,12 +33,13 @@ import { shouldRenderTransactionMap } from "../utils/transactionLocationUtils";
 import {
   DATE_RANGE_OPTIONS,
   TRANSACTIONS_CONFIG,
-} from "../constants/transactions";
+} from "../constants/transactions_constants";
 
 const { INITIAL_VISIBLE_COUNT, LOAD_MORE_COUNT } = TRANSACTIONS_CONFIG;
 
 export default function TransactionsPage() {
-  const [user, setUser] = useState(null);
+  const { user } = useAuth();
+
   const [accounts, setAccounts] = useState([]);
   const [selectedAccountKey, setSelectedAccountKey] = useState("");
 
@@ -63,21 +57,22 @@ export default function TransactionsPage() {
   const [collapsedGroups, setCollapsedGroups] = useState({});
   const [expandedTransactions, setExpandedTransactions] = useState({});
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingAccounts, setIsLoadingAccounts] = useState(true);
+  const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   const transactionsListRef = useRef(null);
 
+  // ── Load accounts once user is available ──────────────────────────────────
   useEffect(() => {
-    async function init() {
+    if (!user) return;
+
+    async function loadAccounts() {
       try {
-        setIsLoading(true);
+        setIsLoadingAccounts(true);
         setErrorMessage("");
 
-        const currentUser = await getCurrentUser();
-        const userAccounts = await getAccountsForUser(currentUser.id);
-
-        setUser(currentUser);
+        const userAccounts = await getAccountsForUser();
         setAccounts(userAccounts);
 
         if (userAccounts.length > 0) {
@@ -86,51 +81,70 @@ export default function TransactionsPage() {
       } catch {
         setErrorMessage("Failed to load account data.");
       } finally {
-        setIsLoading(false);
+        setIsLoadingAccounts(false);
       }
     }
 
-    init();
-  }, []);
+    loadAccounts();
+  }, [user]);
 
+  // ── Load transactions when selected account changes ───────────────────────
   useEffect(() => {
     async function loadTransactions() {
-      if (!user || !selectedAccountKey) {
-        return;
-      }
-
       try {
-        setIsLoading(true);
+        setIsLoadingTransactions(true);
         setErrorMessage("");
 
-        const account = await getAccountByKeyForUser(user.id, selectedAccountKey);
+        if (!selectedAccountKey) return;
+        const account = await getAccountByKeyForUser(selectedAccountKey);
 
-        if (!account) {
-          return;
+        async function loadTransactions() {
+          try {
+            setIsLoadingTransactions(true);
+            setErrorMessage("");
+            console.log("GIT" + selectedAccountKey);
+            const account = await getAccountByKeyForUser(selectedAccountKey);
+
+            if (!account) return;
+            console.log(JSON.stringify(account));
+            const data = await getTransactionsForAccount(account.id);
+
+            setTransactions(Array.isArray(data) ? data : []);
+            setAvailableBalance(
+              Number(account.currentBalance ?? account.availableCredit ?? 0),
+            );
+          } catch {
+            setErrorMessage("Unable to load transactions.");
+          } finally {
+            setIsLoadingTransactions(false);
+          }
         }
-
+        if (!account) return;
+        console.log(JSON.stringify(account));
         const data = await getTransactionsForAccount(account.id);
 
         setTransactions(Array.isArray(data) ? data : []);
         setAvailableBalance(
-          Number(account.currentBalance ?? account.availableCredit ?? 0)
+          Number(account.currentBalance ?? account.availableCredit ?? 0),
         );
       } catch {
         setErrorMessage("Unable to load transactions.");
       } finally {
-        setIsLoading(false);
+        setIsLoadingTransactions(false);
       }
     }
 
     loadTransactions();
-  }, [user, selectedAccountKey]);
+  }, [selectedAccountKey]);
 
+  // ── Reset pagination when filters change ─────────────────────────────────
   useEffect(() => {
     setVisibleCount(INITIAL_VISIBLE_COUNT);
     setCollapsedGroups({});
     setExpandedTransactions({});
   }, [searchState, activeFilter, selectedDateRange, selectedAccountKey]);
 
+  // ── Derived data ──────────────────────────────────────────────────────────
   const accountOptions = useMemo(() => {
     return accounts.map((acc) => ({
       value: acc.key,
@@ -139,7 +153,9 @@ export default function TransactionsPage() {
   }, [accounts]);
 
   const selectedAccount = useMemo(() => {
-    return accounts.find((account) => account.key === selectedAccountKey) ?? null;
+    return (
+      accounts.find((account) => account.key === selectedAccountKey) ?? null
+    );
   }, [accounts, selectedAccountKey]);
 
   const dateFilteredTransactions = useMemo(() => {
@@ -185,17 +201,11 @@ export default function TransactionsPage() {
 
       const matchesSearch = matchesInput && matchesTags;
 
-      if (activeFilter === "In") {
-        return matchesSearch && amount.startsWith("+");
-      }
-
-      if (activeFilter === "Out") {
+      if (activeFilter === "In") return matchesSearch && amount.startsWith("+");
+      if (activeFilter === "Out")
         return matchesSearch && amount.startsWith("-");
-      }
-
-      if (activeFilter === "Pending") {
+      if (activeFilter === "Pending")
         return matchesSearch && status === "Pending";
-      }
 
       return matchesSearch;
     });
@@ -228,12 +238,8 @@ export default function TransactionsPage() {
 
     dateFilteredTransactions.forEach((transaction) => {
       const amount = getAmountValue(transaction.amount ?? "0");
-
-      if (amount > 0) {
-        incoming += amount;
-      } else {
-        outgoing += Math.abs(amount);
-      }
+      if (amount > 0) incoming += amount;
+      else outgoing += Math.abs(amount);
     });
 
     return {
@@ -252,13 +258,9 @@ export default function TransactionsPage() {
     });
   }, [selectedAccount, totals.incoming, totals.outgoing, dateRangeLabel]);
 
+  // ── Handlers ──────────────────────────────────────────────────────────────
   function scrollTransactionsToTop() {
-    if (transactionsListRef.current) {
-      transactionsListRef.current.scrollTo({
-        top: 0,
-        behavior: "smooth",
-      });
-    }
+    transactionsListRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function toggleGroup(label) {
@@ -270,11 +272,12 @@ export default function TransactionsPage() {
 
   function toggleTransaction(transactionId) {
     setExpandedTransactions((current) =>
-      current[transactionId] ? {} : { [transactionId]: true }
+      current[transactionId] ? {} : { [transactionId]: true },
     );
   }
 
-  if (isLoading) {
+  // ── Loading state (initial accounts fetch) ────────────────────────────────
+  if (isLoadingAccounts) {
     return (
       <main className="home-page transactions-page">
         <header className="dashboard-header">
@@ -303,8 +306,8 @@ export default function TransactionsPage() {
         </div>
 
         <section className="summary-grid">
-          {[...Array(3)].map((_, index) => (
-            <SkeletonSummaryCard key={index} />
+          {[...Array(3)].map((_, i) => (
+            <SkeletonSummaryCard key={i} />
           ))}
         </section>
 
@@ -318,7 +321,6 @@ export default function TransactionsPage() {
             <Skeleton width="190px" height="3rem" />
             <Skeleton width="340px" height="3rem" />
           </div>
-
           <div className="transactions-list">
             <SkeletonTransactionsList />
           </div>
@@ -327,7 +329,8 @@ export default function TransactionsPage() {
     );
   }
 
-  if (errorMessage) {
+  // ── Error state ───────────────────────────────────────────────────────────
+  if (errorMessage && accounts.length === 0) {
     return (
       <main className="home-page transactions-page">
         <section className="status-card error-card">
@@ -338,6 +341,7 @@ export default function TransactionsPage() {
     );
   }
 
+  // ── Main render ───────────────────────────────────────────────────────────
   return (
     <main className="home-page transactions-page">
       <header className="dashboard-header">
@@ -359,18 +363,19 @@ export default function TransactionsPage() {
           <article
             key={card.id}
             className={`summary-card ${
-              selectedAccount?.type === "credit" && card.id === "available-credit"
+              (selectedAccount?.type === "credit" &&
+                card.id === "available-credit") ||
+              (selectedAccount?.type === "savings" &&
+                card.id === "savings-balance")
                 ? "summary-balance"
-                : selectedAccount?.type === "savings" &&
-                  card.id === "savings-balance"
-                ? "summary-balance"
-                : card.id.includes("incoming") || card.id.includes("interest-earned")
-                ? "summary-incoming"
-                : card.id.includes("outgoing") ||
-                  card.id.includes("interest-rate") ||
-                  card.id.includes("minimum-payment")
-                ? "summary-outgoing"
-                : ""
+                : card.id.includes("incoming") ||
+                    card.id.includes("interest-earned")
+                  ? "summary-incoming"
+                  : card.id.includes("outgoing") ||
+                      card.id.includes("interest-rate") ||
+                      card.id.includes("minimum-payment")
+                    ? "summary-outgoing"
+                    : ""
             }`}
           >
             <h3>{card.title}</h3>
@@ -385,8 +390,9 @@ export default function TransactionsPage() {
           <div className="section-header-left">
             <h2>All Transactions</h2>
             <p className="transactions-subtext">
-              Showing {Math.min(visibleCount, filteredTransactions.length)} of{" "}
-              {filteredTransactions.length} transactions
+              {isLoadingTransactions
+                ? "Loading transactions…"
+                : `Showing ${Math.min(visibleCount, filteredTransactions.length)} of ${filteredTransactions.length} transactions`}
             </p>
           </div>
 
@@ -427,14 +433,8 @@ export default function TransactionsPage() {
 
             {[
               { label: "All", icon: null },
-              {
-                label: "In",
-                icon: <ArrowDown size={16} strokeWidth={2.2} />,
-              },
-              {
-                label: "Out",
-                icon: <ArrowUp size={16} strokeWidth={2.2} />,
-              },
+              { label: "In", icon: <ArrowDown size={16} strokeWidth={2.2} /> },
+              { label: "Out", icon: <ArrowUp size={16} strokeWidth={2.2} /> },
               {
                 label: "Pending",
                 icon: <ClockFading size={16} strokeWidth={2.2} />,
@@ -455,15 +455,15 @@ export default function TransactionsPage() {
         </div>
 
         <div className="transactions-list" ref={transactionsListRef}>
-          {groupedTransactions.length > 0 ? (
+          {isLoadingTransactions ? (
+            <SkeletonTransactionsList />
+          ) : groupedTransactions.length > 0 ? (
             <>
               {groupedTransactions.map((group) => {
                 const groupTotal = group.items.reduce(
-                  (sum, transaction) =>
-                    sum + getAmountValue(transaction.amount ?? "0"),
-                  0
+                  (sum, t) => sum + getAmountValue(t.amount ?? "0"),
+                  0,
                 );
-
                 const isCollapsed = Boolean(collapsedGroups[group.label]);
 
                 return (
@@ -522,13 +522,14 @@ export default function TransactionsPage() {
                           const detailRows = getTransactionDetails(
                             transaction,
                             selectedAccount?.type,
-                            selectedAccount?.currency
+                            selectedAccount?.currency,
                           );
                           const isExpanded = Boolean(
-                            expandedTransactions[transaction.id]
+                            expandedTransactions[transaction.id],
                           );
-                          const showTransactionMap =
-                            isExpanded && shouldRenderTransactionMap(transaction);
+                          const showMap =
+                            isExpanded &&
+                            shouldRenderTransactionMap(transaction);
 
                           return (
                             <div
@@ -540,7 +541,9 @@ export default function TransactionsPage() {
                               <button
                                 type="button"
                                 className="transaction-row-toggle"
-                                onClick={() => toggleTransaction(transaction.id)}
+                                onClick={() =>
+                                  toggleTransaction(transaction.id)
+                                }
                                 aria-expanded={isExpanded}
                               >
                                 <div className="transaction-main">
@@ -560,8 +563,8 @@ export default function TransactionsPage() {
                                         status === "Pending"
                                           ? "transaction-status-pending"
                                           : status === "Declined"
-                                          ? "transaction-status-declined"
-                                          : "transaction-status-completed"
+                                            ? "transaction-status-declined"
+                                            : "transaction-status-completed"
                                       }`}
                                     >
                                       {status}
@@ -577,7 +580,6 @@ export default function TransactionsPage() {
                                       >
                                         {amount}
                                       </p>
-
                                       <p className="transaction-balance">
                                         £{transaction.runningBalance.toFixed(2)}
                                       </p>
@@ -605,14 +607,19 @@ export default function TransactionsPage() {
                                 <div className="transaction-extra-details-content">
                                   <div className="transaction-extra-details-inner">
                                     {detailRows.map((detail) => (
-                                      <p key={`${transaction.id}-${detail.label}`}>
-                                        <span>{detail.label}:</span> {detail.value}
+                                      <p
+                                        key={`${transaction.id}-${detail.label}`}
+                                      >
+                                        <span>{detail.label}:</span>{" "}
+                                        {detail.value}
                                       </p>
                                     ))}
                                   </div>
 
-                                  {showTransactionMap ? (
-                                    <TransactionLocationMap transaction={transaction} />
+                                  {showMap ? (
+                                    <TransactionLocationMap
+                                      transaction={transaction}
+                                    />
                                   ) : null}
 
                                   <NavLink
@@ -676,7 +683,7 @@ export default function TransactionsPage() {
           ) : (
             <div className="status-card empty-card">
               <h2>No transactions found</h2>
-              <p>Try adjusting your filters.</p>
+              <p>{errorMessage || "Try adjusting your filters."}</p>
             </div>
           )}
         </div>

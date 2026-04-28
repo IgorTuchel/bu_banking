@@ -10,22 +10,20 @@ function QuickActions({ actions }) {
       <div className="quick-actions-grid">
         {actions.map((action) => (
           <button
-            key={action.id}
+            key={action?.id}
             className="quick-action-button"
-            onClick={() => navigate(action.path)}
+            onClick={() => navigate(action?.path)}
           >
             <span className="quick-action-icon">
               <action.icon size={26} strokeWidth={2.2} />
             </span>
 
             <div className="quick-action-text">
-              <span className="quick-action-label">
-                {action.label}
-              </span>
+              <span className="quick-action-label">{action?.label}</span>
 
               {action.description && (
                 <span className="quick-action-description">
-                  {action.description}
+                  {action?.description}
                 </span>
               )}
             </div>
