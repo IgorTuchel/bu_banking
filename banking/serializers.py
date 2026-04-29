@@ -7,7 +7,7 @@ from .models import Account, Business, Card, Transaction
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "username", "email", "first_name", "last_name", "lastLogin"]
+        fields = ["id", "username", "email", "first_name", "last_name", "last_login"]
         read_only_fields = ["id"]
 
 

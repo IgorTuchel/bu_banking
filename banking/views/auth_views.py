@@ -35,8 +35,6 @@ class LoginView(APIView):
         # Get user's accounts
         accounts = Account.objects.filter(user=user)
         account_data = AccountSerializer(accounts, many=True).data
-        if user.currentLogin:
-            user.lastLogin = user.currentLogin
 
         user.currentLogin = timezone.now()
         user.save()
