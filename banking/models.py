@@ -156,7 +156,39 @@ class UserLoginLocation(models.Model):
 
     def __str__(self):
         return f"Login location for {self.user}"
+    
+class UserProfile(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="profile",
+    )
 
+    account_status = models.CharField(max_length=30, default="Active")
+    security_level = models.CharField(max_length=30, default="High")
+    member_since = models.CharField(max_length=10, blank=True)
+    password_changed_at = models.DateTimeField(null=True, blank=True)
+
+    date_of_birth = models.DateField(null=True, blank=True)
+    location = models.CharField(max_length=100, blank=True)
+    phone_home = models.CharField(max_length=30, blank=True)
+    phone_mobile = models.CharField(max_length=30, blank=True)
+
+    house_number = models.CharField(max_length=20, blank=True)
+    flat_number = models.CharField(max_length=20, blank=True)
+    street_address = models.CharField(max_length=150, blank=True)
+    town_city = models.CharField(max_length=100, blank=True)
+    county = models.CharField(max_length=100, blank=True)
+    postcode = models.CharField(max_length=20, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "banking_userprofile"
+
+    def __str__(self):
+        return f"Profile for {self.user}"
 
 class SavingsAccountDetails(models.Model):
     account = models.OneToOneField(

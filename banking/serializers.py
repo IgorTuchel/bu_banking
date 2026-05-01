@@ -1,7 +1,8 @@
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
-from .models import Account, Business, Card, Transaction, UserLoginLocation
+from .models import Account, Business, Card, Transaction, UserLoginLocation, UserProfile
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -59,23 +60,37 @@ class TransactionSerializer(serializers.ModelSerializer):
         ]
 
 
-# 🔥 FULL FIXED VERSION
 class CurrentUserSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     firstName = serializers.CharField(source="first_name")
     lastName = serializers.CharField(source="last_name")
     email = serializers.EmailField()
 
-    lastLogin = serializers.DateTimeField(
-        source="last_login",
-        allow_null=True,
-    )
-
+    lastLogin = serializers.DateTimeField(source="last_login", allow_null=True)
     lastLoginLocation = serializers.SerializerMethodField()
+    passwordChangedAt = serializers.SerializerMethodField()
+
+    accountStatus = serializers.SerializerMethodField()
+    securityLevel = serializers.SerializerMethodField()
+    memberSince = serializers.SerializerMethodField()
+    dateOfBirth = serializers.SerializerMethodField()
+
+    phoneHome = serializers.SerializerMethodField()
+    phoneMobile = serializers.SerializerMethodField()
+
+    houseNumber = serializers.SerializerMethodField()
+    flatNumber = serializers.SerializerMethodField()
+    streetAddress = serializers.SerializerMethodField()
+    townCity = serializers.SerializerMethodField()
+    county = serializers.SerializerMethodField()
+    postcode = serializers.SerializerMethodField()
+    address = serializers.SerializerMethodField()
+
+    def _profile(self, obj):
+        return getattr(obj, "profile", None)
 
     def get_lastLoginLocation(self, obj):
         location = getattr(obj, "login_location", None)
-
         if not location:
             return None
 
@@ -84,6 +99,156 @@ class CurrentUserSerializer(serializers.Serializer):
             "longitude": location.longitude,
             "locationLabel": location.location_label,
         }
+
+    def get_accountStatus(self, obj):
+        profile = self._profile(obj)
+        return profile.account_status if profile else "Active"
+
+    def get_securityLevel(self, obj):
+        profile = self._profile(obj)
+        return profile.security_level if profile else "High"
+
+    def get_memberSince(self, obj):
+        profile = self._profile(obj)
+        if profile and profile.member_since:
+            return profile.member_since
+        return str(obj.date_joined.year) if getattr(obj, "date_joined", None) else "—"
+
+    def get_dateOfBirth(self, obj):
+        profile = self._profile(obj)
+        return profile.date_of_birth if profile else None
+
+    def get_phoneHome(self, obj):
+        profile = self._profile(obj)
+        return profile.phone_home if profile else ""
+
+    def get_phoneMobile(self, obj):
+        profile = self._profile(obj)
+        return profile.phone_mobile if profile else ""
+
+    def get_houseNumber(self, obj):
+        profile = self._profile(obj)
+        return profile.house_number if profile else ""
+
+    def get_flatNumber(self, obj):
+        profile = self._profile(obj)
+        return profile.flat_number if profile else ""
+
+    def get_streetAddress(self, obj):
+        profile = self._profile(obj)
+        return profile.street_address if profile else ""
+
+    def get_townCity(self, obj):
+        profile = self._profile(obj)
+        return profile.town_city if profile else ""
+
+    def get_county(self, obj):
+        profile = self._profile(obj)
+        return profile.county if profile else ""
+
+    def get_postcode(self, obj):
+        profile = self._profile(obj)
+        return profile.postcode if profile else ""
+
+    def get_address(self, obj):
+        profile = self._profile(obj)
+        if not profile:
+            return ""
+
+        parts = [
+            profile.flat_number,
+            profile.house_number,
+            profile.street_address,
+            profile.town_city,
+            profile.county,
+            profile.postcode,
+        ]
+
+        return ", ".join([part for part in parts if part])
+    
+    def get_passwordChangedAt(self, obj):
+        profile = self._profile(obj)
+        return profile.password_changed_at if profile else None
+
+
+class UpdateUserProfileSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=False)
+
+    phoneHome = serializers.CharField(required=False, allow_blank=True, max_length=30)
+    phoneMobile = serializers.CharField(required=False, allow_blank=True, max_length=30)
+
+    houseNumber = serializers.CharField(required=False, allow_blank=True, max_length=20)
+    flatNumber = serializers.CharField(required=False, allow_blank=True, max_length=20)
+    streetAddress = serializers.CharField(required=False, allow_blank=True, max_length=150)
+    townCity = serializers.CharField(required=False, allow_blank=True, max_length=100)
+    county = serializers.CharField(required=False, allow_blank=True, max_length=100)
+    postcode = serializers.CharField(required=False, allow_blank=True, max_length=20)
+
+    def update(self, instance, validated_data):
+        user = instance
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+
+        if "email" in validated_data:
+            user.email = validated_data["email"]
+            user.save(update_fields=["email"])
+
+        field_map = {
+            "phoneHome": "phone_home",
+            "phoneMobile": "phone_mobile",
+            "houseNumber": "house_number",
+            "flatNumber": "flat_number",
+            "streetAddress": "street_address",
+            "townCity": "town_city",
+            "county": "county",
+            "postcode": "postcode",
+        }
+
+        changed_fields = []
+
+        for frontend_key, model_field in field_map.items():
+            if frontend_key in validated_data:
+                setattr(profile, model_field, validated_data[frontend_key])
+                changed_fields.append(model_field)
+
+        if changed_fields:
+            profile.save(update_fields=[*changed_fields, "updated_at"])
+
+        return user
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    currentPassword = serializers.CharField(required=True, write_only=True)
+    newPassword = serializers.CharField(required=True, write_only=True)
+    confirmPassword = serializers.CharField(required=True, write_only=True)
+
+    def validate(self, attrs):
+        user = self.context["request"].user
+
+        if not user.check_password(attrs["currentPassword"]):
+            raise serializers.ValidationError(
+                {"currentPassword": "Current password is incorrect."}
+            )
+
+        if attrs["newPassword"] != attrs["confirmPassword"]:
+            raise serializers.ValidationError(
+                {"confirmPassword": "New passwords do not match."}
+            )
+
+        validate_password(attrs["newPassword"], user)
+        return attrs
+
+    def save(self):
+        from django.utils import timezone
+
+        user = self.context["request"].user
+        user.set_password(self.validated_data["newPassword"])
+        user.save(update_fields=["password"])
+
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        profile.password_changed_at = timezone.now()
+        profile.save(update_fields=["password_changed_at", "updated_at"])
+
+        return user
 
 
 class FrontendAccountSerializer(serializers.ModelSerializer):

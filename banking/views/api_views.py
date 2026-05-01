@@ -4,17 +4,37 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from banking.models import Account, Card, Transaction
+from banking.models import Account, Card, Transaction, UserProfile
 from banking.serializers import (
+    ChangePasswordSerializer,
     CurrentUserSerializer,
     FrontendAccountSerializer,
     FrontendCardSerializer,
     FrontendTransactionSerializer,
+    UpdateUserProfileSerializer,
 )
 
 
 class CurrentUserView(APIView):
     permission_classes = [IsAuthenticated]
+
+    def _ensure_profile(self, user):
+        UserProfile.objects.get_or_create(
+            user=user,
+            defaults={
+                "account_status": "Active",
+                "security_level": "High",
+                "member_since": str(user.date_joined.year),
+                "phone_home": "",
+                "phone_mobile": "",
+                "house_number": "",
+                "flat_number": "",
+                "street_address": "",
+                "town_city": "",
+                "county": "",
+                "postcode": "",
+            },
+        )
 
     def get(self, request):
         user = request.user
@@ -23,8 +43,47 @@ class CurrentUserView(APIView):
             user.last_login = timezone.now()
             user.save(update_fields=["last_login"])
 
+        self._ensure_profile(user)
+
         serializer = CurrentUserSerializer(user)
         return Response(serializer.data)
+
+    def patch(self, request):
+        user = request.user
+        self._ensure_profile(user)
+
+        serializer = UpdateUserProfileSerializer(
+            user,
+            data=request.data,
+            partial=True,
+        )
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+
+        serializer.save()
+
+        return Response(CurrentUserSerializer(user).data)
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(
+            data=request.data,
+            context={"request": request},
+        )
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+
+        serializer.save()
+
+        return Response(
+            {"message": "Password changed successfully."},
+            status=200,
+        )
 
 
 class AccountListView(APIView):
@@ -120,7 +179,7 @@ class CardUpdateView(APIView):
         card = Card.objects.filter(id=card_id, account__user=request.user).first()
 
         if not card:
-            return Response({"detail": "Card not found."}, status=404)
+            return Response({"detail": "Card not found"}, status=404)
 
         allowed_fields = {
             "frozen": "frozen",
@@ -142,12 +201,6 @@ class CardUpdateView(APIView):
 
 
 class TestTransactionView(APIView):
-    """
-    Dev-only endpoint — simulate a card payment without going through
-    the full payment network flow.
-    Remove or restrict to IsAdminUser before production.
-    """
-
     permission_classes = [IsAuthenticated]
 
     def post(self, request):

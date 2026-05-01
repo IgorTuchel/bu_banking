@@ -21,6 +21,7 @@ from .views.api_views import (
     CardUpdateView,
     CurrentUserView,
     TestTransactionView,
+    ChangePasswordView,   # ✅ NEW
 )
 from .views.auth_views import LoginView, UserAccountsView
 from .views.business_view import BusinessViewSet
@@ -43,10 +44,16 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
+    # Auth
     path("auth/login/", LoginView.as_view(), name="auth-login"),
     path("auth/register/", UserRegistrationView.as_view(), name="auth-register"),
     path("auth/user/", UserAccountsView.as_view(), name="auth-user"),
+
+    # Current user
     path("me/", CurrentUserView.as_view(), name="api-me"),
+    path("me/change-password/", ChangePasswordView.as_view(), name="api-change-password"),  # ✅ NEW
+
+    # Accounts
     path("accounts/", AccountListView.as_view(), name="api-accounts"),
     path(
         "accounts/by-key/<slug:display_key>/",
@@ -63,18 +70,32 @@ urlpatterns = [
         AccountCardsView.as_view(),
         name="api-account-cards",
     ),
+
+    # Cards
+    path("cards/<str:card_id>/", CardUpdateView.as_view(), name="api-card-update"),
+
+    # Transfers / Network
     path("network/banks/", NetworkBanksView.as_view()),
     path("network/status/", NetworkStatusView.as_view()),
     path("network/transfer/", NetworkTransferView.as_view()),
     path("transfers/", TransferView.as_view(), name="api-transfers"),
-    path("cards/<str:card_id>/", CardUpdateView.as_view(), name="api-card-update"),
+
+    # Testing
     path("test-transaction/", TestTransactionView.as_view(), name="test-transaction"),
     path("test-view/", TestView.as_view(), name="banking-test-view"),
+
+    # Routers
     path("", include(router.urls)),
+
+    # Docs
     path(
         "swagger/",
         schema_view.with_ui("swagger", cache_timeout=0),
         name="schema-swagger-ui",
     ),
-    path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
+    path(
+        "redoc/",
+        schema_view.with_ui("redoc", cache_timeout=0),
+        name="schema-redoc",
+    ),
 ]

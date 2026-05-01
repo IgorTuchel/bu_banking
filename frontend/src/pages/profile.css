@@ -86,3 +86,259 @@
     text-align: left;
   }
 }
+
+.profile-readonly-value {
+  opacity: 0.65;
+  font-style: italic;
+}
+
+.profile-edit-input {
+  width: min(100%, 18rem);
+  padding: 0.65rem 0.8rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  text-align: right;
+  box-shadow: var(--shadow-sm);
+}
+
+.profile-edit-input:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-color: var(--color-accent);
+}
+
+.profile-edit-actions {
+  display: flex;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+.profile-action-button:disabled,
+.profile-edit-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@media (max-width: 600px) {
+  .profile-edit-input {
+    width: 100%;
+    text-align: left;
+  }
+
+  .profile-edit-actions {
+    flex-direction: column;
+  }
+}
+
+/* =========================
+   PASSWORD MODAL
+========================= */
+
+.profile-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+}
+
+.profile-password-modal {
+  width: 100%;
+  max-width: 520px;
+  background: var(--color-surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  padding: 1.5rem 1.6rem;
+  position: relative;
+  animation: profileModalIn 0.2s ease;
+}
+
+/* subtle pop animation */
+@keyframes profileModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* close button */
+.profile-modal-close {
+  border: none;
+  background: none;
+  font-size: 1.6rem;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.profile-modal-close:hover {
+  color: var(--color-text);
+  transform: scale(1.1);
+}
+
+/* =========================
+   PASSWORD FORM
+========================= */
+
+.profile-password-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-top: 0.75rem;
+}
+
+.profile-password-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.profile-password-field span {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-heading);
+}
+
+.profile-password-field input {
+  padding: 0.65rem 0.8rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.profile-password-field input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(46, 139, 87, 0.2); /* green glow */
+}
+
+/* =========================
+   ACTION BUTTONS (reuse)
+========================= */
+
+.profile-edit-actions {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: 0.5rem;
+}
+
+.profile-edit-actions .profile-action-button {
+  flex: 1;
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 600px) {
+  .profile-password-modal {
+    padding: 1.2rem;
+  }
+
+  .profile-edit-actions {
+    flex-direction: column;
+  }
+}
+
+.profile-danger-button {
+  background: linear-gradient(135deg, #9f1239, #7f1d1d);
+}
+
+.profile-danger-button:hover {
+  box-shadow: 0 10px 20px rgba(127, 29, 29, 0.22);
+}
+
+.profile-password-last-changed {
+  margin: 0.35rem 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.profile-password-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.profile-password-input-wrap input {
+  width: 100%;
+  padding-right: 2.8rem;
+}
+
+.profile-password-eye {
+  position: absolute;
+  right: 0.65rem;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-password-eye:hover {
+  color: var(--color-primary);
+}
+
+.profile-password-strength {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.profile-password-strength-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.profile-password-strength-top strong {
+  color: var(--color-text-heading);
+}
+
+.profile-password-strength-track {
+  height: 0.55rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.profile-password-strength-bar {
+  height: 100%;
+  border-radius: inherit;
+  transition:
+    width 0.25s ease,
+    background 0.25s ease;
+}
+
+.strength-empty {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.strength-weak {
+  background: #b91c1c;
+}
+
+.strength-medium {
+  background: #d4af37;
+}
+
+.strength-strong {
+  background: #2e8b57;
+}
