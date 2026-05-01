@@ -11,6 +11,15 @@ function Register() {
     lastName: "",
     username: "",
     email: "",
+    dateOfBirth: "",
+    phoneMobile: "",
+    phoneHome: "",
+    houseNumber: "",
+    flatNumber: "",
+    streetAddress: "",
+    townCity: "",
+    county: "",
+    postcode: "",
     password: "",
     confirmPassword: "",
   });
@@ -23,51 +32,74 @@ function Register() {
   function handleChange(event) {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrorMessage("");
   }
 
-  function handleSubmit(event) {
-    event.preventDefault();
+  function validateForm() {
+    const requiredFields = [
+      ["firstName", "First name"],
+      ["lastName", "Last name"],
+      ["username", "Username"],
+      ["email", "Email address"],
+      ["dateOfBirth", "Date of birth"],
+      ["phoneMobile", "Mobile phone"],
+      ["houseNumber", "House number"],
+      ["streetAddress", "Street address"],
+      ["townCity", "Town / City"],
+      ["postcode", "Postcode"],
+      ["password", "Password"],
+      ["confirmPassword", "Confirm password"],
+    ];
 
-    if (!formData.username || !formData.password) {
-      setErrorMessage("Username and password are required.");
-      return;
+    for (const [key, label] of requiredFields) {
+      if (!formData[key].trim()) {
+        return `${label} is required.`;
+      }
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setErrorMessage("Passwords do not match.");
-      return;
+      return "Passwords do not match.";
     }
 
     if (formData.password.length < 8) {
-      setErrorMessage("Password must be at least 8 characters.");
+      return "Password must be at least 8 characters.";
+    }
+
+    return "";
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+
+    const validationError = validateForm();
+
+    if (validationError) {
+      setErrorMessage(validationError);
       return;
     }
 
-    setErrorMessage("");
-    setIsLoading(true);
+    try {
+      setErrorMessage("");
+      setIsLoading(true);
 
-    fetch("http://localhost:8000/api/auth/register/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        username: formData.username,
-        password: formData.password,
-        email: formData.email,
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-      }),
-    })
-      .then((res) => {
-        if (!res.ok) return res.json().then((d) => Promise.reject(d));
-        return res.json();
-      })
-      .then(() => {
-        navigate("/login");
-      })
-      .catch((err) => {
-        setIsLoading(false);
-        setErrorMessage(err.error || "Registration failed. Please try again.");
+      const response = await fetch("http://localhost:8000/api/auth/register/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Registration failed. Please try again.");
+      }
+
+      navigate("/login");
+    } catch (error) {
+      setErrorMessage(error.message || "Registration failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -109,7 +141,7 @@ function Register() {
               <div className="register-field-row">
                 <div className="register-field-block">
                   <label htmlFor="firstName" className="register-label">
-                    First Name
+                    First Name <span className="register-required">*</span>
                   </label>
                   <input
                     id="firstName"
@@ -125,7 +157,7 @@ function Register() {
 
                 <div className="register-field-block">
                   <label htmlFor="lastName" className="register-label">
-                    Last Name
+                    Last Name <span className="register-required">*</span>
                   </label>
                   <input
                     id="lastName"
@@ -140,25 +172,42 @@ function Register() {
                 </div>
               </div>
 
-              <div className="register-field-block">
-                <label htmlFor="username" className="register-label">
-                  Username <span className="register-required">*</span>
-                </label>
-                <input
-                  id="username"
-                  name="username"
-                  type="text"
-                  value={formData.username}
-                  onChange={handleChange}
-                  className="register-text-input"
-                  placeholder="Choose a username"
-                  autoComplete="username"
-                />
+              <div className="register-field-row">
+                <div className="register-field-block">
+                  <label htmlFor="username" className="register-label">
+                    Username <span className="register-required">*</span>
+                  </label>
+                  <input
+                    id="username"
+                    name="username"
+                    type="text"
+                    value={formData.username}
+                    onChange={handleChange}
+                    className="register-text-input"
+                    placeholder="Choose a username"
+                    autoComplete="username"
+                  />
+                </div>
+
+                <div className="register-field-block">
+                  <label htmlFor="dateOfBirth" className="register-label">
+                    Date of Birth <span className="register-required">*</span>
+                  </label>
+                  <input
+                    id="dateOfBirth"
+                    name="dateOfBirth"
+                    type="date"
+                    value={formData.dateOfBirth}
+                    onChange={handleChange}
+                    className="register-text-input"
+                    autoComplete="bday"
+                  />
+                </div>
               </div>
 
               <div className="register-field-block">
                 <label htmlFor="email" className="register-label">
-                  Email Address
+                  Email Address <span className="register-required">*</span>
                 </label>
                 <input
                   id="email"
@@ -171,6 +220,142 @@ function Register() {
                   autoComplete="email"
                 />
               </div>
+
+              <div className="register-field-row">
+                <div className="register-field-block">
+                  <label htmlFor="phoneMobile" className="register-label">
+                    Mobile Phone <span className="register-required">*</span>
+                  </label>
+                  <input
+                    id="phoneMobile"
+                    name="phoneMobile"
+                    type="tel"
+                    value={formData.phoneMobile}
+                    onChange={handleChange}
+                    className="register-text-input"
+                    placeholder="Mobile phone"
+                    autoComplete="tel"
+                  />
+                </div>
+
+                <div className="register-field-block">
+                  <label htmlFor="phoneHome" className="register-label">
+                    Home Phone
+                  </label>
+                  <input
+                    id="phoneHome"
+                    name="phoneHome"
+                    type="tel"
+                    value={formData.phoneHome}
+                    onChange={handleChange}
+                    className="register-text-input"
+                    placeholder="Optional"
+                    autoComplete="tel"
+                  />
+                </div>
+              </div>
+
+              <div className="register-divider" />
+
+              <div className="register-field-row">
+                <div className="register-field-block">
+                  <label htmlFor="flatNumber" className="register-label">
+                    Flat Number
+                  </label>
+                  <input
+                    id="flatNumber"
+                    name="flatNumber"
+                    type="text"
+                    value={formData.flatNumber}
+                    onChange={handleChange}
+                    className="register-text-input"
+                    placeholder="Optional"
+                  />
+                </div>
+
+                <div className="register-field-block">
+                  <label htmlFor="houseNumber" className="register-label">
+                    House Number <span className="register-required">*</span>
+                  </label>
+                  <input
+                    id="houseNumber"
+                    name="houseNumber"
+                    type="text"
+                    value={formData.houseNumber}
+                    onChange={handleChange}
+                    className="register-text-input"
+                    placeholder="House number"
+                  />
+                </div>
+              </div>
+
+              <div className="register-field-block">
+                <label htmlFor="streetAddress" className="register-label">
+                  Street Address <span className="register-required">*</span>
+                </label>
+                <input
+                  id="streetAddress"
+                  name="streetAddress"
+                  type="text"
+                  value={formData.streetAddress}
+                  onChange={handleChange}
+                  className="register-text-input"
+                  placeholder="Street address"
+                  autoComplete="address-line1"
+                />
+              </div>
+
+              <div className="register-field-row">
+                <div className="register-field-block">
+                  <label htmlFor="townCity" className="register-label">
+                    Town / City <span className="register-required">*</span>
+                  </label>
+                  <input
+                    id="townCity"
+                    name="townCity"
+                    type="text"
+                    value={formData.townCity}
+                    onChange={handleChange}
+                    className="register-text-input"
+                    placeholder="Town or city"
+                    autoComplete="address-level2"
+                  />
+                </div>
+
+                <div className="register-field-block">
+                  <label htmlFor="county" className="register-label">
+                    County
+                  </label>
+                  <input
+                    id="county"
+                    name="county"
+                    type="text"
+                    value={formData.county}
+                    onChange={handleChange}
+                    className="register-text-input"
+                    placeholder="County"
+                    autoComplete="address-level1"
+                  />
+                </div>
+              </div>
+
+              <div className="register-field-block">
+                <label htmlFor="postcode" className="register-label">
+                  Postcode <span className="register-required">*</span>
+                </label>
+                <input
+                  id="postcode"
+                  name="postcode"
+                  type="text"
+                  value={formData.postcode}
+                  onChange={handleChange}
+                  className="register-text-input"
+                  placeholder="Postcode"
+                  autoComplete="postal-code"
+                />
+              </div>
+
+              <div className="register-divider" />
 
               <div className="register-field-block">
                 <label htmlFor="password" className="register-label">
