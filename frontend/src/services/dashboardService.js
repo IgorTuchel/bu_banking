@@ -32,13 +32,12 @@ export async function getDashboardData() {
     }),
   );
 
-  console.log(user.lastLogin);
-  console.log(user);
+  console.log("USER FROM /api/me/", user);
 
   return {
     user: {
-      firstName: user.firstName,
-      lastName: user.lastName,
+      firstName: user.firstName || user.first_name || user.username || "there",
+      lastName: user.lastName || user.last_name || "",
       email: user.email,
       lastLogin: user.lastLogin,
     },
