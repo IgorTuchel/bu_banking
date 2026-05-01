@@ -4,6 +4,33 @@ const ACCESS_TOKEN_KEY = "aurixAccessToken";
 const REFRESH_TOKEN_KEY = "aurixRefreshToken";
 const REMEMBERED_USERNAME_KEY = "aurixRememberedUsername";
 
+function getCurrentLocation() {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) {
+      resolve(null);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          locationLabel: "Current device location",
+        });
+      },
+      () => {
+        resolve(null);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 8000,
+        maximumAge: 60000,
+      },
+    );
+  });
+}
+
 export function getAccessToken() {
   return localStorage.getItem(ACCESS_TOKEN_KEY);
 }
@@ -30,6 +57,8 @@ export function logoutUser() {
 }
 
 export async function loginUser({ username, password, rememberUser }) {
+  const location = await getCurrentLocation();
+
   const response = await fetch(`${API_BASE}/auth/login/`, {
     method: "POST",
     headers: {
@@ -38,6 +67,7 @@ export async function loginUser({ username, password, rememberUser }) {
     body: JSON.stringify({
       username,
       password,
+      location,
     }),
   });
 

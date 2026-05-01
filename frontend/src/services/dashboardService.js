@@ -1,6 +1,5 @@
 import { authenticatedFetch } from "./authService";
-// src/services/dashboardService.js
-import { ArrowLeftRight, HandCoins, FileText, PieChart } from "lucide-react";
+import { ArrowLeftRight, HandCoins, CreditCard, PieChart } from "lucide-react";
 
 const API = "http://127.0.0.1:8000/api";
 
@@ -32,8 +31,10 @@ export async function getDashboardData() {
       };
     }),
   );
+
   console.log(user.lastLogin);
   console.log(user);
+
   return {
     user: {
       firstName: user.firstName,
@@ -59,11 +60,11 @@ export async function getDashboardData() {
         icon: HandCoins,
       },
       {
-        id: "statements",
-        label: "Statements",
-        description: "View and download statements",
-        path: "/statements",
-        icon: FileText,
+        id: "cards",
+        label: "Cards",
+        description: "Freeze, manage and view cards",
+        path: "/cards",
+        icon: CreditCard,
       },
       {
         id: "spending-insights",

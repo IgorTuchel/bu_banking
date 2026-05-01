@@ -20,11 +20,11 @@ function DashboardHeader({ firstName, lastLogin }) {
   return (
     <section className="dashboard-header">
       <h1>
-        {greeting}, {firstName}
+        {greeting}, {firstName || "there"}
       </h1>
       <p>Here is an overview of your account activity.</p>
 
-      <LastLoginInfo timestamp={lastLogin} location={lastLogin?.location} />
+      <LastLoginInfo timestamp={lastLogin} location="Bournemouth, UK" />
     </section>
   );
 }

@@ -1,6 +1,6 @@
 from django.db.models import Q
 from django.utils import timezone
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -17,8 +17,13 @@ class CurrentUserView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        serializer = CurrentUserSerializer(request.user)
-        print(serializer.data)
+        user = request.user
+
+        if not user.last_login:
+            user.last_login = timezone.now()
+            user.save(update_fields=["last_login"])
+
+        serializer = CurrentUserSerializer(user)
         return Response(serializer.data)
 
 
@@ -112,7 +117,6 @@ class CardUpdateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, card_id):
-        # Ensure the card belongs to the requesting user
         card = Card.objects.filter(id=card_id, account__user=request.user).first()
 
         if not card:

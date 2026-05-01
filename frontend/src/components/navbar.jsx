@@ -155,8 +155,8 @@ export default function Navbar() {
               <NavLink to="/rewards" onClick={closeMenu}>
                 Rewards
               </NavLink>
-              <NavLink to="/card-controls" onClick={closeMenu}>
-                Card Controls
+              <NavLink to="/cards" onClick={closeMenu}>
+                Manage Cards
               </NavLink>
               <NavLink to="/offers" onClick={closeMenu}>
                 Offers

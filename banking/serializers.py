@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from .models import Account, Business, Card, Transaction
+from .models import Account, Business, Card, Transaction, UserLoginLocation
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -59,12 +59,31 @@ class TransactionSerializer(serializers.ModelSerializer):
         ]
 
 
+# 🔥 FULL FIXED VERSION
 class CurrentUserSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     firstName = serializers.CharField(source="first_name")
     lastName = serializers.CharField(source="last_name")
     email = serializers.EmailField()
-    lastLogin = serializers.DateTimeField(allow_null=True)
+
+    lastLogin = serializers.DateTimeField(
+        source="last_login",
+        allow_null=True,
+    )
+
+    lastLoginLocation = serializers.SerializerMethodField()
+
+    def get_lastLoginLocation(self, obj):
+        location = getattr(obj, "login_location", None)
+
+        if not location:
+            return None
+
+        return {
+            "latitude": location.latitude,
+            "longitude": location.longitude,
+            "locationLabel": location.location_label,
+        }
 
 
 class FrontendAccountSerializer(serializers.ModelSerializer):
@@ -113,39 +132,25 @@ class FrontendAccountSerializer(serializers.ModelSerializer):
         return obj.masked_account_number
 
     def get_interestRate(self, obj):
-        if hasattr(obj, "savings_details"):
-            return obj.savings_details.interest_rate
-        return None
+        return getattr(obj, "savings_details", None) and obj.savings_details.interest_rate
 
     def get_interestEarnedYtd(self, obj):
-        if hasattr(obj, "savings_details"):
-            return obj.savings_details.interest_earned_ytd
-        return None
+        return getattr(obj, "savings_details", None) and obj.savings_details.interest_earned_ytd
 
     def get_creditLimit(self, obj):
-        if hasattr(obj, "credit_details"):
-            return obj.credit_details.credit_limit
-        return None
+        return getattr(obj, "credit_details", None) and obj.credit_details.credit_limit
 
     def get_availableCredit(self, obj):
-        if hasattr(obj, "credit_details"):
-            return obj.credit_details.available_credit
-        return None
+        return getattr(obj, "credit_details", None) and obj.credit_details.available_credit
 
     def get_minimumPaymentDue(self, obj):
-        if hasattr(obj, "credit_details"):
-            return obj.credit_details.minimum_payment_due
-        return None
+        return getattr(obj, "credit_details", None) and obj.credit_details.minimum_payment_due
 
     def get_paymentDueDate(self, obj):
-        if hasattr(obj, "credit_details"):
-            return obj.credit_details.payment_due_date
-        return None
+        return getattr(obj, "credit_details", None) and obj.credit_details.payment_due_date
 
     def get_statementBalance(self, obj):
-        if hasattr(obj, "credit_details"):
-            return obj.credit_details.statement_balance
-        return None
+        return getattr(obj, "credit_details", None) and obj.credit_details.statement_balance
 
 
 class FrontendMerchantSerializer(serializers.Serializer):
@@ -168,25 +173,14 @@ class FrontendTransactionSerializer(serializers.ModelSerializer):
     transferDirection = serializers.SerializerMethodField()
 
     bankName = serializers.CharField(source="bank_name", allow_blank=True)
-    sortCodeMasked = serializers.CharField(
-        source="sort_code_masked",
-        allow_blank=True,
-    )
-    accountNumberMasked = serializers.CharField(
-        source="account_number_masked",
-        allow_blank=True,
-    )
-    paymentReference = serializers.CharField(
-        source="payment_reference",
-        allow_blank=True,
-    )
+    sortCodeMasked = serializers.CharField(source="sort_code_masked", allow_blank=True)
+    accountNumberMasked = serializers.CharField(source="account_number_masked", allow_blank=True)
+    paymentReference = serializers.CharField(source="payment_reference", allow_blank=True)
     payerName = serializers.CharField(source="payer_name", allow_blank=True)
     payeeName = serializers.CharField(source="payee_name", allow_blank=True)
     terminalId = serializers.CharField(source="terminal_id", allow_blank=True)
-    locationLabel = serializers.CharField(
-        source="location_label",
-        allow_blank=True,
-    )
+
+    locationLabel = serializers.CharField(source="location_label", allow_blank=True)
 
     merchantId = serializers.SerializerMethodField()
     merchantName = serializers.SerializerMethodField()
@@ -228,8 +222,7 @@ class FrontendTransactionSerializer(serializers.ModelSerializer):
         return self.context.get("account")
 
     def _clean_legacy_description(self, obj):
-        raw_description = obj.description or ""
-        return raw_description.split(" | legacy:", 1)[0].strip()
+        return (obj.description or "").split(" | legacy:", 1)[0].strip()
 
     def get_accountId(self, obj):
         account = self._viewed_account()
@@ -238,32 +231,22 @@ class FrontendTransactionSerializer(serializers.ModelSerializer):
     def get_name(self, obj):
         if obj.transaction_type == "bank_transfer" and obj.payer_name:
             return f"Transfer from {obj.payer_name}"
-
         if obj.transaction_type == "bank_transfer" and obj.payee_name:
             return f"Transfer to {obj.payee_name}"
-
         if obj.business:
             return obj.business.name
-
-        clean_description = self._clean_legacy_description(obj)
-        if clean_description:
-            return clean_description
-
-        return obj.transaction_type.replace("_", " ").title()
+        clean = self._clean_legacy_description(obj)
+        return clean if clean else obj.transaction_type.replace("_", " ").title()
 
     def get_category(self, obj):
         if obj.business:
             return obj.business.category
-
         if obj.transaction_type in {"bank_transfer", "round_up_transfer"}:
             return "Transfer"
-
         if obj.transaction_type == "credit_payment":
             return "Payment"
-
         if obj.transaction_type == "interest":
             return "Interest"
-
         return obj.transaction_type.replace("_", " ").title()
 
     def get_amount(self, obj):
@@ -290,8 +273,6 @@ class FrontendTransactionSerializer(serializers.ModelSerializer):
                 viewed_account and viewed_account.account_type == "credit"
             ):
                 return "Credit Card"
-            if obj.card and obj.card.card_type == "debit":
-                return "Debit Card"
             return "Debit Card"
 
         mapping = {
@@ -306,19 +287,11 @@ class FrontendTransactionSerializer(serializers.ModelSerializer):
             "round_up_transfer": "Round-up Transfer",
             "credit_payment": "Credit Card Repayment",
         }
-        return mapping.get(
-            obj.transaction_type,
-            obj.transaction_type.replace("_", " ").title(),
-        )
+
+        return mapping.get(obj.transaction_type, obj.transaction_type.replace("_", " ").title())
 
     def get_transferDirection(self, obj):
-        if obj.direction == "incoming":
-            return "Incoming"
-        if obj.direction == "outgoing":
-            return "Outgoing"
-        if obj.direction == "internal":
-            return "Internal"
-        return None
+        return obj.direction.title() if obj.direction else None
 
     def get_merchantId(self, obj):
         return obj.business.id if obj.business else None
@@ -327,9 +300,7 @@ class FrontendTransactionSerializer(serializers.ModelSerializer):
         return obj.business.name if obj.business else None
 
     def get_merchant(self, obj):
-        if not obj.business:
-            return None
-        return FrontendMerchantSerializer(obj.business).data
+        return FrontendMerchantSerializer(obj.business).data if obj.business else None
 
     def get_cleanDescription(self, obj):
         return self._clean_legacy_description(obj)
@@ -375,8 +346,4 @@ class FrontendCardSerializer(serializers.ModelSerializer):
         ]
 
     def get_type(self, obj):
-        if obj.card_type == "debit":
-            return "Debit Card"
-        if obj.card_type == "credit":
-            return "Credit Card"
-        return obj.card_type.title()
+        return "Credit Card" if obj.card_type == "credit" else "Debit Card"
