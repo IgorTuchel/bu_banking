@@ -51,6 +51,11 @@ class TransactionSerializer(serializers.ModelSerializer):
             "to_account",
             "business",
             "timestamp",
+            "city",
+            "country",
+            "latitude",
+            "longitude",
+            "location_label",
         ]
 
 
@@ -178,6 +183,10 @@ class FrontendTransactionSerializer(serializers.ModelSerializer):
     payerName = serializers.CharField(source="payer_name", allow_blank=True)
     payeeName = serializers.CharField(source="payee_name", allow_blank=True)
     terminalId = serializers.CharField(source="terminal_id", allow_blank=True)
+    locationLabel = serializers.CharField(
+        source="location_label",
+        allow_blank=True,
+    )
 
     merchantId = serializers.SerializerMethodField()
     merchantName = serializers.SerializerMethodField()
@@ -208,6 +217,9 @@ class FrontendTransactionSerializer(serializers.ModelSerializer):
             "terminalId",
             "city",
             "country",
+            "latitude",
+            "longitude",
+            "locationLabel",
             "description",
             "cleanDescription",
         ]

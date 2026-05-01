@@ -61,11 +61,11 @@ class Account(models.Model):
     account_number = models.CharField(
         max_length=8,
         unique=True,
-        default=generate_account_number,  # ← add this
+        default=generate_account_number,
     )
     sort_code = models.CharField(
         max_length=8,
-        default=generate_sort_code,  # ← add this so it's never blank
+        default=generate_sort_code,
     )
 
     starting_balance = models.DecimalField(
@@ -419,6 +419,20 @@ class Transaction(models.Model):
 
     city = models.CharField(max_length=100, blank=True)
     country = models.CharField(max_length=2, blank=True)
+
+    latitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+    )
+    longitude = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+    )
+    location_label = models.CharField(max_length=255, blank=True)
 
     balance_after = models.DecimalField(
         max_digits=12,

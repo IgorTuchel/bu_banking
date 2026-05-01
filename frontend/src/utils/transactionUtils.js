@@ -44,27 +44,33 @@ export function filterTransactionsByDateRange(transactions, dateRange) {
   if (dateRange === "all") return transactions;
 
   const now = new Date();
+
   const startOf = (unit) => {
     const d = new Date(now);
+
     if (unit === "day") {
       d.setHours(0, 0, 0, 0);
       return d;
     }
+
     if (unit === "week") {
       d.setDate(d.getDate() - d.getDay());
       d.setHours(0, 0, 0, 0);
       return d;
     }
+
     if (unit === "month") {
       d.setDate(1);
       d.setHours(0, 0, 0, 0);
       return d;
     }
+
     if (unit === "year") {
       d.setMonth(0, 1);
       d.setHours(0, 0, 0, 0);
       return d;
     }
+
     return d;
   };
 
@@ -86,7 +92,11 @@ export function filterTransactionsByDateRange(transactions, dateRange) {
 }
 
 /**
- * Group transactions by a human-readable date heading.
+ * Group transactions:
+ * - Today
+ * - Yesterday
+ * - This Week
+ * - Then Month/Year
  */
 export function groupTransactions(transactions) {
   const groups = new Map();
@@ -111,8 +121,13 @@ function getGroupLabel(timestamp) {
   if (!timestamp) return "Unknown Date";
 
   const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return "Unknown Date";
+
   const now = new Date();
+
+  // ── Today / Yesterday ─────────────────────
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
 
@@ -121,17 +136,21 @@ function getGroupLabel(timestamp) {
   if (txDay.getTime() === today.getTime()) return "Today";
   if (txDay.getTime() === yesterday.getTime()) return "Yesterday";
 
+  // ── This Week ─────────────────────────────
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - today.getDay());
+
+  if (txDay >= startOfWeek) return "This Week";
+
+  // ── Monthly fallback ──────────────────────
   return date.toLocaleDateString("en-GB", {
-    weekday: "long",
-    day: "numeric",
     month: "long",
     year: "numeric",
   });
 }
 
 /**
- * Append a running balance to each transaction, working backwards from the
- * current available balance.
+ * Append a running balance to each transaction.
  */
 export function addRunningBalance(transactions, availableBalance) {
   let balance = Number(availableBalance) || 0;
@@ -144,8 +163,7 @@ export function addRunningBalance(transactions, availableBalance) {
 }
 
 /**
- * Returns the most recent N transactions sorted by timestamp descending.
- * Used by the home dashboard panel.
+ * Recent transactions (dashboard)
  */
 export function getHomeRecentTransactions(transactions, limit = 15) {
   if (!transactions || transactions.length === 0) return [];

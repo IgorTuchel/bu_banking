@@ -15,6 +15,7 @@ import {
   firstDefined,
   getGeocodeQuery,
   getLocationLabel,
+  getTransactionCoordinates,
 } from "../utils/transactionLocationUtils";
 import {
   GEOCODE_CACHE,
@@ -35,29 +36,42 @@ export default function TransactionLocationMap({ transaction }) {
   const [resolvedCenter, setResolvedCenter] = useState(null);
   const [resolvingKey, setResolvingKey] = useState("");
 
-  const geocodeQuery = getGeocodeQuery(transaction);
+  const directCoordinates = useMemo(
+    () => getTransactionCoordinates(transaction),
+    [transaction],
+  );
+
+  const geocodeQuery = useMemo(
+    () => getGeocodeQuery(transaction),
+    [transaction],
+  );
+
   const cacheKey = geocodeQuery ?? "";
   const locationLabel = getLocationLabel(transaction) ?? geocodeQuery;
 
   const center = useMemo(() => {
+    if (directCoordinates) {
+      return directCoordinates;
+    }
+
     if (!geocodeQuery) {
       return null;
     }
 
     return GEOCODE_CACHE.get(cacheKey) ?? resolvedCenter;
-  }, [cacheKey, geocodeQuery, resolvedCenter]);
+  }, [cacheKey, directCoordinates, geocodeQuery, resolvedCenter]);
 
-  const isResolving = resolvingKey === cacheKey;
+  const isResolving = Boolean(geocodeQuery && resolvingKey === cacheKey);
 
   const transactionTitle = firstDefined(
     transaction.merchant?.name,
     transaction.merchantName,
     transaction.name,
-    "Transaction"
+    "Transaction",
   );
 
   useEffect(() => {
-    if (!geocodeQuery || GEOCODE_CACHE.has(cacheKey)) {
+    if (directCoordinates || !geocodeQuery || GEOCODE_CACHE.has(cacheKey)) {
       return;
     }
 
@@ -68,20 +82,16 @@ export default function TransactionLocationMap({ transaction }) {
       try {
         await Promise.resolve();
 
-        if (!isActive) {
-          return;
-        }
+        if (!isActive) return;
 
         setResolvingKey(cacheKey);
 
         const resolvedCoordinates = await geocodeLocationQuery(
           geocodeQuery,
-          controller.signal
+          controller.signal,
         );
 
-        if (!isActive) {
-          return;
-        }
+        if (!isActive) return;
 
         if (resolvedCoordinates) {
           GEOCODE_CACHE.set(cacheKey, resolvedCoordinates);
@@ -94,7 +104,7 @@ export default function TransactionLocationMap({ transaction }) {
       } finally {
         if (isActive) {
           setResolvingKey((currentKey) =>
-            currentKey === cacheKey ? "" : currentKey
+            currentKey === cacheKey ? "" : currentKey,
           );
         }
       }
@@ -106,7 +116,7 @@ export default function TransactionLocationMap({ transaction }) {
       isActive = false;
       controller.abort();
     };
-  }, [cacheKey, geocodeQuery]);
+  }, [cacheKey, directCoordinates, geocodeQuery]);
 
   if (isResolving) {
     return (
@@ -116,10 +126,10 @@ export default function TransactionLocationMap({ transaction }) {
     );
   }
 
-  if (!geocodeQuery) {
+  if (!directCoordinates && !geocodeQuery) {
     return (
       <div className="transaction-map transaction-map-status">
-        No city location stored for this transaction.
+        No location stored for this transaction.
       </div>
     );
   }
@@ -139,11 +149,13 @@ export default function TransactionLocationMap({ transaction }) {
           attribution={MAP_TILE_LAYER.attribution}
           url={MAP_TILE_LAYER.url}
         />
+
         <Circle
           center={center}
           radius={TRANSACTION_MAP_CIRCLE_STYLE.radius}
           pathOptions={TRANSACTION_MAP_CIRCLE_STYLE.pathOptions}
         />
+
         <Marker position={center} icon={customMarkerIcon}>
           <Popup>
             <strong>{transactionTitle}</strong>

@@ -1,8 +1,11 @@
+// src/pages/transactions.jsx
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { FileText, ArrowDown, ArrowUp, ClockFading } from "lucide-react";
 import "./home.css";
 import "./transactions.css";
+
 import AccountDropdown from "../components/AccountDropdown";
 import SearchInput from "../components/SearchInput";
 import Button from "../components/Button";
@@ -11,6 +14,7 @@ import SkeletonSummaryCard from "../components/SkeletonSummaryCard";
 import SkeletonTransactionsList from "../components/SkeletonTransactionsList";
 import TransactionLocationMap from "../components/TransactionLocationMap";
 import SelectedAccountCard from "../components/SelectedAccountCard";
+
 import { useAuth } from "../context/AuthContext";
 import {
   getAccountsForUser,
@@ -26,6 +30,7 @@ import {
   groupTransactions,
   addRunningBalance,
 } from "../utils/transactionUtils";
+
 import { getAccountSummaryCards } from "../utils/accountSummaryUtils";
 import { getTransactionDetails } from "../utils/transactionDetailsUtils";
 import { shouldRenderTransactionMap } from "../utils/transactionLocationUtils";
@@ -37,12 +42,36 @@ import {
 
 const { INITIAL_VISIBLE_COUNT, LOAD_MORE_COUNT } = TRANSACTIONS_CONFIG;
 
+function normaliseTransaction(transaction) {
+  const amountString = String(transaction.amount ?? "0");
+
+  return {
+    ...transaction,
+    amount: amountString,
+    timestamp:
+      transaction.timestamp ??
+      transaction.transactionDate ??
+      transaction.createdAt ??
+      transaction.date ??
+      new Date().toISOString(),
+    status: transaction.status ?? "Completed",
+    name:
+      transaction.name ??
+      transaction.merchantName ??
+      transaction.merchant?.name ??
+      "Transaction",
+    category:
+      transaction.category ??
+      transaction.merchant?.category ??
+      "Uncategorised",
+  };
+}
+
 export default function TransactionsPage() {
   const { user } = useAuth();
 
   const [accounts, setAccounts] = useState([]);
   const [selectedAccountKey, setSelectedAccountKey] = useState("");
-
   const [transactions, setTransactions] = useState([]);
   const [availableBalance, setAvailableBalance] = useState(0);
 
@@ -63,7 +92,6 @@ export default function TransactionsPage() {
 
   const transactionsListRef = useRef(null);
 
-  // ── Load accounts once user is available ──────────────────────────────────
   useEffect(() => {
     if (!user) return;
 
@@ -73,12 +101,13 @@ export default function TransactionsPage() {
         setErrorMessage("");
 
         const userAccounts = await getAccountsForUser();
-        setAccounts(userAccounts);
+        setAccounts(Array.isArray(userAccounts) ? userAccounts : []);
 
-        if (userAccounts.length > 0) {
+        if (Array.isArray(userAccounts) && userAccounts.length > 0) {
           setSelectedAccountKey(userAccounts[0].key);
         }
-      } catch {
+      } catch (error) {
+        console.error(error);
         setErrorMessage("Failed to load account data.");
       } finally {
         setIsLoadingAccounts(false);
@@ -88,46 +117,41 @@ export default function TransactionsPage() {
     loadAccounts();
   }, [user]);
 
-  // ── Load transactions when selected account changes ───────────────────────
   useEffect(() => {
+    if (!selectedAccountKey) return;
+
     async function loadTransactions() {
       try {
         setIsLoadingTransactions(true);
         setErrorMessage("");
 
-        if (!selectedAccountKey) return;
         const account = await getAccountByKeyForUser(selectedAccountKey);
 
-        async function loadTransactions() {
-          try {
-            setIsLoadingTransactions(true);
-            setErrorMessage("");
-            console.log("GIT" + selectedAccountKey);
-            const account = await getAccountByKeyForUser(selectedAccountKey);
+        console.log("TRANSACTIONS PAGE ACCOUNT OBJECT:", account);
+        console.log("ACCOUNT ID BEING USED:", account?.id);
 
-            if (!account) return;
-            console.log(JSON.stringify(account));
-            const data = await getTransactionsForAccount(account.id);
-
-            setTransactions(Array.isArray(data) ? data : []);
-            setAvailableBalance(
-              Number(account.currentBalance ?? account.availableCredit ?? 0),
-            );
-          } catch {
-            setErrorMessage("Unable to load transactions.");
-          } finally {
-            setIsLoadingTransactions(false);
-          }
+        if (!account) {
+          setTransactions([]);
+          return;
         }
-        if (!account) return;
-        console.log(JSON.stringify(account));
+
         const data = await getTransactionsForAccount(account.id);
 
-        setTransactions(Array.isArray(data) ? data : []);
+        console.log("TRANSACTIONS PAGE DATA:", data);
+        console.log("IS ARRAY:", Array.isArray(data));
+        console.log("TRANSACTION COUNT:", data?.length);
+
+        const normalisedTransactions = Array.isArray(data)
+          ? data.map(normaliseTransaction)
+          : [];
+
+        setTransactions(normalisedTransactions);
         setAvailableBalance(
           Number(account.currentBalance ?? account.availableCredit ?? 0),
         );
-      } catch {
+      } catch (error) {
+        console.error(error);
+        setTransactions([]);
         setErrorMessage("Unable to load transactions.");
       } finally {
         setIsLoadingTransactions(false);
@@ -137,14 +161,12 @@ export default function TransactionsPage() {
     loadTransactions();
   }, [selectedAccountKey]);
 
-  // ── Reset pagination when filters change ─────────────────────────────────
   useEffect(() => {
     setVisibleCount(INITIAL_VISIBLE_COUNT);
     setCollapsedGroups({});
     setExpandedTransactions({});
   }, [searchState, activeFilter, selectedDateRange, selectedAccountKey]);
 
-  // ── Derived data ──────────────────────────────────────────────────────────
   const accountOptions = useMemo(() => {
     return accounts.map((acc) => ({
       value: acc.key,
@@ -153,9 +175,7 @@ export default function TransactionsPage() {
   }, [accounts]);
 
   const selectedAccount = useMemo(() => {
-    return (
-      accounts.find((account) => account.key === selectedAccountKey) ?? null
-    );
+    return accounts.find((account) => account.key === selectedAccountKey) ?? null;
   }, [accounts, selectedAccountKey]);
 
   const dateFilteredTransactions = useMemo(() => {
@@ -164,11 +184,12 @@ export default function TransactionsPage() {
 
   const filteredTransactions = useMemo(() => {
     return dateFilteredTransactions.filter((transaction) => {
-      const name = transaction.name ?? "";
-      const category = transaction.category ?? "";
-      const amount = transaction.amount ?? "";
+      const amount = String(transaction.amount ?? "");
       const status = transaction.status ?? "";
       const merchant = transaction.merchant ?? {};
+
+      const name = transaction.name ?? "";
+      const category = transaction.category ?? "";
       const merchantName = merchant.name ?? transaction.merchantName ?? "";
       const merchantCategory = merchant.category ?? "";
       const merchantType = merchant.type ?? "";
@@ -202,10 +223,10 @@ export default function TransactionsPage() {
       const matchesSearch = matchesInput && matchesTags;
 
       if (activeFilter === "In") return matchesSearch && amount.startsWith("+");
-      if (activeFilter === "Out")
-        return matchesSearch && amount.startsWith("-");
-      if (activeFilter === "Pending")
+      if (activeFilter === "Out") return matchesSearch && amount.startsWith("-");
+      if (activeFilter === "Pending") {
         return matchesSearch && status === "Pending";
+      }
 
       return matchesSearch;
     });
@@ -237,7 +258,8 @@ export default function TransactionsPage() {
     let outgoing = 0;
 
     dateFilteredTransactions.forEach((transaction) => {
-      const amount = getAmountValue(transaction.amount ?? "0");
+      const amount = getAmountValue(String(transaction.amount ?? "0"));
+
       if (amount > 0) incoming += amount;
       else outgoing += Math.abs(amount);
     });
@@ -258,7 +280,6 @@ export default function TransactionsPage() {
     });
   }, [selectedAccount, totals.incoming, totals.outgoing, dateRangeLabel]);
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
   function scrollTransactionsToTop() {
     transactionsListRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -276,7 +297,6 @@ export default function TransactionsPage() {
     );
   }
 
-  // ── Loading state (initial accounts fetch) ────────────────────────────────
   if (isLoadingAccounts) {
     return (
       <main className="home-page transactions-page">
@@ -321,6 +341,7 @@ export default function TransactionsPage() {
             <Skeleton width="190px" height="3rem" />
             <Skeleton width="340px" height="3rem" />
           </div>
+
           <div className="transactions-list">
             <SkeletonTransactionsList />
           </div>
@@ -329,7 +350,6 @@ export default function TransactionsPage() {
     );
   }
 
-  // ── Error state ───────────────────────────────────────────────────────────
   if (errorMessage && accounts.length === 0) {
     return (
       <main className="home-page transactions-page">
@@ -341,7 +361,6 @@ export default function TransactionsPage() {
     );
   }
 
-  // ── Main render ───────────────────────────────────────────────────────────
   return (
     <main className="home-page transactions-page">
       <header className="dashboard-header">
@@ -392,7 +411,10 @@ export default function TransactionsPage() {
             <p className="transactions-subtext">
               {isLoadingTransactions
                 ? "Loading transactions…"
-                : `Showing ${Math.min(visibleCount, filteredTransactions.length)} of ${filteredTransactions.length} transactions`}
+                : `Showing ${Math.min(
+                    visibleCount,
+                    filteredTransactions.length,
+                  )} of ${filteredTransactions.length} transactions`}
             </p>
           </div>
 
@@ -461,9 +483,10 @@ export default function TransactionsPage() {
             <>
               {groupedTransactions.map((group) => {
                 const groupTotal = group.items.reduce(
-                  (sum, t) => sum + getAmountValue(t.amount ?? "0"),
+                  (sum, t) => sum + getAmountValue(String(t.amount ?? "0")),
                   0,
                 );
+
                 const isCollapsed = Boolean(collapsedGroups[group.label]);
 
                 return (
@@ -508,25 +531,32 @@ export default function TransactionsPage() {
                     >
                       <div className="transaction-group-content-inner">
                         {group.items.map((transaction) => {
-                          const amount = transaction.amount ?? "£0.00";
+                          const amount = String(transaction.amount ?? "£0.00");
                           const status = transaction.status ?? "Completed";
-                          const timestamp = transaction.timestamp ?? new Date();
+                          const timestamp =
+                            transaction.timestamp ?? new Date().toISOString();
+
                           const isPositive = amount.startsWith("+");
+
                           const merchantName =
                             transaction.merchant?.name ??
                             transaction.merchantName ??
                             transaction.name;
+
                           const merchantCategory =
                             transaction.merchant?.category ??
                             transaction.category;
+
                           const detailRows = getTransactionDetails(
                             transaction,
                             selectedAccount?.type,
                             selectedAccount?.currency,
                           );
+
                           const isExpanded = Boolean(
                             expandedTransactions[transaction.id],
                           );
+
                           const showMap =
                             isExpanded &&
                             shouldRenderTransactionMap(transaction);
@@ -580,8 +610,12 @@ export default function TransactionsPage() {
                                       >
                                         {amount}
                                       </p>
+
                                       <p className="transaction-balance">
-                                        £{transaction.runningBalance.toFixed(2)}
+                                        £
+                                        {Number(
+                                          transaction.runningBalance ?? 0,
+                                        ).toFixed(2)}
                                       </p>
                                     </div>
                                   </div>
