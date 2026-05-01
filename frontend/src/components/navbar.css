@@ -97,13 +97,13 @@
     translateX(-0.5rem)
     translateY(clamp(-0.5rem, -0.1rem - 0.45vw, -0.25rem));
   z-index: 1;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .navCapsuleGroup {
   display: flex;
   width: 100%;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .navbarFrame.menu-open .navbarCenterZone,
@@ -123,6 +123,7 @@
   position: relative;
   z-index: 1;
   margin-left: calc(var(--nav-strip-overhang) * -1);
+  overflow: visible;
   box-shadow:
     0 8px 18px rgba(0, 0, 0, 0.1),
     0 3px 8px rgba(0, 0, 0, 0.14),
@@ -143,7 +144,6 @@
     #f7f6f2 55%,
     #efeee8 100%
   );
-  /* remove lateral shadow that can create a vertical seam */
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
   pointer-events: none;
 }
@@ -170,6 +170,7 @@
   align-items: stretch;
   padding-left: var(--nav-strip-side-padding);
   padding-right: var(--nav-strip-side-padding);
+  overflow: visible;
 }
 
 /* MENU BUTTON */
@@ -304,6 +305,7 @@
   padding-left: var(--space-md);
   padding-right: 0;
   transform: translateX(clamp(-1rem, -0.55rem - 0.5vw, -0.5rem));
+  overflow: visible;
 }
 
 .navStripIconButton {
@@ -332,8 +334,6 @@
     transform var(--transition-fast),
     stroke-width var(--transition-fast);
 }
-
-
 
 .navStripIconButton:hover {
   background: transparent;
@@ -433,7 +433,6 @@
     background var(--transition-fast);
 }
 
-/* initial 3x3 grid positions */
 .navGridDot:nth-child(1) {
   left: 2px;
   top: 2px;
@@ -475,7 +474,6 @@
   transform: translate(-50%, -50%) scale(1.08);
 }
 
-/* open state */
 .navStripMenuButton[aria-expanded="true"] .navGridDot {
   border-radius: 999px;
 }
@@ -489,7 +487,6 @@
   transform: translate(-50%, -50%) scale(0.1);
 }
 
-/* corner dots move slightly inward to support the X feel */
 .navStripMenuButton[aria-expanded="true"] .navGridDot:nth-child(1),
 .navStripMenuButton[aria-expanded="true"] .navGridDot:nth-child(3),
 .navStripMenuButton[aria-expanded="true"] .navGridDot:nth-child(7),
@@ -520,11 +517,102 @@
   top: 16px;
 }
 
-/* X strokes appear */
 .navStripMenuButton[aria-expanded="true"] .navGridIcon::before,
 .navStripMenuButton[aria-expanded="true"] .navGridIcon::after {
   width: 18px;
   opacity: 0.92;
+}
+
+/* PROFILE DROPDOWN - ATTACHED STYLE */
+.navProfileMenuWrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  justify-content: center;
+  z-index: 50;
+}
+
+.navStripIconButtonActive {
+  color: var(--color-primary);
+}
+
+.navProfileDropdown {
+  position: absolute;
+  top: calc(100% + 1.1rem);
+  right: -1.5rem;
+  min-width: 12rem;
+  padding: 0.45rem;
+  border-radius: 0 0 0.9rem 0.9rem;
+
+  background: #f8f7f3;
+  border: 1px solid rgba(23, 71, 45, 0.16);
+  border-top: none;
+
+  box-shadow:
+    0 10px 18px rgba(0, 0, 0, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-1.35rem);
+  pointer-events: none;
+  z-index: 10;
+
+  transition:
+    opacity 0.22s ease,
+    visibility 0.22s ease,
+    transform 0.22s ease;
+}
+
+.navProfileDropdown.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0.35rem);
+  pointer-events: auto;
+}
+
+.navProfileDropdown::before,
+.navProfileDropdown::after {
+  display: none;
+}
+
+.navProfileDropdown button {
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border: none;
+  border-radius: 0.65rem;
+  background: transparent;
+  text-align: left;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #183b26;
+  cursor: pointer;
+
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.navProfileDropdown button:hover {
+  background: rgba(46, 139, 87, 0.1);
+  color: #12311f;
+  transform: translateX(2px);
+}
+
+.navProfileDropdown .navProfileLogout {
+  color: #b91c1c;
+}
+
+.navProfileDropdown .navProfileLogout:hover {
+  background: rgba(185, 28, 28, 0.08);
+  color: #7f1d1d;
+}
+
+.navProfileDropdown button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 /* FULLSCREEN MENU BELOW NAVBAR ONLY */
@@ -635,7 +723,7 @@
   font-size: 1.07rem;
   font-weight: 800;
   line-height: 1.35;
-  color: rgb(144, 22, 22);
+  color: darkred;
   position: relative;
   padding: 0 0 0 0.75rem;
   margin: 0;
@@ -925,7 +1013,6 @@
   font-weight: 700;
   letter-spacing: -0.02em;
 
-  /* 🔥 gradient gold */
   background: linear-gradient(
     120deg,
     #d4af37 0%,
@@ -1160,6 +1247,7 @@
     width: 100%;
     margin-left: 0;
     margin-right: 0;
+    overflow: visible;
   }
 
   .navStripInner {
@@ -1303,13 +1391,15 @@
   .navMenuSection a::before,
   .navMenuSlide,
   .navMenuSlideDot,
-  .navMenuStaticCardPanel::after {
+  .navMenuStaticCardPanel::after,
+  .navProfileDropdown {
     transition: none;
     animation: none;
   }
 
   .navStripIconButton:hover,
-  .navMenuSection a:hover {
+  .navMenuSection a:hover,
+  .navProfileDropdown button:hover {
     transform: none;
   }
 

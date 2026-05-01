@@ -10,7 +10,7 @@ function Profile() {
 
   function handleLogout() {
     logout();
-    navigate("/login");
+    navigate("/login", { replace: true });
   }
 
   const profileExtras = {

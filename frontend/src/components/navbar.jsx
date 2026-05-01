@@ -1,28 +1,66 @@
 import "./navbar.css";
 import logo from "../assets/logo.png";
 import { NavLink, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import MenuSlideshow from "./MenuSlideshow";
 import { Mail, UserRoundCog } from "lucide-react";
 import { logoutUser } from "../services/authService";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef(null);
   const navigate = useNavigate();
 
   function toggleMenu() {
     setIsMenuOpen((prev) => !prev);
+    setIsProfileMenuOpen(false);
   }
 
   function closeMenu() {
     setIsMenuOpen(false);
   }
 
-  function handleLogout() {
-    logoutUser();     
-    closeMenu();         
-    navigate("/login");  
+  function toggleProfileMenu() {
+    setIsProfileMenuOpen((prev) => !prev);
   }
+
+  function closeProfileMenu() {
+    setIsProfileMenuOpen(false);
+  }
+
+  function handleViewProfile() {
+    closeProfileMenu();
+    closeMenu();
+    navigate("/profile");
+  }
+
+  function handleLogout() {
+    logoutUser();
+
+    closeProfileMenu();
+    closeMenu();
+
+    navigate("/login", { replace: true });
+
+    setTimeout(() => {
+      window.location.href = "/login";
+    }, 50);
+  }
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(event.target)
+      ) {
+        setIsProfileMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const scrollBarWidth =
@@ -30,7 +68,7 @@ export default function Navbar() {
 
     document.documentElement.style.setProperty(
       "--scrollbar-width",
-      `${scrollBarWidth}px`
+      `${scrollBarWidth}px`,
     );
 
     if (isMenuOpen) {
@@ -102,19 +140,44 @@ export default function Navbar() {
                       className="navStripIconButton"
                       aria-label="Notifications"
                       type="button"
-                      onClick={() => navigate("/notifications")}
+                      onClick={() => {
+                        closeProfileMenu();
+                        navigate("/notifications");
+                      }}
                     >
                       <Mail strokeWidth={2.7} />
                     </button>
 
-                    <button
-                      className="navStripIconButton"
-                      aria-label="Profile"
-                      type="button"
-                      onClick={() => navigate("/profile")}
-                    >
-                      <UserRoundCog strokeWidth={2.7} />
-                    </button>
+                    <div className="navProfileMenuWrapper" ref={profileMenuRef}>
+                      <button
+                        className={`navStripIconButton ${
+                          isProfileMenuOpen ? "navStripIconButtonActive" : ""
+                        }`}
+                        aria-label="Profile menu"
+                        aria-expanded={isProfileMenuOpen}
+                        type="button"
+                        onClick={toggleProfileMenu}
+                      >
+                        <UserRoundCog strokeWidth={2.7} />
+                      </button>
+
+                      <div
+                        className={`navProfileDropdown ${
+                          isProfileMenuOpen ? "open" : ""
+                        }`}
+                      >
+                        <button type="button" onClick={handleViewProfile}>
+                          View Profile
+                        </button>
+                        <button
+                          type="button"
+                          className="navProfileLogout"
+                          onClick={handleLogout}
+                        >
+                          Log out
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -183,10 +246,7 @@ export default function Navbar() {
               <NavLink to="/support" onClick={closeMenu}>
                 Help &amp; Support
               </NavLink>
-              <button
-                className="navMenuLogoutButton"
-                onClick={handleLogout}
-              >
+              <button className="navMenuLogoutButton" onClick={handleLogout}>
                 Sign Out
               </button>
             </div>
