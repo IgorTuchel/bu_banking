@@ -64,17 +64,145 @@
 }
 
 .bank-card-preview {
-  min-height: 220px;
+  width: 100%;
+  max-width: 420px; 
+  aspect-ratio: 1.586 / 1; 
+
   border-radius: 1.5rem;
   padding: 1.5rem;
+
   color: white;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+
   box-shadow:
     0 12px 28px rgba(0, 0, 0, 0.18),
     0 2px 8px rgba(0, 0, 0, 0.12);
 }
+
+.cards-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.bank-card-preview {
+  position: relative;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition:
+    transform 0.18s ease-out,
+    box-shadow 0.18s ease-out;
+  cursor: pointer;
+  margin: 1rem auto 1.5rem auto;
+
+  --card-glow-x: 50%;
+  --card-glow-y: 50%;
+  --chip-lift-x: 0px;
+  --chip-lift-y: 0px;
+  --text-lift-x: 0px;
+  --text-lift-y: 0px;
+}
+
+.bank-card-preview::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 0;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(212, 175, 55, 0.15),
+      transparent 40%,
+      rgba(0, 0, 0, 0.15)
+    );
+}
+
+.bank-card-preview:hover {
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.25),
+    0 0 18px rgba(212, 175, 55, 0.35);
+}
+
+.bank-card-shine {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+
+  background:
+    radial-gradient(
+      circle at var(--card-glow-x) var(--card-glow-y),
+      rgba(212, 175, 55, 0.35),   
+      rgba(212, 175, 55, 0.16) 20%,
+      rgba(212, 175, 55, 0.06) 35%,
+      transparent 55%
+    ),
+    linear-gradient(
+      120deg,
+      transparent 20%,
+      rgba(212, 175, 55, 0.10) 45%,
+      transparent 70%
+    );
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.bank-card-preview:hover .bank-card-shine {
+  opacity: 0.75;
+}
+
+.bank-card-layer {
+  position: relative;
+  z-index: 2;
+  transform:
+    translateX(var(--text-lift-x))
+    translateY(var(--text-lift-y))
+    translateZ(28px);
+  transition: transform 0.18s ease-out;
+}
+
+.bank-card-chip-layer {
+  position: relative;
+  z-index: 2;
+  transform:
+    translateX(var(--chip-lift-x))
+    translateY(var(--chip-lift-y))
+    translateZ(42px);
+  transition: transform 0.18s ease-out;
+}
+
+.bank-card-preview::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.14),
+      transparent 38%,
+      rgba(0, 0, 0, 0.14)
+    );
+  pointer-events: none;
+}
+
+.bank-card-preview::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: 1;
+  border-radius: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  pointer-events: none;
+}
+
 
 .bank-card-preview-green-gold {
   background: linear-gradient(135deg, #1f5e3b, #2e8b57 60%, #d4af37 140%);
@@ -133,6 +261,126 @@
 .bank-card-bottom p {
   margin: 0;
   font-weight: 600;
+}
+
+.bank-card-cvv {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-cvv-button {
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.16);
+  color: white;
+  border-radius: 999px;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.card-cvv-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.28);
+  border-color: rgba(255, 255, 255, 0.75);
+  transform: translateY(-1px);
+}
+
+.card-cvv-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.bank-card-number-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 5.75rem;
+  align-items: center;
+  gap: 1rem;
+}
+
+.bank-card-number {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.bank-card-cvv {
+  display: grid;
+  grid-template-columns: 2.5rem 5.75rem;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-reveal-button {
+  background: transparent;
+  border: none;
+  color: white;
+
+  width: 5.75rem;
+  height: 2rem;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 700;
+
+  transition:
+    transform 0.2s ease,
+    color 0.2s ease;
+}
+
+.card-reveal-button svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  transition:
+    transform 0.2s ease,
+    stroke-width 0.2s ease,
+    color 0.2s ease;
+}
+
+.card-reveal-button:hover:not(:disabled) {
+  color: var(--color-accent);
+  transform: scale(1.08);
+}
+
+.card-reveal-button:hover:not(:disabled) svg {
+  transform: scale(1.15);
+  stroke-width: 2.9;
+}
+
+.card-reveal-button:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.card-reveal-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.card-reveal-button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 0.4rem;
+}
+
+.card-reveal-button-small {
+  width: 5.75rem;
+}
+
+.card-reveal-timer {
+  font-size: 0.7rem;
+  font-weight: 700;
+  min-width: 1.8rem;
+  text-align: center;
 }
 
 .cards-controls-grid {
@@ -244,6 +492,148 @@
 .card-help-card p {
   margin: 0;
   color: var(--color-text-muted);
+}
+
+/* Spending limit editor */
+.spending-limit-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-top: 0.85rem;
+}
+
+.spending-limit-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: max-content;
+  color: var(--color-text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.spending-limit-checkbox input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+}
+
+.spending-limit-slider-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 7.5rem;
+  align-items: center;
+  gap: 1rem;
+}
+
+.spending-limit-slider-row input[type="range"] {
+  width: 100%;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+}
+
+.spending-limit-slider-row input[type="range"]:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.spending-limit-slider-value {
+  text-align: right;
+  color: var(--color-text-heading);
+  font-size: 1rem;
+}
+
+.card-limit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 0.85rem;
+}
+
+.card-limit-actions .btn,
+.card-control-top .btn {
+  background:
+    linear-gradient(var(--color-surface), var(--color-surface)) padding-box,
+    var(--color-gradient) border-box;
+  border: 1px solid transparent;
+  color: var(--color-text-heading);
+  box-shadow: var(--shadow-sm);
+}
+
+.card-limit-actions .btn:hover,
+.card-control-top .btn:hover {
+  background: var(--color-green-gradient);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.card-limit-actions .btn svg,
+.card-control-top .btn svg {
+  width: 1rem;
+  height: 1rem;
+  stroke-width: 2.5;
+}
+
+.card-limit-actions .btn:hover svg,
+.card-control-top .btn:hover svg {
+  color: var(--color-accent);
+}
+
+.card-limit-actions .btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+
+.btn-pill.btn-danger {
+  color: white;
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  border: none !important;
+
+  box-shadow:
+    0 4px 14px rgba(220, 38, 38, 0.25);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: linear-gradient(135deg, #f05252, #dc2626);
+  color: white;
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 6px 16px rgba(220, 38, 38, 0.35);
+}
+
+.btn-danger:hover .btn-icon {
+  color: #fecaca;
+}
+
+.btn-pill.btn-safe {
+  color: white;
+  background: var(--color-green-gradient) !important;
+  border: none !important;
+
+  box-shadow:
+    0 4px 14px rgba(46, 139, 87, 0.25);
+}
+
+.btn-safe:hover:not(:disabled) {
+  background: var(--color-green-gradient);
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 6px 18px rgba(46, 139, 87, 0.35);
+}
+
+.btn-safe:hover .btn-icon {
+  color: var(--color-gold, #d4af37);
+}
+
+.cancel-card-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
 }
 
 @media (max-width: 992px) {

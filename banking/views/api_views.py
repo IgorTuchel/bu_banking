@@ -1,3 +1,7 @@
+import random
+from datetime import timedelta
+
+from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
@@ -13,6 +17,11 @@ from banking.serializers import (
     FrontendTransactionSerializer,
     UpdateUserProfileSerializer,
 )
+
+
+def generate_replacement_expiry():
+    future_date = timezone.now() + timedelta(days=365 * 3)
+    return future_date.strftime("%m/%y")
 
 
 class CurrentUserView(APIView):
@@ -167,7 +176,9 @@ class AccountCardsView(APIView):
         if not account:
             return Response({"detail": "Account not found."}, status=404)
 
-        cards = Card.objects.filter(account=account).order_by("name")
+        cards = Card.objects.filter(account=account)\
+            .exclude(status="cancelled")\
+            .order_by("name")
         serializer = FrontendCardSerializer(cards, many=True)
         return Response(serializer.data)
 
@@ -180,6 +191,12 @@ class CardUpdateView(APIView):
 
         if not card:
             return Response({"detail": "Card not found"}, status=404)
+
+        if card.status == "cancelled":
+            return Response(
+                {"detail": "Cancelled cards cannot be updated."},
+                status=400,
+            )
 
         allowed_fields = {
             "frozen": "frozen",
@@ -198,6 +215,98 @@ class CardUpdateView(APIView):
 
         serializer = FrontendCardSerializer(card)
         return Response(serializer.data)
+
+
+class RevealCvvView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, card_id):
+        card = Card.objects.filter(
+            id=card_id,
+            account__user=request.user,
+        ).first()
+
+        if not card:
+            return Response({"detail": "Card not found"}, status=404)
+
+        if card.frozen or card.status != "active":
+            return Response(
+                {"detail": "CVV cannot be revealed for this card."},
+                status=400,
+            )
+
+        cvv = str(random.randint(100, 999))
+
+        return Response(
+            {
+                "cvv": cvv,
+                "expiresInSeconds": 30,
+            },
+            status=200,
+        )
+
+
+class CancelAndReplaceCardView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, card_id):
+        card = (
+            Card.objects.select_related("account")
+            .filter(id=card_id, account__user=request.user)
+            .first()
+        )
+
+        if not card:
+            return Response({"detail": "Card not found"}, status=404)
+
+        if card.status == "cancelled":
+            return Response(
+                {"detail": "This card has already been cancelled."},
+                status=400,
+            )
+
+        with transaction.atomic():
+            card.status = "cancelled"
+            card.frozen = True
+            card.contactless_enabled = False
+            card.online_payments_enabled = False
+            card.atm_withdrawals_enabled = False
+            card.save(
+                update_fields=[
+                    "status",
+                    "frozen",
+                    "contactless_enabled",
+                    "online_payments_enabled",
+                    "atm_withdrawals_enabled",
+                ]
+            )
+
+            replacement_card = Card.objects.create(
+                account=card.account,
+                card_type=card.card_type,
+                name=card.name,
+                scheme=card.scheme,
+                cardholder_name=card.cardholder_name,
+                masked_number="•••• •••• •••• ••••",
+                expiry=generate_replacement_expiry(),
+                color=card.color,
+                status="active",
+                frozen=False,
+                contactless_enabled=True,
+                online_payments_enabled=True,
+                atm_withdrawals_enabled=True,
+                spending_limit=card.spending_limit,
+                spending_limit_period=card.spending_limit_period,
+                last_used=None,
+            )
+
+        return Response(
+            {
+                "cancelledCard": FrontendCardSerializer(card).data,
+                "replacementCard": FrontendCardSerializer(replacement_card).data,
+            },
+            status=201,
+        )
 
 
 class TestTransactionView(APIView):

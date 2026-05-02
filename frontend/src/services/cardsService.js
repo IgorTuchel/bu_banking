@@ -29,3 +29,32 @@ export async function updateCard(cardId, updates) {
 
   return response.json();
 }
+
+/* 🔥 Reveal CVV (generated on demand) */
+export async function revealCvv(cardId) {
+  const response = await authenticatedFetch(
+    `${API_BASE}/cards/${cardId}/reveal-cvv/`
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to reveal CVV.");
+  }
+
+  return response.json();
+}
+
+/* 🔥 NEW: Cancel + Replace Card */
+export async function cancelAndReplaceCard(cardId) {
+  const response = await authenticatedFetch(
+    `${API_BASE}/cards/${cardId}/cancel/`,
+    {
+      method: "POST",
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to cancel and replace card.");
+  }
+
+  return response.json();
+}

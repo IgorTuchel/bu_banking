@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import "./cards.css";
 
 import AccountDropdown from "../components/AccountDropdown";
@@ -7,9 +7,27 @@ import Button from "../components/Button";
 import Skeleton from "../components/Skeleton";
 import SkeletonSummaryCard from "../components/SkeletonSummaryCard";
 
+import {
+  AlertTriangle,
+  CircleOff,
+  CreditCard,
+  Eye,
+  EyeOff,
+  Pause,
+  Pencil,
+  Play,
+  Save,
+  X,
+} from "lucide-react";
+
 import { getCurrentUser } from "../services/userService";
 import { getAccountsForUser } from "../services/accountService";
-import { getCardsForAccount, updateCard } from "../services/cardsService";
+import {
+  cancelAndReplaceCard,
+  getCardsForAccount,
+  revealCvv,
+  updateCard,
+} from "../services/cardsService";
 
 function formatMoney(value, currency = "GBP") {
   return new Intl.NumberFormat("en-GB", {
@@ -19,9 +37,7 @@ function formatMoney(value, currency = "GBP") {
 }
 
 function formatDateTime(value) {
-  if (!value) {
-    return "—";
-  }
+  if (!value) return "—";
 
   return new Date(value).toLocaleString("en-GB", {
     day: "2-digit",
@@ -41,6 +57,199 @@ function Cards() {
   const [isCardsLoading, setIsCardsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [actionError, setActionError] = useState("");
+
+  const [cvv, setCvv] = useState("");
+  const [showCvv, setShowCvv] = useState(false);
+  const [cvvLoading, setCvvLoading] = useState(false);
+  const [cvvSecondsLeft, setCvvSecondsLeft] = useState(0);
+
+  const [showCardNumber, setShowCardNumber] = useState(false);
+  const [cardNumberSecondsLeft, setCardNumberSecondsLeft] = useState(0);
+
+  const [isEditingLimit, setIsEditingLimit] = useState(false);
+  const [limitDraft, setLimitDraft] = useState(0);
+  const [noLimitDraft, setNoLimitDraft] = useState(false);
+  const [isSavingLimit, setIsSavingLimit] = useState(false);
+
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [isCancellingCard, setIsCancellingCard] = useState(false);
+
+  const cvvHideTimerRef = useRef(null);
+  const cvvCountdownRef = useRef(null);
+  const cardNumberHideTimerRef = useRef(null);
+  const cardNumberCountdownRef = useRef(null);
+  const cardRef = useRef(null);
+
+  function clearCvvTimers() {
+    if (cvvHideTimerRef.current) {
+      clearTimeout(cvvHideTimerRef.current);
+      cvvHideTimerRef.current = null;
+    }
+
+    if (cvvCountdownRef.current) {
+      clearInterval(cvvCountdownRef.current);
+      cvvCountdownRef.current = null;
+    }
+  }
+
+  function clearCardNumberTimers() {
+    if (cardNumberHideTimerRef.current) {
+      clearTimeout(cardNumberHideTimerRef.current);
+      cardNumberHideTimerRef.current = null;
+    }
+
+    if (cardNumberCountdownRef.current) {
+      clearInterval(cardNumberCountdownRef.current);
+      cardNumberCountdownRef.current = null;
+    }
+  }
+
+  function clearRevealTimers() {
+    clearCvvTimers();
+    clearCardNumberTimers();
+  }
+
+  function hideCvv() {
+    clearCvvTimers();
+    setCvv("");
+    setShowCvv(false);
+    setCvvSecondsLeft(0);
+  }
+
+  function hideCardNumber() {
+    clearCardNumberTimers();
+    setShowCardNumber(false);
+    setCardNumberSecondsLeft(0);
+  }
+
+  function hideAllSensitiveDetails() {
+    hideCvv();
+    hideCardNumber();
+  }
+
+  function handleCardTilt(event) {
+    const card = cardRef.current;
+    if (!card) return;
+
+    const pointer = event.touches ? event.touches[0] : event;
+    const rect = card.getBoundingClientRect();
+
+    const x = pointer.clientX - rect.left;
+    const y = pointer.clientY - rect.top;
+
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+
+    const rotateX = ((y - centerY) / centerY) * -10;
+    const rotateY = ((x - centerX) / centerX) * 10;
+
+    card.style.setProperty("--card-glow-x", `${x}px`);
+    card.style.setProperty("--card-glow-y", `${y}px`);
+    card.style.setProperty("--chip-lift-x", `${rotateY * 0.4}px`);
+    card.style.setProperty("--chip-lift-y", `${rotateX * -0.4}px`);
+    card.style.setProperty("--text-lift-x", `${rotateY * 0.25}px`);
+    card.style.setProperty("--text-lift-y", `${rotateX * -0.25}px`);
+
+    card.style.transform = `
+      perspective(1000px)
+      rotateX(${rotateX}deg)
+      rotateY(${rotateY}deg)
+      scale(1.025)
+    `;
+  }
+
+  function resetCardTilt() {
+    const card = cardRef.current;
+    if (!card) return;
+
+    card.style.setProperty("--card-glow-x", "50%");
+    card.style.setProperty("--card-glow-y", "50%");
+    card.style.setProperty("--chip-lift-x", "0px");
+    card.style.setProperty("--chip-lift-y", "0px");
+    card.style.setProperty("--text-lift-x", "0px");
+    card.style.setProperty("--text-lift-y", "0px");
+
+    card.style.transform = `
+      perspective(1000px)
+      rotateX(0deg)
+      rotateY(0deg)
+      scale(1)
+    `;
+  }
+
+  function openLimitEditor() {
+    if (!selectedCard) return;
+
+    const hasNoLimit =
+      selectedCard.spendingLimit === null ||
+      selectedCard.spendingLimit === undefined ||
+      selectedCard.spendingLimit === "";
+
+    setNoLimitDraft(hasNoLimit);
+    setLimitDraft(hasNoLimit ? 0 : Number(selectedCard.spendingLimit));
+    setIsEditingLimit(true);
+  }
+
+  function cancelLimitEditor() {
+    setIsEditingLimit(false);
+    setNoLimitDraft(false);
+    setLimitDraft(0);
+  }
+
+  async function handleSaveLimit() {
+    if (!selectedCard) return;
+
+    try {
+      setActionError("");
+      setIsSavingLimit(true);
+
+      const updated = await updateCard(selectedCard.id, {
+        spendingLimit: noLimitDraft ? null : Number(limitDraft),
+      });
+
+      setCards((current) =>
+        current.map((item) => (item.id === updated.id ? updated : item))
+      );
+
+      setIsEditingLimit(false);
+    } catch (error) {
+      console.error(error);
+      setActionError("Unable to update spending limit.");
+    } finally {
+      setIsSavingLimit(false);
+    }
+  }
+
+  async function handleCancelAndReplaceCard() {
+    if (!selectedCard) return;
+
+    try {
+      setActionError("");
+      setIsCancellingCard(true);
+      hideAllSensitiveDetails();
+
+      const data = await cancelAndReplaceCard(selectedCard.id);
+
+      setCards((current) => {
+        const withoutCancelled = current.filter(
+          (card) => card.id !== data.cancelledCard.id
+        );
+
+        return [...withoutCancelled, data.replacementCard].sort((a, b) =>
+          a.name.localeCompare(b.name)
+        );
+      });
+
+      setSelectedCardId(data.replacementCard.id);
+      setShowCancelConfirm(false);
+      setIsEditingLimit(false);
+    } catch (error) {
+      console.error(error);
+      setActionError("Unable to cancel and replace this card.");
+    } finally {
+      setIsCancellingCard(false);
+    }
+  }
 
   useEffect(() => {
     async function init() {
@@ -65,6 +274,10 @@ function Cards() {
     }
 
     init();
+
+    return () => {
+      clearRevealTimers();
+    };
   }, []);
 
   const selectedAccount = useMemo(() => {
@@ -80,6 +293,11 @@ function Cards() {
 
   useEffect(() => {
     async function loadCards() {
+      hideAllSensitiveDetails();
+      resetCardTilt();
+      setIsEditingLimit(false);
+      setShowCancelConfirm(false);
+
       if (!selectedAccount) {
         setCards([]);
         setSelectedCardId("");
@@ -104,19 +322,31 @@ function Cards() {
     loadCards();
   }, [selectedAccount]);
 
+  useEffect(() => {
+    hideAllSensitiveDetails();
+    resetCardTilt();
+    setIsEditingLimit(false);
+    setShowCancelConfirm(false);
+  }, [selectedCardId]);
+
   const selectedCard = useMemo(() => {
     return cards.find((card) => card.id === selectedCardId) ?? null;
   }, [cards, selectedCardId]);
 
   const summaryCards = useMemo(() => {
-    if (!selectedAccount || !selectedCard) {
-      return [];
-    }
+    if (!selectedAccount || !selectedCard) return [];
 
     const balanceValue =
       selectedAccount.type === "credit"
         ? selectedAccount.availableCredit
         : selectedAccount.currentBalance;
+
+    const spendingLimitValue =
+      selectedCard.spendingLimit === null ||
+      selectedCard.spendingLimit === undefined ||
+      selectedCard.spendingLimit === ""
+        ? "No limit"
+        : formatMoney(selectedCard.spendingLimit, selectedAccount.currency);
 
     return [
       {
@@ -137,8 +367,10 @@ function Cards() {
       {
         id: "spending-limit",
         title: "Spending Limit",
-        value: formatMoney(selectedCard.spendingLimit, selectedAccount.currency),
-        note: `${selectedCard.spendingLimitPeriod} limit`,
+        value: spendingLimitValue,
+        note: selectedCard.spendingLimitPeriod
+          ? `${selectedCard.spendingLimitPeriod} limit`
+          : "Card limit",
       },
     ];
   }, [selectedAccount, selectedCard]);
@@ -166,6 +398,7 @@ function Cards() {
   async function handleFreezeToggle(cardId) {
     try {
       setActionError("");
+      hideAllSensitiveDetails();
 
       const card = cards.find((item) => item.id === cardId);
       if (!card) return;
@@ -181,6 +414,57 @@ function Cards() {
       console.error(error);
       setActionError("Unable to update card status.");
     }
+  }
+
+  async function handleRevealCvv() {
+    if (!selectedCard || selectedCard.frozen) return;
+
+    try {
+      setActionError("");
+      setCvvLoading(true);
+      hideCardNumber();
+      clearCvvTimers();
+
+      const data = await revealCvv(selectedCard.id);
+      const seconds = Number(data.expiresInSeconds ?? 30);
+
+      setCvv(data.cvv);
+      setShowCvv(true);
+      setCvvSecondsLeft(seconds);
+
+      cvvCountdownRef.current = setInterval(() => {
+        setCvvSecondsLeft((current) => (current <= 1 ? 0 : current - 1));
+      }, 1000);
+
+      cvvHideTimerRef.current = setTimeout(() => {
+        hideCvv();
+      }, seconds * 1000);
+    } catch (error) {
+      console.error(error);
+      setActionError("Unable to reveal CVV for this card.");
+    } finally {
+      setCvvLoading(false);
+    }
+  }
+
+  function handleRevealCardNumber() {
+    if (!selectedCard || selectedCard.frozen) return;
+
+    hideCvv();
+    clearCardNumberTimers();
+
+    const seconds = 30;
+
+    setShowCardNumber(true);
+    setCardNumberSecondsLeft(seconds);
+
+    cardNumberCountdownRef.current = setInterval(() => {
+      setCardNumberSecondsLeft((current) => (current <= 1 ? 0 : current - 1));
+    }, 1000);
+
+    cardNumberHideTimerRef.current = setTimeout(() => {
+      hideCardNumber();
+    }, seconds * 1000);
   }
 
   if (isLoading) {
@@ -291,18 +575,50 @@ function Cards() {
               </div>
 
               <article
+                ref={cardRef}
                 className={`bank-card-preview bank-card-preview-${selectedCard.color}`}
+                onMouseMove={handleCardTilt}
+                onMouseLeave={resetCardTilt}
+                onTouchMove={handleCardTilt}
+                onTouchEnd={resetCardTilt}
               >
-                <div className="bank-card-top">
+                <div className="bank-card-shine" />
+
+                <div className="bank-card-top bank-card-layer">
                   <span className="bank-card-brand">Aurix</span>
                   <span className="bank-card-scheme">{selectedCard.scheme}</span>
                 </div>
 
-                <div className="bank-card-chip" />
+                <div className="bank-card-chip bank-card-chip-layer" />
 
-                <p className="bank-card-number">{selectedCard.maskedNumber}</p>
+                <div className="bank-card-number-row bank-card-layer">
+                  <p className="bank-card-number">
+                    {showCardNumber
+                      ? selectedCard.networkCardNumber ?? selectedCard.maskedNumber
+                      : selectedCard.maskedNumber}
+                  </p>
 
-                <div className="bank-card-bottom">
+                  <button
+                    type="button"
+                    className="card-reveal-button"
+                    onClick={
+                      showCardNumber ? hideCardNumber : handleRevealCardNumber
+                    }
+                    disabled={selectedCard.frozen}
+                    aria-label={
+                      showCardNumber ? "Hide card number" : "Reveal card number"
+                    }
+                  >
+                    {showCardNumber ? <EyeOff size={16} /> : <Eye size={16} />}
+                    {showCardNumber ? (
+                      <span className="card-reveal-timer">
+                        {cardNumberSecondsLeft}s
+                      </span>
+                    ) : null}
+                  </button>
+                </div>
+
+                <div className="bank-card-bottom bank-card-layer">
                   <div>
                     <span className="bank-card-label">Cardholder</span>
                     <p>{selectedCard.cardholderName}</p>
@@ -311,6 +627,32 @@ function Cards() {
                   <div>
                     <span className="bank-card-label">Expires</span>
                     <p>{selectedCard.expiry}</p>
+                  </div>
+
+                  <div>
+                    <span className="bank-card-label">CVV</span>
+                    <p className="bank-card-cvv">
+                      <span className="bank-card-cvv-value">
+                        {showCvv ? cvv : "•••"}
+                      </span>
+
+                      <button
+                        type="button"
+                        className="card-reveal-button card-reveal-button-small"
+                        onClick={showCvv ? hideCvv : handleRevealCvv}
+                        disabled={cvvLoading || selectedCard.frozen}
+                        aria-label={showCvv ? "Hide CVV" : "Reveal CVV"}
+                      >
+                        {showCvv ? <EyeOff size={15} /> : <Eye size={15} />}
+                        {cvvLoading ? (
+                          <span className="card-reveal-timer">...</span>
+                        ) : showCvv ? (
+                          <span className="card-reveal-timer">
+                            {cvvSecondsLeft}s
+                          </span>
+                        ) : null}
+                      </button>
+                    </p>
                   </div>
                 </div>
               </article>
@@ -326,12 +668,20 @@ function Cards() {
                     </div>
 
                     <Button
-                      variant="pill"
-                      icon={selectedCard.frozen ? "▶" : "❄"}
+                      variant={`pill ${
+                        selectedCard.frozen ? "btn-safe" : "btn-danger"
+                      }`}
+                      icon={
+                        selectedCard.frozen ? (
+                          <Play size={16} />
+                        ) : (
+                          <Pause size={16} />
+                        )
+                      }
                       onClick={() => handleFreezeToggle(selectedCard.id)}
                     >
                       {selectedCard.frozen ? "Unfreeze" : "Freeze"}
-                    </Button>
+                  </Button>
                   </div>
                 </div>
 
@@ -376,17 +726,146 @@ function Cards() {
 
                 <div className="card-control-card">
                   <h3>Spending Limit</h3>
-                  <p className="card-limit-value">
-                    {formatMoney(selectedCard.spendingLimit, selectedAccount?.currency)}
-                  </p>
-                  <p className="card-limit-note">
-                    Current {selectedCard.spendingLimitPeriod} spending limit
-                  </p>
-                  <div className="card-limit-actions">
-                    <Button variant="pill" icon="✏️">
-                      Edit Limit
+
+                  {isEditingLimit ? (
+                    <div className="spending-limit-editor">
+                      <label className="spending-limit-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={noLimitDraft}
+                          onChange={(event) =>
+                            setNoLimitDraft(event.target.checked)
+                          }
+                        />
+                        <span>No limit</span>
+                      </label>
+
+                      <div className="spending-limit-slider-row">
+                        <input
+                          type="range"
+                          min="0"
+                          max="10000"
+                          step="50"
+                          value={limitDraft}
+                          disabled={noLimitDraft}
+                          onChange={(event) =>
+                            setLimitDraft(Number(event.target.value))
+                          }
+                        />
+
+                        <strong className="spending-limit-slider-value">
+                          {noLimitDraft
+                            ? "No limit"
+                            : formatMoney(limitDraft, selectedAccount?.currency)}
+                        </strong>
+                      </div>
+
+                      <div className="card-limit-actions">
+                        <Button
+                          variant="pill btn-safe"
+                          icon={<Save size={16} />}
+                          onClick={handleSaveLimit}
+                          disabled={isSavingLimit}
+                        >
+                          {isSavingLimit ? "Saving..." : "Save Changes"}
+                        </Button>
+                        <Button
+                          variant="pill btn-danger"
+                          icon={<X size={16} />}
+                          onClick={cancelLimitEditor}
+                          disabled={isSavingLimit}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="card-limit-value">
+                        {selectedCard.spendingLimit === null ||
+                        selectedCard.spendingLimit === undefined ||
+                        selectedCard.spendingLimit === ""
+                          ? "No limit"
+                          : formatMoney(
+                              selectedCard.spendingLimit,
+                              selectedAccount?.currency
+                            )}
+                      </p>
+
+                      <p className="card-limit-note">
+                        Current {selectedCard.spendingLimitPeriod} spending limit
+                      </p>
+
+                      <div className="card-limit-actions">
+                       <Button
+                          variant="pill btn-safe"
+                          icon={<Pencil size={16} />}
+                          onClick={openLimitEditor}
+                        >
+                          Edit Limit
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <div className="card-control-card cancel-card-control-card">
+                  <div className="card-control-top">
+                    <div>
+                      <h3>Cancel & Replace Card</h3>
+                      <p>
+                        Permanently cancel this card and generate a replacement.
+                      </p>
+                    </div>
+
+                    <Button
+                      variant="pill btn-danger"
+                      icon={<CircleOff size={16} />}
+                      onClick={() => setShowCancelConfirm(true)}
+                      disabled={isCancellingCard || selectedCard.status === "cancelled"}
+                    >
+                      Cancel Card
                     </Button>
                   </div>
+
+                  {showCancelConfirm ? (
+                    <div className="cancel-card-confirm">
+                      <div className="cancel-card-warning-icon">
+                        <AlertTriangle size={20} />
+                      </div>
+
+                      <div className="cancel-card-confirm-content">
+                        <h4>Are you sure?</h4>
+                        <p>
+                          This will freeze and cancel the current card, then
+                          create a new replacement card with a new number and
+                          expiry date.
+                        </p>
+
+                        <div className="cancel-card-actions">
+                          <Button
+                            variant="pill btn-danger"
+                            icon={<CreditCard size={16} />}
+                            onClick={handleCancelAndReplaceCard}
+                            disabled={isCancellingCard}
+                          >
+                            {isCancellingCard
+                              ? "Replacing..."
+                              : "Confirm Replacement"}
+                          </Button>
+
+                          <Button
+                            variant="pill btn-safe"
+                            icon={<X size={16} />}
+                            onClick={() => setShowCancelConfirm(false)}
+                            disabled={isCancellingCard}
+                          >
+                            Keep Card
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </>

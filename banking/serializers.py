@@ -474,7 +474,8 @@ class FrontendTransactionSerializer(serializers.ModelSerializer):
 class FrontendCardSerializer(serializers.ModelSerializer):
     accountId = serializers.CharField(source="account.id")
     type = serializers.SerializerMethodField()
-    maskedNumber = serializers.CharField(source="masked_number")
+    maskedNumber = serializers.SerializerMethodField()
+    networkCardNumber = serializers.CharField(source="network_card_number", read_only=True)
     cardholderName = serializers.CharField(source="cardholder_name")
     contactlessEnabled = serializers.BooleanField(source="contactless_enabled")
     onlinePaymentsEnabled = serializers.BooleanField(source="online_payments_enabled")
@@ -498,6 +499,7 @@ class FrontendCardSerializer(serializers.ModelSerializer):
             "scheme",
             "cardholderName",
             "maskedNumber",
+            "networkCardNumber",
             "expiry",
             "color",
             "status",
@@ -512,3 +514,6 @@ class FrontendCardSerializer(serializers.ModelSerializer):
 
     def get_type(self, obj):
         return "Credit Card" if obj.card_type == "credit" else "Debit Card"
+
+    def get_maskedNumber(self, obj):
+        return obj.generated_masked_number

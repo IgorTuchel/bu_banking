@@ -1,3 +1,4 @@
+import random
 import uuid
 from decimal import Decimal
 
@@ -128,7 +129,8 @@ class AccountUser(models.Model):
 
     def __str__(self):
         return f"{self.user} -> {self.account} ({self.role})"
-    
+
+
 class UserLoginLocation(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -156,7 +158,8 @@ class UserLoginLocation(models.Model):
 
     def __str__(self):
         return f"Login location for {self.user}"
-    
+
+
 class UserProfile(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -189,6 +192,7 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"Profile for {self.user}"
+
 
 class SavingsAccountDetails(models.Model):
     account = models.OneToOneField(
@@ -376,15 +380,26 @@ class Card(models.Model):
 
     def generate_network_card_number(self):
         """
-        Generate a 16-character card number for the payment network.
-        Uses last 4 chars of UUID for simplicity.
+        Generate a unique 16-digit numeric card number.
+        Uses Visa-style numbers starting with 4 for realistic test data.
         """
-        return f"000000000000{self.id[-4:]}"
+        while True:
+            number = str(random.randint(4000000000000000, 4999999999999999))
+
+            if not Card.objects.filter(network_card_number=number).exists():
+                return number
 
     def save(self, *args, **kwargs):
         if not self.network_card_number:
             self.network_card_number = self.generate_network_card_number()
         super().save(*args, **kwargs)
+
+    @property
+    def generated_masked_number(self):
+        if not self.network_card_number:
+            return self.masked_number or "•••• •••• •••• ••••"
+
+        return f"•••• •••• •••• {self.network_card_number[-4:]}"
 
     def __str__(self):
         return f"{self.name} ({self.card_type})"

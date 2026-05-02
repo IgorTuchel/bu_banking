@@ -19,9 +19,11 @@ from .views.api_views import (
     AccountListView,
     AccountTransactionsView,
     CardUpdateView,
+    ChangePasswordView,
     CurrentUserView,
+    RevealCvvView,
     TestTransactionView,
-    ChangePasswordView,   # ✅ NEW
+    CancelAndReplaceCardView,  # ✅ NEW IMPORT
 )
 from .views.auth_views import LoginView, UserAccountsView
 from .views.business_view import BusinessViewSet
@@ -51,7 +53,7 @@ urlpatterns = [
 
     # Current user
     path("me/", CurrentUserView.as_view(), name="api-me"),
-    path("me/change-password/", ChangePasswordView.as_view(), name="api-change-password"),  # ✅ NEW
+    path("me/change-password/", ChangePasswordView.as_view(), name="api-change-password"),
 
     # Accounts
     path("accounts/", AccountListView.as_view(), name="api-accounts"),
@@ -73,6 +75,18 @@ urlpatterns = [
 
     # Cards
     path("cards/<str:card_id>/", CardUpdateView.as_view(), name="api-card-update"),
+    path(
+        "cards/<str:card_id>/reveal-cvv/",
+        RevealCvvView.as_view(),
+        name="api-card-reveal-cvv",
+    ),
+
+    # ✅ NEW: Cancel + Replace card endpoint
+    path(
+        "cards/<str:card_id>/cancel/",
+        CancelAndReplaceCardView.as_view(),
+        name="api-card-cancel-replace",
+    ),
 
     # Transfers / Network
     path("network/banks/", NetworkBanksView.as_view()),
