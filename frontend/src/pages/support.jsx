@@ -3,10 +3,12 @@ import "./support.css";
 
 import FaqItem from "../components/FaqItem";
 import Skeleton from "../components/Skeleton";
+import Chatbot from "../components/Chatbot";
 import faqData from "../data/faqData";
 
 function HelpSupport() {
   const [isLoading, setIsLoading] = useState(true);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -117,21 +119,27 @@ function HelpSupport() {
       <section className="selected-account-card support-hero-card">
         <div className="selected-account-card-top">
           <span className="selected-account-label">AI Assistant</span>
-          <span className="selected-account-type">Coming Soon</span>
+          <span className="selected-account-type">Online</span>
         </div>
 
         <h2 className="selected-account-name">Need help with your account?</h2>
         <p className="support-hero-text">
-          Our future AI assistant will help answer common questions, guide you
-          through app features, and direct you to the right support options.
+          Ask the Aurix Assistant about common account, card, payment, rewards,
+          and security questions.
         </p>
 
         <div className="chat-cta-wrapper">
-          <button type="button" className="chat-cta-button">
+          <button
+            type="button"
+            className="chat-cta-button"
+            onClick={() => setIsChatOpen(true)}
+          >
             Start Chat
           </button>
         </div>
       </section>
+
+      <Chatbot isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
 
       <section className="summary-grid">
         <article className="summary-card">
@@ -141,12 +149,12 @@ function HelpSupport() {
 
         <article className="summary-card">
           <h3>FAQ Articles</h3>
-          <p>10</p>
+          <p>{faqData.length}</p>
         </article>
 
         <article className="summary-card">
           <h3>Average Reply</h3>
-          <p>&lt; 5 min</p>
+          <p>Instant</p>
         </article>
       </section>
 
