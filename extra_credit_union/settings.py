@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -142,3 +143,13 @@ REST_FRAMEWORK = {
 
 CORS_ALLOW_ALL_ORIGINS = True  # For development only, don't use in production
 CORS_ALLOW_CREDENTIALS = True
+
+PAYMENT_NETWORK_BASE_URL = os.getenv(
+    "PAYMENT_NETWORK_BASE_URL",
+    "https://paymentsystem-cards-cf.pages.dev",
+)
+
+PAYMENT_NETWORK_API_KEY = os.getenv(
+    "PAYMENT_NETWORK_API_KEY",
+    "gNeyImmnVbNIDM0b2AHmslgzjcJC8knU",
+)

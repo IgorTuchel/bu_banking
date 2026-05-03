@@ -212,6 +212,10 @@
   background: linear-gradient(135deg, #1d1d1f, #2d2d32 55%, #5a5a66 100%);
 }
 
+.bank-card-preview-green {
+  background: linear-gradient(135deg, #1f5e3b, #2e8b57 60%, #d4af37 140%);
+}
+
 .bank-card-top {
   display: flex;
   justify-content: space-between;

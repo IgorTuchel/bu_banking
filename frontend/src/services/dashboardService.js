@@ -1,5 +1,6 @@
 import { authenticatedFetch } from "./authService";
 import { ArrowLeftRight, HandCoins, CreditCard, PieChart } from "lucide-react";
+import { getCardsForAccount } from "./cardsService";
 
 const API = "http://127.0.0.1:8000/api";
 
@@ -13,6 +14,37 @@ async function fetchJSON(url) {
   return res.json();
 }
 
+function applyLiveCardBalance(account, cards = []) {
+  const linkedCards = cards.filter(
+    (card) =>
+      card.isNetworkLinked &&
+      card.liveBalance !== null &&
+      card.liveBalance !== undefined
+  );
+
+  if (linkedCards.length === 0 || account.type === "credit") {
+    return {
+      ...account,
+      cards,
+    };
+  }
+
+  const liveBalance = linkedCards.reduce(
+    (sum, card) => sum + Number(card.liveBalance ?? 0),
+    0
+  );
+
+  return {
+    ...account,
+    cards,
+    currentBalance: liveBalance,
+    availableBalance: liveBalance,
+    liveCardBalance: liveBalance,
+    isNetworkLinked: true,
+    linkedCards,
+  };
+}
+
 export async function getDashboardData() {
   const [user, accounts] = await Promise.all([
     fetchJSON(`${API}/me/`),
@@ -21,18 +53,23 @@ export async function getDashboardData() {
 
   const accountsWithTransactions = await Promise.all(
     accounts.map(async (account) => {
-      const transactions = await fetchJSON(
-        `${API}/accounts/${account.id}/transactions/`,
+      const [transactions, cards] = await Promise.all([
+        fetchJSON(`${API}/accounts/${account.id}/transactions/`),
+        getCardsForAccount(account.id).catch((error) => {
+          console.error("Unable to load cards for dashboard:", error);
+          return [];
+        }),
+      ]);
+
+      return applyLiveCardBalance(
+        {
+          ...account,
+          transactions,
+        },
+        cards
       );
-
-      return {
-        ...account,
-        transactions,
-      };
-    }),
+    })
   );
-
-  console.log("USER FROM /api/me/", user);
 
   return {
     user: {

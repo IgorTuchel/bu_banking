@@ -292,42 +292,70 @@ function Cards() {
   }, [accounts]);
 
   useEffect(() => {
-    async function loadCards() {
+  let refreshTimer = null;
+  let isMounted = true;
+
+  async function loadCards({ silent = false } = {}) {
+    if (!silent) {
       hideAllSensitiveDetails();
       resetCardTilt();
       setIsEditingLimit(false);
       setShowCancelConfirm(false);
+    }
 
-      if (!selectedAccount) {
-        setCards([]);
-        setSelectedCardId("");
-        return;
+    if (!selectedAccount) {
+      setCards([]);
+      setSelectedCardId("");
+      return;
+    }
+
+    try {
+      if (!silent) {
+        setIsCardsLoading(true);
       }
 
-      try {
-        setIsCardsLoading(true);
-        setActionError("");
+      setActionError("");
 
-        const data = await getCardsForAccount(selectedAccount.id);
-        setCards(data);
-        setSelectedCardId(data[0]?.id ?? "");
-      } catch (error) {
-        console.error(error);
+      const data = await getCardsForAccount(selectedAccount.id);
+
+      if (!isMounted) return;
+
+      setCards(data);
+
+      setSelectedCardId((currentSelectedId) => {
+        if (currentSelectedId && data.some((card) => card.id === currentSelectedId)) {
+          return currentSelectedId;
+        }
+
+        return data[0]?.id ?? "";
+      });
+    } catch (error) {
+      console.error(error);
+
+      if (!silent) {
         setActionError("Unable to load cards for this account.");
-      } finally {
+      }
+    } finally {
+      if (isMounted && !silent) {
         setIsCardsLoading(false);
       }
     }
+  }
 
-    loadCards();
-  }, [selectedAccount]);
+  loadCards();
 
-  useEffect(() => {
-    hideAllSensitiveDetails();
-    resetCardTilt();
-    setIsEditingLimit(false);
-    setShowCancelConfirm(false);
-  }, [selectedCardId]);
+  refreshTimer = setInterval(() => {
+    loadCards({ silent: true });
+  }, 3000);
+
+  return () => {
+    isMounted = false;
+
+    if (refreshTimer) {
+      clearInterval(refreshTimer);
+    }
+  };
+}, [selectedAccount]);
 
   const selectedCard = useMemo(() => {
     return cards.find((card) => card.id === selectedCardId) ?? null;
@@ -336,10 +364,22 @@ function Cards() {
   const summaryCards = useMemo(() => {
     if (!selectedAccount || !selectedCard) return [];
 
+    const hasNetworkLinkedCards = cards.some((card) => card.isNetworkLinked);
+
+    const liveAccountBalance = cards.reduce((total, card) => {
+      if (!card.isNetworkLinked || card.liveBalance === null || card.liveBalance === undefined) {
+        return total;
+      }
+
+      return total + Number(card.liveBalance);
+    }, 0);
+
     const balanceValue =
-      selectedAccount.type === "credit"
-        ? selectedAccount.availableCredit
-        : selectedAccount.currentBalance;
+      hasNetworkLinkedCards && selectedAccount.type !== "credit"
+        ? liveAccountBalance
+        : selectedAccount.type === "credit"
+          ? selectedAccount.availableCredit
+          : selectedAccount.currentBalance;
 
     const spendingLimitValue =
       selectedCard.spendingLimit === null ||
@@ -348,12 +388,25 @@ function Cards() {
         ? "No limit"
         : formatMoney(selectedCard.spendingLimit, selectedAccount.currency);
 
+    const liveBalanceValue =
+      selectedCard.liveBalance !== undefined && selectedCard.liveBalance !== null
+        ? formatMoney(selectedCard.liveBalance, selectedAccount.currency)
+        : "Not linked";
+
     return [
       {
         id: "card-status",
         title: "Card Status",
         value: selectedCard.frozen ? "Frozen" : "Active",
         note: selectedCard.type,
+      },
+      {
+        id: "live-card-balance",
+        title: "Live Card Balance",
+        value: liveBalanceValue,
+        note: selectedCard.isNetworkLinked
+          ? "v2 payment network"
+          : "Local card only",
       },
       {
         id: "available-balance",
@@ -373,7 +426,7 @@ function Cards() {
           : "Card limit",
       },
     ];
-  }, [selectedAccount, selectedCard]);
+  }, [selectedAccount, selectedCard, cards]);
 
   async function handleToggle(cardId, field) {
     try {
@@ -478,7 +531,7 @@ function Cards() {
         <Skeleton width="260px" height="3rem" />
 
         <section className="summary-grid">
-          {[...Array(3)].map((_, index) => (
+          {[...Array(4)].map((_, index) => (
             <SkeletonSummaryCard key={index} />
           ))}
         </section>
@@ -576,7 +629,17 @@ function Cards() {
 
               <article
                 ref={cardRef}
-                className={`bank-card-preview bank-card-preview-${selectedCard.color}`}
+                className={`bank-card-preview ${
+                  selectedCard.color
+                    ? `bank-card-preview-${selectedCard.color}`
+                    : selectedAccount?.type === "current"
+                    ? "bank-card-preview-green-gold"
+                    : selectedAccount?.type === "savings"
+                    ? "bank-card-preview-green-gold"
+                    : selectedAccount?.type === "credit"
+                    ? "bank-card-preview-dark"
+                    : "bank-card-preview-green-gold"
+                }`}
                 onMouseMove={handleCardTilt}
                 onMouseLeave={resetCardTilt}
                 onTouchMove={handleCardTilt}
@@ -681,7 +744,7 @@ function Cards() {
                       onClick={() => handleFreezeToggle(selectedCard.id)}
                     >
                       {selectedCard.frozen ? "Unfreeze" : "Freeze"}
-                  </Button>
+                    </Button>
                   </div>
                 </div>
 
@@ -797,7 +860,7 @@ function Cards() {
                       </p>
 
                       <div className="card-limit-actions">
-                       <Button
+                        <Button
                           variant="pill btn-safe"
                           icon={<Pencil size={16} />}
                           onClick={openLimitEditor}
@@ -897,6 +960,26 @@ function Cards() {
               <div className="card-details-row">
                 <span>Status</span>
                 <strong>{selectedCard.frozen ? "Frozen" : "Active"}</strong>
+              </div>
+
+              <div className="card-details-row">
+                <span>Live balance</span>
+                <strong>
+                  {selectedCard.liveBalance !== undefined &&
+                  selectedCard.liveBalance !== null
+                    ? formatMoney(
+                        selectedCard.liveBalance,
+                        selectedAccount?.currency
+                      )
+                    : "Not linked"}
+                </strong>
+              </div>
+
+              <div className="card-details-row">
+                <span>Network card</span>
+                <strong>
+                  {selectedCard.isNetworkLinked ? "Linked" : "Local only"}
+                </strong>
               </div>
 
               <div className="card-details-row">

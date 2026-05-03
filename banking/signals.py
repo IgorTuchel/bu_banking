@@ -1,3 +1,13 @@
+"""
+
+==================================================
+Signals disabled.
+
+Default account creation is handled in the registration view
+(user_registration_view.py) to avoid duplicate accounts.
+
+===================================================
+
 import uuid
 from decimal import Decimal
 
@@ -49,3 +59,5 @@ def create_default_accounts(sender, instance, created, **kwargs):
         user=instance,
         account_type="savings",
     )
+
+"""

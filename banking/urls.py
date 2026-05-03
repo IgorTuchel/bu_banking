@@ -29,6 +29,10 @@ from .views.auth_views import LoginView, UserAccountsView
 from .views.business_view import BusinessViewSet
 from .views.transaction_view import TransactionViewSet
 from .views.user_registration_view import UserRegistrationView
+from .views.payment_network_views import (
+    PaymentNetworkCardsView,
+    PaymentNetworkChargeView,
+)
 
 router = DefaultRouter()
 router.register(r"accounts", AccountViewSet, basename="account")
@@ -93,6 +97,8 @@ urlpatterns = [
     path("network/status/", NetworkStatusView.as_view()),
     path("network/transfer/", NetworkTransferView.as_view()),
     path("transfers/", TransferView.as_view(), name="api-transfers"),
+    path("payment-network/cards/me/", PaymentNetworkCardsView.as_view()),
+    path("payment-network/charge/", PaymentNetworkChargeView.as_view()),
 
     # Testing
     path("test-transaction/", TestTransactionView.as_view(), name="test-transaction"),
