@@ -164,4 +164,3 @@ Engineering:
 Feel free to assign yourselk to the tasks and resolve them.
 Leadership: 
 Collaborate with engineering - comment on tasks/epics/user stories to validate if the user stories were delivered.
-
