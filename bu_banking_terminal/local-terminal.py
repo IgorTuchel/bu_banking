@@ -91,6 +91,12 @@ TAP_TIMEOUT = float(os.environ.get("TAP_TIMEOUT", "30"))
 
 AUTHORIZE_URL = PAYMENT_NETWORK_URL + "/api/authorize"
 REGISTER_CARD_URL = PAYMENT_NETWORK_URL + "/api/cards/register"
+DJANGO_CHARGE_URL = os.environ.get(
+    "DJANGO_CHARGE_URL",
+    "http://127.0.0.1:8000/api/payment-network/charge/",
+)
+
+DJANGO_ACCESS_TOKEN = os.environ.get("DJANGO_ACCESS_TOKEN", "")
 
 CONFIG_PATH = os.path.expanduser("~/.bu-banking-terminal/config.json")
 
@@ -281,43 +287,72 @@ def _post_charge(amount: float, merchant_id: str, payload: str) -> Tuple[int, di
     parts = payload.split("|")
     if len(parts) < 2 or not parts[0] or not parts[1]:
         return 400, {"error": f"invalid card payload: {payload[:80]}"}
+
     issuing_bank_id, card_number = parts[0], parts[1]
+
+    if not DJANGO_ACCESS_TOKEN:
+        return 401, {
+            "error": "DJANGO_ACCESS_TOKEN is not set. Set it before running local-terminal.py."
+        }
 
     body = json.dumps({
         "amount": amount,
         "card_number": card_number,
         "merchant_id": merchant_id,
-        "issuing_bank_id": issuing_bank_id,
+        "description": f"{merchant_id} NFC card payment",
     }).encode()
 
     headers = {
         "Content-Type": "application/json",
-        # Cloudflare bot management blocks the default Python-urllib User-Agent
-        # with "error code: 1010". Use a normal-looking UA.
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                      "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 ps-local-terminal/1.0",
+        "Authorization": f"Bearer {DJANGO_ACCESS_TOKEN}",
+        "User-Agent": "Mozilla/5.0 local-terminal-django-proxy/1.0",
     }
-    api_key = current_acquirer_api_key()
-    if api_key:
-        headers["X-API-Key"] = api_key
 
-    req = urllib.request.Request(AUTHORIZE_URL, data=body, headers=headers, method="POST")
-    print(f"[charge] POST {AUTHORIZE_URL} (api-key={'set' if api_key else 'unset'})")
+    req = urllib.request.Request(
+        DJANGO_CHARGE_URL,
+        data=body,
+        headers=headers,
+        method="POST",
+    )
+
+    print(f"[charge] POST {DJANGO_CHARGE_URL} card={card_number}")
+
     try:
         with urllib.request.urlopen(req, timeout=20) as resp:
-            return resp.status, json.loads(resp.read() or b"{}")
+            data = json.loads(resp.read() or b"{}")
+
+            network = data.get("network") or data
+
+            if data.get("status") == "declined":
+                return resp.status, {
+                    "status": "declined",
+                    "response_code": data.get("response_code", "57"),
+                    "message": data.get("message", "Declined by banking app"),
+                    "transaction_id": str(data.get("transaction_id", "")),
+                }
+
+            return resp.status, network
+
     except urllib.error.HTTPError as e:
         raw = e.read() or b""
+
         try:
-            return e.code, json.loads(raw)
+            data = json.loads(raw)
         except Exception:
-            return e.code, {
+            data = {
                 "error": str(e),
                 "body": raw.decode("utf-8", errors="replace")[:300],
-                "api_key_sent": bool(api_key),
             }
+
+        return e.code, {
+            "status": "declined",
+            "response_code": data.get("response_code", "57"),
+            "message": data.get("message") or data.get("error") or "Declined by banking app",
+            "details": data,
+        }
+
     except Exception as e:
-        return 502, {"error": f"network error: {e}"}
+        return 502, {"error": f"django charge proxy error: {e}"}
 
 
 def _whoami_on_network(api_key: str) -> Tuple[int, dict]:
@@ -1007,6 +1042,8 @@ def main() -> None:
     print(f"Payment network: {PAYMENT_NETWORK_URL}")
     print(f"  authorize:     {AUTHORIZE_URL}")
     print(f"  register card: {REGISTER_CARD_URL}")
+    print(f"  django charge: {DJANGO_CHARGE_URL}")
+    print(f"  django token:  {'set' if DJANGO_ACCESS_TOKEN else 'unset'}")
     if not current_acquirer_api_key():
         print("WARNING: no acquirer api_key set. /api/authorize will reject calls.")
         print("         Set it in the Settings page (http://localhost:%d/config)" % LISTEN_PORT)

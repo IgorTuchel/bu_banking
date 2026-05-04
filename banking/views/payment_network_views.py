@@ -80,6 +80,42 @@ class PaymentNetworkChargeView(APIView):
                 {"error": "You do not have permission to charge this card."},
                 status=403,
             )
+        
+        if card.frozen or card.status != "active":
+            transaction = Transaction.objects.create(
+                transaction_type="card_payment",
+                status="declined",
+                direction="outgoing",
+                amount=amount,
+                timestamp=timezone.now(),
+                from_account=card.account,
+                card=card,
+                description=description,
+                payment_reference="LOCAL-FROZEN-CARD",
+                terminal_id="",
+                city=city,
+                country=country,
+                latitude=Decimal(str(latitude)) if latitude not in [None, ""] else None,
+                longitude=Decimal(str(longitude)) if longitude not in [None, ""] else None,
+                location_label=location_label,
+                balance_after=None,
+            )
+
+            return Response(
+                {
+                    "transaction_id": transaction.id,
+                    "status": "declined",
+                    "response_code": "57",
+                    "message": "Card is frozen or inactive.",
+                    "transaction": {
+                        "id": transaction.id,
+                        "amount": str(transaction.amount),
+                        "status": transaction.status,
+                        "description": transaction.description,
+                    },
+                },
+                status=200,
+            )
 
         network_response = requests.post(
             f"{settings.PAYMENT_NETWORK_BASE_URL}/api/authorize",
