@@ -640,6 +640,106 @@
   flex-wrap: wrap;
 }
 
+.round-up-card {
+  margin-top: 0.5rem;
+  padding: 1.1rem;
+  border-radius: var(--radius-md);
+  background: var(--color-green-gradient);
+  color: white;
+  box-shadow:
+    0 12px 28px rgba(31, 94, 59, 0.22),
+    inset 0 0 0 1px rgba(212, 175, 55, 0.35);
+}
+
+.round-up-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.round-up-card-header h3 {
+  margin: 0 0 0.35rem 0;
+  color: var(--color-accent);
+  font-size: 1.35rem;
+}
+
+.round-up-card-header p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.round-up-card-header svg {
+  color: var(--color-accent);
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.35));
+}
+
+.round-up-status-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.round-up-status-row span {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.round-up-status-row strong {
+  color: white;
+}
+
+.round-up-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.55rem;
+  margin: 1rem 0;
+}
+
+.round-up-option {
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-radius: 999px;
+  padding: 0.55rem 0.65rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.round-up-option:hover:not(:disabled),
+.round-up-option.active {
+  background: var(--color-accent);
+  color: var(--color-text-heading);
+  border-color: var(--color-accent);
+  transform: translateY(-1px);
+}
+
+.round-up-option:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.round-up-card .btn {
+  width: 100%;
+  margin-top: 0.2rem;
+}
+
+.round-up-disabled-note {
+  margin: 0.75rem 0 0 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.85rem;
+}
+
 @media (max-width: 992px) {
   .cards-page {
     padding: var(--space-lg);

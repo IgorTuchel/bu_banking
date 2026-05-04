@@ -10,6 +10,7 @@ import SkeletonSummaryCard from "../components/SkeletonSummaryCard";
 import {
   AlertTriangle,
   CircleOff,
+  Coins,
   CreditCard,
   Eye,
   EyeOff,
@@ -27,6 +28,7 @@ import {
   getCardsForAccount,
   revealCvv,
   updateCard,
+  updateRoundUpSettings,
 } from "../services/cardsService";
 
 function formatMoney(value, currency = "GBP") {
@@ -73,12 +75,20 @@ function Cards() {
 
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [isCancellingCard, setIsCancellingCard] = useState(false);
+  const [isSavingRoundUp, setIsSavingRoundUp] = useState(false);
+  const [roundUpDraft, setRoundUpDraft] = useState("1.00");
 
   const cvvHideTimerRef = useRef(null);
   const cvvCountdownRef = useRef(null);
   const cardNumberHideTimerRef = useRef(null);
   const cardNumberCountdownRef = useRef(null);
   const cardRef = useRef(null);
+
+  const summaryGridStyle = {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+    gap: "1rem",
+  };
 
   function clearCvvTimers() {
     if (cvvHideTimerRef.current) {
@@ -284,6 +294,12 @@ function Cards() {
     return accounts.find((account) => account.key === selectedAccountKey) ?? null;
   }, [accounts, selectedAccountKey]);
 
+  useEffect(() => {
+    if (!selectedAccount) return;
+
+    setRoundUpDraft(String(selectedAccount.roundUpIncrement ?? "1.00"));
+  }, [selectedAccount?.id, selectedAccount?.roundUpIncrement]);
+
   const accountOptions = useMemo(() => {
     return accounts.map((account) => ({
       value: account.key,
@@ -292,70 +308,73 @@ function Cards() {
   }, [accounts]);
 
   useEffect(() => {
-  let refreshTimer = null;
-  let isMounted = true;
+    let refreshTimer = null;
+    let isMounted = true;
 
-  async function loadCards({ silent = false } = {}) {
-    if (!silent) {
-      hideAllSensitiveDetails();
-      resetCardTilt();
-      setIsEditingLimit(false);
-      setShowCancelConfirm(false);
-    }
-
-    if (!selectedAccount) {
-      setCards([]);
-      setSelectedCardId("");
-      return;
-    }
-
-    try {
+    async function loadCards({ silent = false } = {}) {
       if (!silent) {
-        setIsCardsLoading(true);
+        hideAllSensitiveDetails();
+        resetCardTilt();
+        setIsEditingLimit(false);
+        setShowCancelConfirm(false);
       }
 
-      setActionError("");
+      if (!selectedAccount) {
+        setCards([]);
+        setSelectedCardId("");
+        return;
+      }
 
-      const data = await getCardsForAccount(selectedAccount.id);
-
-      if (!isMounted) return;
-
-      setCards(data);
-
-      setSelectedCardId((currentSelectedId) => {
-        if (currentSelectedId && data.some((card) => card.id === currentSelectedId)) {
-          return currentSelectedId;
+      try {
+        if (!silent) {
+          setIsCardsLoading(true);
         }
 
-        return data[0]?.id ?? "";
-      });
-    } catch (error) {
-      console.error(error);
+        setActionError("");
 
-      if (!silent) {
-        setActionError("Unable to load cards for this account.");
-      }
-    } finally {
-      if (isMounted && !silent) {
-        setIsCardsLoading(false);
+        const data = await getCardsForAccount(selectedAccount.id);
+
+        if (!isMounted) return;
+
+        setCards(data);
+
+        setSelectedCardId((currentSelectedId) => {
+          if (
+            currentSelectedId &&
+            data.some((card) => card.id === currentSelectedId)
+          ) {
+            return currentSelectedId;
+          }
+
+          return data[0]?.id ?? "";
+        });
+      } catch (error) {
+        console.error(error);
+
+        if (!silent) {
+          setActionError("Unable to load cards for this account.");
+        }
+      } finally {
+        if (isMounted && !silent) {
+          setIsCardsLoading(false);
+        }
       }
     }
-  }
 
-  loadCards();
+    loadCards();
 
-  refreshTimer = setInterval(() => {
-    loadCards({ silent: true });
-  }, 3000);
+    refreshTimer = setInterval(() => {
+      loadCards({ silent: true });
+    }, 3000);
 
-  return () => {
-    isMounted = false;
+    return () => {
+      isMounted = false;
 
-    if (refreshTimer) {
-      clearInterval(refreshTimer);
-    }
-  };
-}, [selectedAccount]);
+      if (refreshTimer) {
+        clearInterval(refreshTimer);
+      }
+    };
+  }, [selectedAccount]);
 
   const selectedCard = useMemo(() => {
     return cards.find((card) => card.id === selectedCardId) ?? null;
@@ -367,7 +386,11 @@ function Cards() {
     const hasNetworkLinkedCards = cards.some((card) => card.isNetworkLinked);
 
     const liveAccountBalance = cards.reduce((total, card) => {
-      if (!card.isNetworkLinked || card.liveBalance === null || card.liveBalance === undefined) {
+      if (
+        !card.isNetworkLinked ||
+        card.liveBalance === null ||
+        card.liveBalance === undefined
+      ) {
         return total;
       }
 
@@ -427,6 +450,44 @@ function Cards() {
       },
     ];
   }, [selectedAccount, selectedCard, cards]);
+
+  function handleRoundUpChange(increment) {
+    setRoundUpDraft(increment);
+  }
+
+  async function handleRoundUpToggle() {
+    if (!selectedAccount) return;
+
+    try {
+      setActionError("");
+      setIsSavingRoundUp(true);
+
+      const turningOn = !selectedAccount.roundUpEnabled;
+
+      const updated = await updateRoundUpSettings(selectedAccount.id, {
+        roundUpEnabled: turningOn,
+        roundUpIncrement: roundUpDraft,
+      });
+
+      setAccounts((current) =>
+        current.map((account) =>
+          account.id === selectedAccount.id
+            ? {
+                ...account,
+                roundUpEnabled: updated.roundUpEnabled,
+                roundUpIncrement: updated.roundUpIncrement,
+                roundUpPot: updated.roundUpPot,
+              }
+            : account
+        )
+      );
+    } catch (error) {
+      console.error(error);
+      setActionError("Unable to update round-up settings.");
+    } finally {
+      setIsSavingRoundUp(false);
+    }
+  }
 
   async function handleToggle(cardId, field) {
     try {
@@ -530,7 +591,7 @@ function Cards() {
 
         <Skeleton width="260px" height="3rem" />
 
-        <section className="summary-grid">
+        <section className="summary-grid cards-summary-grid-four" style={summaryGridStyle}>
           {[...Array(4)].map((_, index) => (
             <SkeletonSummaryCard key={index} />
           ))}
@@ -575,7 +636,7 @@ function Cards() {
         options={accountOptions}
       />
 
-      <section className="summary-grid">
+      <section className="summary-grid cards-summary-grid-four" style={summaryGridStyle}>
         {summaryCards.map((card) => (
           <SummaryCard
             key={card.id}
@@ -633,12 +694,12 @@ function Cards() {
                   selectedCard.color
                     ? `bank-card-preview-${selectedCard.color}`
                     : selectedAccount?.type === "current"
-                    ? "bank-card-preview-green-gold"
-                    : selectedAccount?.type === "savings"
-                    ? "bank-card-preview-green-gold"
-                    : selectedAccount?.type === "credit"
-                    ? "bank-card-preview-dark"
-                    : "bank-card-preview-green-gold"
+                      ? "bank-card-preview-green-gold"
+                      : selectedAccount?.type === "savings"
+                        ? "bank-card-preview-green-gold"
+                        : selectedAccount?.type === "credit"
+                          ? "bank-card-preview-dark"
+                          : "bank-card-preview-green-gold"
                 }`}
                 onMouseMove={handleCardTilt}
                 onMouseLeave={resetCardTilt}
@@ -885,7 +946,9 @@ function Cards() {
                       variant="pill btn-danger"
                       icon={<CircleOff size={16} />}
                       onClick={() => setShowCancelConfirm(true)}
-                      disabled={isCancellingCard || selectedCard.status === "cancelled"}
+                      disabled={
+                        isCancellingCard || selectedCard.status === "cancelled"
+                      }
                     >
                       Cancel Card
                     </Button>
@@ -990,6 +1053,75 @@ function Cards() {
               <div className="card-details-row">
                 <span>Scheme</span>
                 <strong>{selectedCard.scheme}</strong>
+              </div>
+
+              <div className="round-up-card">
+                <div className="round-up-card-header">
+                  <div>
+                    <h3>Round Up</h3>
+                    <p>Automatically save spare change into your savings account.</p>
+                  </div>
+                  <Coins size={28} />
+                </div>
+
+                <div className="round-up-status-row">
+                  <span>Status</span>
+                  <strong>{selectedAccount?.roundUpEnabled ? "On" : "Off"}</strong>
+                </div>
+
+                <div className="round-up-status-row">
+                  <span>Saved so far</span>
+                  <strong>
+                    {formatMoney(
+                      selectedAccount?.roundUpPot,
+                      selectedAccount?.currency
+                    )}
+                  </strong>
+                </div>
+
+                <div className="round-up-options">
+                  {[
+                    { label: "10p", value: "0.10" },
+                    { label: "50p", value: "0.50" },
+                    { label: "£1", value: "1.00" },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      className={`round-up-option ${
+                        roundUpDraft === option.value ? "active" : ""
+                      }`}
+                      onClick={() => handleRoundUpChange(option.value)}
+                      disabled={
+                        isSavingRoundUp || selectedAccount?.type !== "current"
+                      }
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+
+                <Button
+                  variant={
+                    selectedAccount?.roundUpEnabled
+                      ? "pill btn-danger"
+                      : "pill btn-safe"
+                  }
+                  onClick={handleRoundUpToggle}
+                  disabled={isSavingRoundUp || selectedAccount?.type !== "current"}
+                >
+                  {isSavingRoundUp
+                    ? "Saving..."
+                    : selectedAccount?.roundUpEnabled
+                      ? "Turn Off"
+                      : "Turn On"}
+                </Button>
+
+                {selectedAccount?.type !== "current" ? (
+                  <p className="round-up-disabled-note">
+                    Round ups are available on current accounts.
+                  </p>
+                ) : null}
               </div>
 
               <div className="card-help-card">

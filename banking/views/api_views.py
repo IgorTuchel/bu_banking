@@ -1,5 +1,7 @@
 import random
 from datetime import timedelta
+from decimal import Decimal
+
 
 from django.db import transaction
 from django.db.models import Q
@@ -137,16 +139,8 @@ class AccountTransactionsView(APIView):
         if account.account_type == "current":
             transactions = (
                 Transaction.objects.filter(
-                    Q(from_account=account, direction="outgoing")
-                    | Q(to_account=account, direction="incoming")
-                    | Q(from_account=account, transaction_type="card_payment")
-                    | Q(from_account=account, transaction_type="direct_debit")
-                    | Q(from_account=account, transaction_type="standing_order")
-                    | Q(from_account=account, transaction_type="cash_withdrawal")
-                    | Q(to_account=account, transaction_type="cash_deposit")
-                    | Q(to_account=account, transaction_type="refund")
+                    Q(from_account=account) | Q(to_account=account)
                 )
-                .exclude(direction="internal")
                 .select_related("business", "card", "from_account", "to_account")
                 .order_by("-timestamp", "-id")
             )
@@ -339,3 +333,43 @@ class TestTransactionView(APIView):
         )
 
         return Response({"success": True, "transaction_id": txn.id})
+    
+class AccountRoundUpSettingsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, account_id):
+        try:
+            account = Account.objects.get(id=account_id)
+        except Account.DoesNotExist:
+            return Response({"error": "Account not found."}, status=404)
+
+        if account.user != request.user and not request.user.is_staff:
+            return Response({"error": "Permission denied."}, status=403)
+
+        enabled = request.data.get("roundUpEnabled")
+        increment = request.data.get("roundUpIncrement")
+
+        if enabled is not None:
+            account.round_up_enabled = bool(enabled)
+
+        if increment is not None:
+            increment = Decimal(str(increment))
+
+            if increment not in [Decimal("0.10"), Decimal("0.50"), Decimal("1.00")]:
+                return Response(
+                    {"error": "Round-up increment must be 0.10, 0.50 or 1.00."},
+                    status=400,
+                )
+
+            account.round_up_increment = increment
+
+        account.save()
+
+        return Response(
+            {
+                "id": account.id,
+                "roundUpEnabled": account.round_up_enabled,
+                "roundUpIncrement": str(account.round_up_increment),
+                "roundUpPot": str(account.round_up_pot),
+            }
+        )
