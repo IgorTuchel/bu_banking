@@ -23,7 +23,8 @@ from .views.api_views import (
     CurrentUserView,
     RevealCvvView,
     TestTransactionView,
-    CancelAndReplaceCardView,  # ✅ NEW IMPORT
+    CancelAndReplaceCardView,
+    AccountRoundUpSettingsView,
 )
 from .views.auth_views import LoginView, UserAccountsView
 from .views.business_view import BusinessViewSet
@@ -85,11 +86,16 @@ urlpatterns = [
         name="api-card-reveal-cvv",
     ),
 
-    # ✅ NEW: Cancel + Replace card endpoint
     path(
         "cards/<str:card_id>/cancel/",
         CancelAndReplaceCardView.as_view(),
         name="api-card-cancel-replace",
+    ),
+    
+    path(
+        "accounts/<str:account_id>/round-up/",
+        AccountRoundUpSettingsView.as_view(),
+        name="api-account-round-up",
     ),
 
     # Transfers / Network

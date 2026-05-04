@@ -263,6 +263,20 @@ class FrontendAccountSerializer(serializers.ModelSerializer):
     maskedAccountNumber = serializers.SerializerMethodField()
     sortCode = serializers.CharField(source="sort_code")
 
+    roundUpEnabled = serializers.BooleanField(source="round_up_enabled", read_only=True)
+    roundUpIncrement = serializers.DecimalField(
+        source="round_up_increment",
+        max_digits=4,
+        decimal_places=2,
+        read_only=True,
+    )
+    roundUpPot = serializers.DecimalField(
+        source="round_up_pot",
+        max_digits=12,
+        decimal_places=2,
+        read_only=True,
+    )
+
     interestRate = serializers.SerializerMethodField()
     interestEarnedYtd = serializers.SerializerMethodField()
     creditLimit = serializers.SerializerMethodField()
@@ -284,6 +298,9 @@ class FrontendAccountSerializer(serializers.ModelSerializer):
             "maskedAccountNumber",
             "sortCode",
             "status",
+            "roundUpEnabled",
+            "roundUpIncrement",
+            "roundUpPot",
             "interestRate",
             "interestEarnedYtd",
             "creditLimit",

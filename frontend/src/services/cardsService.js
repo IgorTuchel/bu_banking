@@ -95,7 +95,6 @@ export async function revealCvv(cardId) {
   return response.json();
 }
 
-/* 🔥 Cancel + Replace Card */
 export async function cancelAndReplaceCard(cardId) {
   const response = await authenticatedFetch(
     `${API_BASE}/cards/${cardId}/cancel/`,
@@ -106,6 +105,25 @@ export async function cancelAndReplaceCard(cardId) {
 
   if (!response.ok) {
     throw new Error("Failed to cancel and replace card.");
+  }
+
+  return response.json();
+}
+
+export async function updateRoundUpSettings(accountId, updates) {
+  const response = await authenticatedFetch(
+    `${API_BASE}/accounts/${accountId}/round-up/`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(updates),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to update round-up settings.");
   }
 
   return response.json();

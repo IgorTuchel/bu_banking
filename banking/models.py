@@ -81,6 +81,11 @@ class Account(models.Model):
     )
 
     round_up_enabled = models.BooleanField(default=False)
+    round_up_increment = models.DecimalField(
+        max_digits=4,
+        decimal_places=2,
+        default=Decimal("1.00"),
+    )
     round_up_pot = models.DecimalField(
         max_digits=12,
         decimal_places=2,

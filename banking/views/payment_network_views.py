@@ -1,5 +1,4 @@
-from decimal import Decimal
-
+from decimal import Decimal, ROUND_CEILING
 import requests
 
 from django.conf import settings
@@ -8,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from banking.models import Card, Transaction
+from banking.models import Account, Card, Transaction
 
 
 class PaymentNetworkCardsView(APIView):
@@ -80,7 +79,7 @@ class PaymentNetworkChargeView(APIView):
                 {"error": "You do not have permission to charge this card."},
                 status=403,
             )
-        
+
         if card.frozen or card.status != "active":
             transaction = Transaction.objects.create(
                 transaction_type="card_payment",
@@ -173,6 +172,56 @@ class PaymentNetworkChargeView(APIView):
             balance_after=balance_after,
         )
 
+        round_up_transaction = None
+
+        if (
+            status_value == "completed"
+            and card.account.round_up_enabled
+            and card.account.account_type == "current"
+        ):
+            increment = card.account.round_up_increment or Decimal("1.00")
+
+            rounded_total = (
+                (amount / increment).to_integral_value(rounding=ROUND_CEILING)
+                * increment
+            ).quantize(Decimal("0.01"))
+
+            round_up_amount = (rounded_total - amount).quantize(Decimal("0.01"))
+
+            if round_up_amount > 0:
+                savings_account = Account.objects.filter(
+                    user=card.account.user,
+                    account_type="savings",
+                    status="active",
+                ).first()
+
+                if savings_account:
+                    savings_account.current_balance += round_up_amount
+                    savings_account.round_up_pot += round_up_amount
+                    savings_account.save()
+
+                    card.account.round_up_pot += round_up_amount
+                    card.account.save(update_fields=["round_up_pot", "updated_at"])
+
+                    round_up_transaction = Transaction.objects.create(
+                        transaction_type="round_up_transfer",
+                        status="completed",
+                        direction="internal",
+                        amount=round_up_amount,
+                        timestamp=timezone.now(),
+                        from_account=card.account,
+                        to_account=savings_account,
+                        card=card,
+                        description=f"Round-up from {description}",
+                        payment_reference=f"ROUNDUP-{transaction.id}",
+                        city=city,
+                        country=country,
+                        latitude=Decimal(str(latitude)) if latitude not in [None, ""] else None,
+                        longitude=Decimal(str(longitude)) if longitude not in [None, ""] else None,
+                        location_label=location_label,
+                        balance_after=savings_account.current_balance,
+                    )
+
         return Response(
             {
                 "network": network_data,
@@ -184,6 +233,15 @@ class PaymentNetworkChargeView(APIView):
                     "payment_reference": transaction.payment_reference,
                     "balance_after": str(transaction.balance_after)
                     if transaction.balance_after is not None
+                    else None,
+                },
+                "round_up": {
+                    "enabled": bool(round_up_transaction),
+                    "amount": str(round_up_transaction.amount)
+                    if round_up_transaction
+                    else "0.00",
+                    "savings_account_id": round_up_transaction.to_account.id
+                    if round_up_transaction and round_up_transaction.to_account
                     else None,
                 },
             },
