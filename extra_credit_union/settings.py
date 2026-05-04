@@ -5,6 +5,8 @@ Django settings for extra_credit_union project.
 from pathlib import Path
 import os
 from datetime import timedelta  # ✅ added
+from dotenv import load_dotenv
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
