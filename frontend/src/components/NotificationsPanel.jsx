@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 
-function NotificationsPanel({ notifications }) {
+function NotificationsPanel({ notifications = [] }) {
   const navigate = useNavigate();
 
   return (
@@ -17,30 +17,39 @@ function NotificationsPanel({ notifications }) {
       </div>
 
       <div className="notifications-list">
-        {notifications.map((notification) => (
-          <div
-            key={notification.id}
-            className="notification-card"
-            onClick={() => navigate("/notifications")}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                navigate("/notifications");
-              }
-            }}
-          >
-            <p className="notification-message">
-              {notification.message}
+        {notifications.length === 0 ? (
+          <div className="notification-card">
+            <p className="notification-title">No notifications yet</p>
+            <p className="notification-detail">
+              Recent account activity will appear here.
             </p>
-
-            {notification.displayDate && (
-              <span className="notification-date">
-                {notification.displayDate}
-              </span>
-            )}
           </div>
-        ))}
+        ) : (
+          notifications.map((notification) => (
+            <div
+              key={notification.id}
+              className={`notification-card notification-${notification.type}`}
+              onClick={() => navigate("/notifications")}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") navigate("/notifications");
+              }}
+            >
+              <div className="notification-top-row">
+                <p className="notification-title">{notification.title}</p>
+                {notification.displayDate && (
+                  <span className="notification-date">
+                    {notification.displayDate}
+                  </span>
+                )}
+              </div>
+
+              <p className="notification-message">{notification.message}</p>
+              <p className="notification-detail">{notification.detail}</p>
+            </div>
+          ))
+        )}
       </div>
     </section>
   );

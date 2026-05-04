@@ -56,7 +56,7 @@ export async function getDashboardData() {
       const [transactions, cards] = await Promise.all([
         fetchJSON(`${API}/accounts/${account.id}/transactions/`),
         getCardsForAccount(account.id).catch((error) => {
-          console.error("Unable to load cards for dashboard:", error);
+          console.error("Unable to load cards:", error);
           return [];
         }),
       ]);
@@ -71,6 +71,31 @@ export async function getDashboardData() {
     })
   );
 
+  // ✅ Better notifications
+  const notifications = accountsWithTransactions
+    .flatMap((account) =>
+      (account.transactions ?? []).slice(0, 3).map((transaction) => {
+        const status = (transaction.status || "").toLowerCase();
+        const amount = transaction.amount || "";
+        const merchant = transaction.description || "Card payment";
+        const date = transaction.displayDate || transaction.date || "";
+
+        const isDeclined = status === "declined";
+
+        return {
+          id: `${account.id}-${transaction.id}`,
+          title: isDeclined ? "Payment declined" : "Payment completed",
+          message: `${merchant} ${amount}`,
+          detail: isDeclined
+            ? "This payment was blocked by card controls."
+            : `Paid from ${account.name}.`,
+          displayDate: date,
+          type: isDeclined ? "warning" : "success",
+        };
+      })
+    )
+    .slice(0, 4);
+
   return {
     user: {
       firstName: user.firstName || user.first_name || user.username || "there",
@@ -79,7 +104,7 @@ export async function getDashboardData() {
       lastLogin: user.lastLogin,
     },
     accounts: accountsWithTransactions,
-    notifications: [],
+    notifications,
     quickActions: [
       {
         id: "transfer",
