@@ -1,0 +1,29 @@
+## NFC Terminal + Django Demo (Quick Start)
+
+### Terminal 1 — Start Backend
+
+```powershell
+cd bu_banking
+.\venv\Scripts\Activate.ps1
+python manage.py runserver
+
+### Terminal 2 
+
+cd bu_banking_terminal
+..\venv\Scripts\Activate.ps1
+
+$body = @{
+  username = "ExpoDemo"
+  password = "Demopassword"
+} | ConvertTo-Json
+
+$response = Invoke-RestMethod -Method Post `
+  -Uri "http://127.0.0.1:8000/api/auth/login/" `
+  -ContentType "application/json" `
+  -Body $body
+
+$env:DJANGO_ACCESS_TOKEN = $response.access
+
+python local-terminal.py
+
+http://localhost:47823
