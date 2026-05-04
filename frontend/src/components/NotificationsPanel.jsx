@@ -18,7 +18,7 @@ function NotificationsPanel({ notifications = [] }) {
 
       <div className="notifications-list">
         {notifications.length === 0 ? (
-          <div className="notification-card">
+          <div className={`notification-card ${notification.type}`}>
             <p className="notification-title">No notifications yet</p>
             <p className="notification-detail">
               Recent account activity will appear here.

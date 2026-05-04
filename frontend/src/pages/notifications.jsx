@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import "./notifications.css";
 
 import Skeleton from "../components/Skeleton";
-import { getDashboardData } from "../services/dashboardService";
+import { formatDateTime } from "../utils/dateUtils";
 
 function Notifications() {
   const [isLoading, setIsLoading] = useState(true);
@@ -10,27 +10,24 @@ function Notifications() {
   const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
-    async function loadNotifications() {
-      try {
-        setIsLoading(true);
-        const data = await getDashboardData();
-        setNotifications(data.notifications ?? []);
-      } catch (error) {
-        console.error("Unable to load notifications:", error);
-        setNotifications([]);
-      } finally {
-        setIsLoading(false);
-      }
-    }
+    const timer = setTimeout(() => {
+      const stored = JSON.parse(
+        localStorage.getItem("aurixCardNotifications") || "[]"
+      );
 
-    loadNotifications();
+      setNotifications(stored);
+      setIsLoading(false);
+    }, 400);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const filteredNotifications = useMemo(() => {
     if (filter === "all") return notifications;
 
     return notifications.filter(
-      (notification) => notification.type?.toLowerCase() === filter
+      (notification) =>
+        notification.type?.toLowerCase() === filter
     );
   }, [filter, notifications]);
 
@@ -59,10 +56,11 @@ function Notifications() {
 
   return (
     <main className="notifications-page">
+
       <section className="notifications-page-header">
         <div className="notifications-page-heading">
           <h2>All notifications</h2>
-          <p>Review recent card payments and account updates.</p>
+          <p>Review recent alerts, reminders, and account updates.</p>
         </div>
 
         <div className="notifications-toolbar">
@@ -74,17 +72,17 @@ function Notifications() {
           </button>
 
           <button
-            className={`notifications-filter-button ${filter === "success" ? "active" : ""}`}
-            onClick={() => setFilter("success")}
+            className={`notifications-filter-button ${filter === "alert" ? "active" : ""}`}
+            onClick={() => setFilter("alert")}
           >
-            Completed
+            Alerts
           </button>
 
           <button
-            className={`notifications-filter-button ${filter === "warning" ? "active" : ""}`}
-            onClick={() => setFilter("warning")}
+            className={`notifications-filter-button ${filter === "update" ? "active" : ""}`}
+            onClick={() => setFilter("update")}
           >
-            Declined
+            Updates
           </button>
         </div>
       </section>
@@ -99,22 +97,29 @@ function Notifications() {
           {filteredNotifications.map((notification) => (
             <article
               key={notification.id}
-              className={`notifications-page-card ${notification.type}`}
+              className={`notifications-page-card ${notification.type} ${
+                notification.isRead ? "is-read" : "is-unread"
+              }`}
             >
               <div className="notifications-page-card-top">
                 <span className="notifications-page-badge">
-                  {notification.type === "warning" ? "Declined" : "Completed"}
+                  {notification.type}
                 </span>
 
                 <span className="notifications-page-date">
-                  {notification.displayDate}
+                  {formatDateTime(notification.date)}
                 </span>
               </div>
 
               <div className="notifications-page-card-body">
                 <h3>{notification.title}</h3>
                 <p>{notification.message}</p>
-                <p>{notification.detail}</p>
+                {notification.detail && <p>{notification.detail}</p>}
+              </div>
+
+              <div className="notifications-page-card-footer">
+                <span>{notification.accountName}</span>
+                <span>{notification.reference}</span>
               </div>
             </article>
           ))}

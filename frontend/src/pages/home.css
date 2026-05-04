@@ -710,6 +710,22 @@
   font-size: 0.85rem;
 }
 
+.notification-card.success {
+  border-left: 5px solid #2f855a;
+}
+
+.notification-card.warning {
+  border-left: 5px solid #c53030;
+}
+
+.notification-card.alert {
+  border-left: 5px solid #c53030;
+}
+
+.notification-card.update {
+  border-left: 5px solid #2f855a;
+}
+
 .status-card {
   width: 100%;
   padding: 1.5rem;

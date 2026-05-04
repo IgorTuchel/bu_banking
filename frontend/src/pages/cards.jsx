@@ -50,6 +50,27 @@ function formatDateTime(value) {
   });
 }
 
+function saveCardNotification({ title, message, detail, type = "update" }) {
+  const existing = JSON.parse(localStorage.getItem("aurixCardNotifications") || "[]");
+
+  const notification = {
+    id: `card-${Date.now()}`,
+    title,
+    message,
+    detail,
+    type,
+    date: new Date().toISOString(),
+    accountName: "Card controls",
+    reference: "Card status update",
+    isRead: false,
+  };
+
+  localStorage.setItem(
+    "aurixCardNotifications",
+    JSON.stringify([notification, ...existing].slice(0, 20))
+  );
+}
+
 function Cards() {
   const [accounts, setAccounts] = useState([]);
   const [selectedAccountKey, setSelectedAccountKey] = useState("");
@@ -510,25 +531,36 @@ function Cards() {
   }
 
   async function handleFreezeToggle(cardId) {
-    try {
-      setActionError("");
-      hideAllSensitiveDetails();
+  try {
+    setActionError("");
+    hideAllSensitiveDetails();
 
-      const card = cards.find((item) => item.id === cardId);
-      if (!card) return;
+    const card = cards.find((item) => item.id === cardId);
+    if (!card) return;
 
-      const updated = await updateCard(cardId, {
-        frozen: !card.frozen,
-      });
+    const willFreeze = !card.frozen;
 
-      setCards((current) =>
-        current.map((item) => (item.id === updated.id ? updated : item))
-      );
-    } catch (error) {
-      console.error(error);
-      setActionError("Unable to update card status.");
-    }
+    const updated = await updateCard(cardId, {
+      frozen: willFreeze,
+    });
+
+    setCards((current) =>
+      current.map((item) => (item.id === updated.id ? updated : item))
+    );
+
+    saveCardNotification({
+      title: willFreeze ? "Card frozen" : "Card unfrozen",
+      message: `${card.name} has been ${willFreeze ? "frozen" : "unfrozen"}.`,
+      detail: willFreeze
+        ? "Payments on this card are now blocked."
+        : "Payments on this card are now enabled.",
+      type: willFreeze ? "warning" : "success",
+    });
+  } catch (error) {
+    console.error(error);
+    setActionError("Unable to update card status.");
   }
+}
 
   async function handleRevealCvv() {
     if (!selectedCard || selectedCard.frozen) return;

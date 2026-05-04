@@ -71,8 +71,8 @@ export async function getDashboardData() {
     })
   );
 
-  // ✅ Better notifications
-  const notifications = accountsWithTransactions
+  // 🔥 1. Transaction notifications
+  const transactionNotifications = accountsWithTransactions
     .flatMap((account) =>
       (account.transactions ?? []).slice(0, 3).map((transaction) => {
         const status = (transaction.status || "").toLowerCase();
@@ -83,7 +83,7 @@ export async function getDashboardData() {
         const isDeclined = status === "declined";
 
         return {
-          id: `${account.id}-${transaction.id}`,
+          id: `tx-${account.id}-${transaction.id}`,
           title: isDeclined ? "Payment declined" : "Payment completed",
           message: `${merchant} ${amount}`,
           detail: isDeclined
@@ -93,8 +93,17 @@ export async function getDashboardData() {
           type: isDeclined ? "warning" : "success",
         };
       })
-    )
-    .slice(0, 4);
+    );
+
+  // 🔥 2. Card notifications (from localStorage)
+  const cardNotifications = JSON.parse(
+    localStorage.getItem("aurixCardNotifications") || "[]"
+  );
+
+  // 🔥 3. Merge + sort by newest
+  const notifications = [...cardNotifications, ...transactionNotifications]
+    .sort((a, b) => new Date(b.date || b.displayDate) - new Date(a.date || a.displayDate))
+    .slice(0, 5);
 
   return {
     user: {
